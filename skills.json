@@ -1,0 +1,9 @@
+{
+  "skills": [
+    {
+      "name": "webgpu-threejs-tsl",
+      "file": "SKILL.md",
+      "description": "WebGPU renderer setup, TSL node-based shader authoring, compute shaders, post-processing, and performance patterns for Three.js."
+    }
+  ]
+}
