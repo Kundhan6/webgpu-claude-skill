@@ -338,17 +338,7 @@ def _wire_drivers(context, modifier):
         nodeutils.add_scene_driver(modifier, f'["{socket_id}"]', scene_path, scene=scene)
 
 
-def _input_identifiers(modifier):
-    """Map a Geometry Nodes modifier's exposed input *names* to the
-    `Socket_N`-style identifiers Blender actually stores values under.
-    (The node-group interface item's `.identifier` is the real key into
-    `modifier["Input_N"]`-equivalent access on 4.x+ GN modifiers.)"""
-    tree = modifier.node_group
-    result = {}
-    for item in tree.interface.items_tree:
-        if getattr(item, "in_out", None) == "INPUT":
-            result[item.name] = item.identifier
-    return result
+_input_identifiers = nodeutils.gn_input_identifiers
 
 
 def _ensure_modifier(obj, group, kind):

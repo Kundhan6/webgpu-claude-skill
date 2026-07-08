@@ -275,6 +275,23 @@ def inject_between(tree, target_node, target_socket_name, group_node,
     return record
 
 
+def gn_input_identifiers(modifier):
+    """Map a Geometry Nodes modifier's exposed input *names* to the
+    `Socket_N`-style identifiers Blender actually stores values under
+    (on the 4.0+ modifier input scheme, a GN modifier's custom
+    properties are keyed by the node-group interface item's
+    `.identifier`, not its display name). Needed any time you want to
+    read/write/drive a GN modifier input by its human-readable name from
+    Python — e.g. `modifier[gn_input_identifiers(modifier)["Density"]]`.
+    """
+    tree = modifier.node_group
+    result = {}
+    for item in tree.interface.items_tree:
+        if getattr(item, "in_out", None) == "INPUT":
+            result[item.name] = item.identifier
+    return result
+
+
 def add_scene_driver(datablock, data_path, scene_data_path, scene=None):
     """Add a single-variable driver on `datablock.data_path` that mirrors
     `scene.<scene_data_path>` verbatim (type AVERAGE with one variable —
