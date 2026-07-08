@@ -106,7 +106,6 @@ def test_stormkit_handlers_are_idempotent_across_repeated_enable():
 
 def test_apply_to_scene_operator_is_undoable():
     _ensure_registered()
-    context = bpy.context
     before_objects = {o.name for o in bpy.data.objects}
 
     bpy.ops.stormkit.apply_to_scene()

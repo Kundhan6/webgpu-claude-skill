@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+/build/
+/dist/
+*.blend1
+qa_*.blend
+/tests/golden/*.tmp

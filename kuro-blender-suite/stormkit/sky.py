@@ -17,7 +17,6 @@ trusting it blindly, per ground rule #2.
 """
 
 import json
-import math
 
 import bpy
 

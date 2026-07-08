@@ -25,7 +25,6 @@ def test_at_least_ten_presets_are_shipped():
 
 
 def test_every_shipped_preset_loads_and_validates():
-    found = dict(sk_presets.list_presets())
     for name in EXPECTED_PRESETS:
         data = sk_presets.load(name)
         harness.assert_true(data is not None, f"preset '{name}' failed to load/validate")
