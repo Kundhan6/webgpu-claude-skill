@@ -71,20 +71,23 @@ class NodeGraphBuilder:
             self._created.append(node)
         return node
 
+    @staticmethod
+    def _resolve_socket(collection, ref):
+        if isinstance(ref, str):
+            return collection.get(ref)
+        if isinstance(ref, int):
+            return collection[ref] if 0 <= ref < len(collection) else None
+        return ref
+
     def link(self, from_node, from_socket, to_node, to_socket):
         """Link `from_node`'s output socket to `to_node`'s input socket.
 
-        `from_socket`/`to_socket` may be a socket name (str) or an actual
-        NodeSocket reference.
+        `from_socket`/`to_socket` may be a socket name (str), an integer
+        index (needed for nodes like Math whose two inputs are both
+        literally named "Value"), or an actual NodeSocket reference.
         """
-        out_socket = (
-            from_node.outputs.get(from_socket)
-            if isinstance(from_socket, str)
-            else from_socket
-        )
-        in_socket = (
-            to_node.inputs.get(to_socket) if isinstance(to_socket, str) else to_socket
-        )
+        out_socket = self._resolve_socket(from_node.outputs, from_socket)
+        in_socket = self._resolve_socket(to_node.inputs, to_socket)
         if out_socket is None:
             raise KeyError(
                 f"'{from_node.name}' has no output '{from_socket}'. "
@@ -169,15 +172,17 @@ def _clear_node_tree(tree):
         tree.interface.remove(item)
 
 
-def ensure_group(name, builder_fn, schema_version=1):
+def ensure_group(name, builder_fn, schema_version=1, tree_type="ShaderNodeTree"):
     """Idempotent node-group creation.
 
     If a group named `name` already exists AND was built with the current
     `schema_version`, it is returned untouched (re-registering the add-on
     never duplicates groups). If it exists but is stale (older schema
-    version) it is cleared and rebuilt in place — every material
+    version) it is cleared and rebuilt in place — every material/modifier
     referencing it picks up the new internals automatically. If it
-    doesn't exist yet, it's created fresh.
+    doesn't exist yet, it's created fresh as a `tree_type` group
+    ("ShaderNodeTree" for material node groups, "GeometryNodeTree" for
+    Geometry Nodes modifier groups).
 
     `builder_fn(tree)` is responsible for declaring the interface sockets
     (via add_group_input/add_group_output) and building the internal node
@@ -189,7 +194,7 @@ def ensure_group(name, builder_fn, schema_version=1):
     if group is not None and group.get(SCHEMA_PROP) == schema_version:
         return group
     if group is None:
-        group = bpy.data.node_groups.new(name, "ShaderNodeTree")
+        group = bpy.data.node_groups.new(name, tree_type)
     else:
         _clear_node_tree(group)
     builder_fn(group)

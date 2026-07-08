@@ -36,6 +36,19 @@ def test_builder_link_connects_sockets():
     harness.assert_true(link.from_node == noise)
 
 
+def test_builder_link_accepts_integer_socket_index():
+    # Math nodes expose two inputs both literally named "Value" — only an
+    # integer index disambiguates them.
+    mat = _make_material("kuro_nu_link_index")
+    b = nodeutils.NodeGraphBuilder(mat)
+    noise = b.add("ShaderNodeTexNoise", name="Noise")
+    math = b.add("ShaderNodeMath", name="Math")
+    math.operation = "SUBTRACT"
+    b.link(noise, "Fac", math, 1)
+    harness.assert_true(math.inputs[1].links[0].from_node == noise)
+    harness.assert_true(len(math.inputs[0].links) == 0)
+
+
 def test_tag_all_stamps_created_nodes_and_tree():
     mat = _make_material("kuro_nu_4")
     b = nodeutils.NodeGraphBuilder(mat)
