@@ -28,6 +28,7 @@ _logger = log.get_logger("stormkit")
 
 _SUBMODULES = (
     "properties",
+    "presets",
     "sky",
     "fog",
     "precipitation",

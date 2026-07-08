@@ -1,0 +1,16 @@
+{
+  "name": "Fresh Snow Morning",
+  "time_of_day": 8.5,
+  "overcast": 0.3,
+  "fog_density": 0.1,
+  "fog_height": 2.0,
+  "precipitation_type": "SNOW",
+  "precipitation_amount": 0.2,
+  "wind_speed": 1.5,
+  "wind_direction": 0.2,
+  "wetness": 0.0,
+  "snow_cover": 0.9,
+  "storm_intensity": 0.0,
+  "turbulence": 0.1,
+  "latitude": 60.0
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Drizzle Fog",
+  "time_of_day": 8.0,
+  "overcast": 0.6,
+  "fog_density": 0.55,
+  "fog_height": 4.0,
+  "precipitation_type": "RAIN",
+  "precipitation_amount": 0.15,
+  "wind_speed": 1.0,
+  "wind_direction": 0.4,
+  "wetness": 0.35,
+  "snow_cover": 0.0,
+  "storm_intensity": 0.0,
+  "turbulence": 0.1,
+  "latitude": 45.0
+}

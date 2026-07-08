@@ -11,7 +11,7 @@ callbacks may set values, never rebuild graphs.
 """
 
 import bpy
-from bpy.props import EnumProperty, FloatProperty, PointerProperty
+from bpy.props import EnumProperty, FloatProperty, IntProperty, PointerProperty
 from bpy.types import PropertyGroup, Scene
 
 PRECIP_KIND_PROP = "kuro_precip_kind"
@@ -107,6 +107,11 @@ class STORMKIT_PG_state(PropertyGroup):
             "locations — see DECISIONS.md"
         ),
         default=45.0, min=-90.0, max=90.0,
+    )
+    transition_frames: IntProperty(
+        name="Transition Frames",
+        description="When applying a preset, keyframe the change over this many frames instead of snapping instantly (0 = instant)",
+        default=0, min=0, max=1000,
     )
 
 

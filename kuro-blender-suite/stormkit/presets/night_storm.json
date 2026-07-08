@@ -1,0 +1,16 @@
+{
+  "name": "Night Storm",
+  "time_of_day": 1.0,
+  "overcast": 0.95,
+  "fog_density": 0.25,
+  "fog_height": 2.5,
+  "precipitation_type": "RAIN",
+  "precipitation_amount": 0.7,
+  "wind_speed": 10.0,
+  "wind_direction": 4.0,
+  "wetness": 0.85,
+  "snow_cover": 0.0,
+  "storm_intensity": 0.9,
+  "turbulence": 0.5,
+  "latitude": 45.0
+}
