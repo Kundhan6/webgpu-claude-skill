@@ -33,10 +33,14 @@ SUN_OBJECT_NAME = "SK_Sun"
 ORIGINAL_SURFACE_PROP = "kuro_sky_original_surface"
 
 
+WORLD_CREATED_PROP = "kuro_world_created_by_addon"
+
+
 def _ensure_world(context):
     scene = context.scene
     if scene.world is None:
         scene.world = bpy.data.worlds.new("World")
+        scene.world[WORLD_CREATED_PROP] = ADDON_ID
     world = scene.world
     if not world.use_nodes:
         world.use_nodes = True
@@ -259,7 +263,12 @@ def build(context):
 
 def teardown(context):
     """Remove everything this subsystem owns and restore the World's
-    original Surface wiring. Part of the full "Remove StormKit" sweep."""
+    original Surface wiring. Part of the full "Remove StormKit" sweep.
+
+    If `build()` had to create the World datablock from scratch (the
+    scene had none), the whole World is removed here too — otherwise a
+    fresh empty World would be left behind as a byte-level-restore leak.
+    """
     world = context.scene.world
     if world is not None and world.node_tree is not None:
         nodeutils.eject(world.node_tree, ADDON_ID)  # no-op unless something used inject_between
@@ -268,6 +277,11 @@ def teardown(context):
             node = world.node_tree.nodes.get(name)
             if node is not None:
                 world.node_tree.nodes.remove(node)
+
+    if world is not None and world.get(WORLD_CREATED_PROP) == ADDON_ID:
+        context.scene.world = None
+        if world.users == 0:
+            bpy.data.worlds.remove(world)
 
     sun = bpy.data.objects.get(SUN_OBJECT_NAME)
     if sun is not None and sun.get(nodeutils.ADDON_PROP) == ADDON_ID:

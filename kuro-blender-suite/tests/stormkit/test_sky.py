@@ -103,3 +103,17 @@ def test_teardown_restores_original_surface_link():
     )
     harness.assert_true(world.node_tree.nodes.get(sky.SKY_NODE_NAME) is None)
     harness.assert_true(bpy.data.objects.get(sky.SUN_OBJECT_NAME) is None)
+
+
+def test_teardown_removes_a_freshly_created_world_entirely():
+    _ensure_registered()
+    context = bpy.context
+    context.scene.world = None
+    worlds_before = len(bpy.data.worlds)
+
+    sky.build(context)
+    harness.assert_true(context.scene.world is not None)
+
+    sky.teardown(context)
+    harness.assert_true(context.scene.world is None, "a World created fresh by build() must be cleared on teardown")
+    harness.assert_equal(len(bpy.data.worlds), worlds_before)
