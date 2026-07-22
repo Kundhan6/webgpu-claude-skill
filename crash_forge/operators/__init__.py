@@ -3,10 +3,12 @@
 if "prep" in locals():
     import importlib
     importlib.reload(prep)
+    importlib.reload(tag)
 else:
     from . import prep
+    from . import tag
 
-modules = (prep,)
+modules = (prep, tag)
 
 
 def register():
