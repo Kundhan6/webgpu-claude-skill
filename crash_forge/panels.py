@@ -23,7 +23,8 @@ class CRASHFORGE_PT_main(Panel):
             sub.label(text="", icon='RADIOBUT_ON' if ok else 'RADIOBUT_OFF')
             sub.label(text=label)
 
-        # "Rebuild from Tags" is pinned here once build_rig exists (Rig stage).
+        layout.separator()
+        layout.operator("crashforge.rebuild_from_tags", icon='FILE_REFRESH')
 
     def _status_dots(self, context):
         scene = context.scene
@@ -31,12 +32,13 @@ class CRASHFORGE_PT_main(Panel):
         tags_touched = getattr(scene, "crashforge_tags_touched", False)
         car = scene.crashforge.car_object
         drive_keyed = bool(car and car.animation_data and car.animation_data.action)
-        # Rig/Bake/Export dots light up once their stages are built.
+        rig_built = any(obj.crashforge.crashforge_generated for obj in scene.objects)
+        # Bake/Export dots light up once their stages are built.
         return [
             (STATUS_LABELS[0], prep_clean),
             (STATUS_LABELS[1], tags_touched),
             (STATUS_LABELS[2], drive_keyed),
-            (STATUS_LABELS[3], False),
+            (STATUS_LABELS[3], rig_built),
             (STATUS_LABELS[4], False),
             (STATUS_LABELS[5], False),
         ]
@@ -148,11 +150,37 @@ class CRASHFORGE_PT_drive(Panel):
         layout.prop(cf, "boost_collision_margins")
 
 
+class CRASHFORGE_PT_rig(Panel):
+    bl_label = "Rig"
+    bl_idname = "CRASHFORGE_PT_rig"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Crash Forge"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.active_object
+
+        if obj is not None and obj.type == 'MESH':
+            box = layout.box()
+            box.label(text=f"Active: {obj.name}", icon='OBJECT_DATA')
+            box.prop(obj.crashforge, "crumple_then_shatter")
+            box.prop(obj.crashforge, "fracture_origin")
+            box.operator("crashforge.pick_fracture_origin", icon='EYEDROPPER')
+        else:
+            layout.label(text="Select a mesh to edit its fracture origin.", icon='INFO')
+
+        layout.separator()
+        layout.operator("crashforge.build_rig", icon='PHYSICS')
+
+
 classes = (
     CRASHFORGE_PT_main,
     CRASHFORGE_PT_prep,
     CRASHFORGE_PT_tag,
     CRASHFORGE_PT_drive,
+    CRASHFORGE_PT_rig,
 )
 
 

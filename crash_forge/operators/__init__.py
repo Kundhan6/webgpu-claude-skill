@@ -5,12 +5,14 @@ if "prep" in locals():
     importlib.reload(prep)
     importlib.reload(tag)
     importlib.reload(drive)
+    importlib.reload(rig)
 else:
     from . import prep
     from . import tag
     from . import drive
+    from . import rig
 
-modules = (prep, tag, drive)
+modules = (prep, tag, drive, rig)
 
 
 def register():
