@@ -33,13 +33,22 @@ class CRASHFORGE_PT_main(Panel):
         car = scene.crashforge.car_object
         drive_keyed = bool(car and car.animation_data and car.animation_data.action)
         rig_built = any(obj.crashforge.crashforge_generated for obj in scene.objects)
-        # Bake/Export dots light up once their stages are built.
+        baked = any(
+            (obj.rigid_body and obj.rigid_body.type == 'ACTIVE')
+            or any(m.type in {'CLOTH', 'FLUID'} for m in obj.modifiers)
+            for obj in scene.objects
+        ) and any(
+            getattr(getattr(m, "point_cache", None), "is_baked", False)
+            for obj in scene.objects
+            for m in obj.modifiers
+        )
+        # Export dot lights up once that stage is built.
         return [
             (STATUS_LABELS[0], prep_clean),
             (STATUS_LABELS[1], tags_touched),
             (STATUS_LABELS[2], drive_keyed),
             (STATUS_LABELS[3], rig_built),
-            (STATUS_LABELS[4], False),
+            (STATUS_LABELS[4], baked),
             (STATUS_LABELS[5], False),
         ]
 
@@ -175,12 +184,51 @@ class CRASHFORGE_PT_rig(Panel):
         layout.operator("crashforge.build_rig", icon='PHYSICS')
 
 
+class CRASHFORGE_PT_bake(Panel):
+    bl_label = "Bake"
+    bl_idname = "CRASHFORGE_PT_bake"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Crash Forge"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        row = layout.row(align=True)
+        row.prop(scene.crashforge, "shot_name")
+        row.prop(scene.crashforge, "cache_version")
+
+        layout.operator("crashforge.estimate_bake_cost", icon='INFO')
+        if scene.crashforge_bake_estimate_mb:
+            layout.label(text=f"Estimated: ~{scene.crashforge_bake_estimate_mb:.1f} MB")
+
+        layout.separator()
+        layout.operator("crashforge.version_cache_path", icon='FILE_FOLDER')
+        layout.operator("crashforge.bake_all", icon='PLAY')
+
+        sim_objects = [
+            obj for obj in scene.objects
+            if obj.type == 'MESH' and (obj.rigid_body or any(m.type in {'CLOTH', 'FLUID'} for m in obj.modifiers))
+        ]
+        if sim_objects:
+            layout.separator()
+            box = layout.box()
+            box.label(text="Locks:")
+            for obj in sim_objects:
+                row = box.row()
+                row.label(text=obj.name)
+                row.prop(obj.crashforge, "baked_locked", text="", icon='LOCKED' if obj.crashforge.baked_locked else 'UNLOCKED')
+
+
 classes = (
     CRASHFORGE_PT_main,
     CRASHFORGE_PT_prep,
     CRASHFORGE_PT_tag,
     CRASHFORGE_PT_drive,
     CRASHFORGE_PT_rig,
+    CRASHFORGE_PT_bake,
 )
 
 
