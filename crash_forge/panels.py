@@ -42,14 +42,14 @@ class CRASHFORGE_PT_main(Panel):
             for obj in scene.objects
             for m in obj.modifiers
         )
-        # Export dot lights up once that stage is built.
+        exported = bool(getattr(scene, "crashforge_last_export_timestamp", ""))
         return [
             (STATUS_LABELS[0], prep_clean),
             (STATUS_LABELS[1], tags_touched),
             (STATUS_LABELS[2], drive_keyed),
             (STATUS_LABELS[3], rig_built),
             (STATUS_LABELS[4], baked),
-            (STATUS_LABELS[5], False),
+            (STATUS_LABELS[5], exported),
         ]
 
 
@@ -222,6 +222,31 @@ class CRASHFORGE_PT_bake(Panel):
                 row.prop(obj.crashforge, "baked_locked", text="", icon='LOCKED' if obj.crashforge.baked_locked else 'UNLOCKED')
 
 
+class CRASHFORGE_PT_export(Panel):
+    bl_label = "Export"
+    bl_idname = "CRASHFORGE_PT_export"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Crash Forge"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        col = layout.column(align=True)
+        col.label(text="FRACTURE / DEFORM -> Alembic")
+        col.label(text="Dust domain -> OpenVDB")
+        col.label(text="Untouched RIGID -> FBX")
+
+        layout.separator()
+        layout.operator("crashforge.export_for_ue", icon='EXPORT')
+
+        timestamp = getattr(scene, "crashforge_last_export_timestamp", "")
+        if timestamp:
+            layout.label(text=f"Last export: {timestamp}", icon='CHECKMARK')
+
+
 classes = (
     CRASHFORGE_PT_main,
     CRASHFORGE_PT_prep,
@@ -229,6 +254,7 @@ classes = (
     CRASHFORGE_PT_drive,
     CRASHFORGE_PT_rig,
     CRASHFORGE_PT_bake,
+    CRASHFORGE_PT_export,
 )
 
 
