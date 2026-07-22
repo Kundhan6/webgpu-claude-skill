@@ -61,7 +61,29 @@ def _poll_impact_target(self, obj):
     return obj.type == 'MESH'
 
 
+# Collision margins applied to car + impact target when boost_collision_margins
+# is on (Drive stage) — tunneling defense at approach speed.
+COLLISION_MARGIN_BOOSTED = 0.02
+COLLISION_MARGIN_DEFAULT = 0.001
+
+
+def _update_collision_margins(self, context):
+    margin = COLLISION_MARGIN_BOOSTED if self.boost_collision_margins else COLLISION_MARGIN_DEFAULT
+    for obj in (self.car_object, self.impact_target):
+        if obj is not None and obj.rigid_body is not None:
+            obj.rigid_body.collision_margin = margin
+
+
 class CrashForgeSceneProps(PropertyGroup):
+    # Not in the original spec field list — Drive Mode has nothing to drive
+    # without knowing which object is "the car"; added here for consistency
+    # with impact_target rather than bolting it onto bpy.types.Scene directly.
+    car_object: PointerProperty(
+        type=bpy.types.Object,
+        name="Car Object",
+        description="The object driven in Drive Mode",
+        poll=_poll_impact_target,
+    )
     impact_target: PointerProperty(
         type=bpy.types.Object,
         name="Impact Target",
@@ -72,6 +94,18 @@ class CrashForgeSceneProps(PropertyGroup):
         name="Auto-Launch on Impact",
         description="Automatically detect the impact frame after Drive Mode finishes",
         default=True,
+    )
+    drive_end_frame: IntProperty(
+        name="Drive End Frame",
+        description="Frame Drive Mode ended on (computed)",
+        default=0,
+        min=0,
+    )
+    boost_collision_margins: BoolProperty(
+        name="Boost Collision Margins",
+        description="Raise rigid body collision margins on the car and impact target — tunneling defense at approach speed",
+        default=False,
+        update=_update_collision_margins,
     )
     impact_frame: IntProperty(
         name="Impact Frame",

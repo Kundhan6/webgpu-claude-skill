@@ -29,11 +29,13 @@ class CRASHFORGE_PT_main(Panel):
         scene = context.scene
         prep_clean = len(getattr(scene, "crashforge_issues", [])) == 0
         tags_touched = getattr(scene, "crashforge_tags_touched", False)
-        # Drive/Rig/Bake/Export dots light up once their stages are built.
+        car = scene.crashforge.car_object
+        drive_keyed = bool(car and car.animation_data and car.animation_data.action)
+        # Rig/Bake/Export dots light up once their stages are built.
         return [
             (STATUS_LABELS[0], prep_clean),
             (STATUS_LABELS[1], tags_touched),
-            (STATUS_LABELS[2], False),
+            (STATUS_LABELS[2], drive_keyed),
             (STATUS_LABELS[3], False),
             (STATUS_LABELS[4], False),
             (STATUS_LABELS[5], False),
@@ -112,10 +114,45 @@ class CRASHFORGE_PT_tag(Panel):
         row.operator("crashforge.load_tag_preset", text="Load Preset", icon='IMPORT')
 
 
+class CRASHFORGE_PT_drive(Panel):
+    bl_label = "Drive"
+    bl_idname = "CRASHFORGE_PT_drive"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Crash Forge"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        cf = context.scene.crashforge
+
+        col = layout.column()
+        col.prop(cf, "car_object")
+        col.prop(cf, "impact_target")
+        col.prop(cf, "auto_launch_on_impact")
+
+        layout.separator()
+        layout.operator("crashforge.drive_modal", icon='AUTO')
+
+        layout.separator()
+        row = layout.row()
+        row.enabled = cf.car_object is not None
+        row.operator("crashforge.set_manual_impact_frame", icon='KEYFRAME_HLT')
+
+        if cf.impact_frame:
+            box = layout.box()
+            box.label(text=f"Impact Frame: {cf.impact_frame}")
+            box.label(text=f"Impact Speed: {cf.impact_speed:.2f} m/s")
+
+        layout.separator()
+        layout.prop(cf, "boost_collision_margins")
+
+
 classes = (
     CRASHFORGE_PT_main,
     CRASHFORGE_PT_prep,
     CRASHFORGE_PT_tag,
+    CRASHFORGE_PT_drive,
 )
 
 
