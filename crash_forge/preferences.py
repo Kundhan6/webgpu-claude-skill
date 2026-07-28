@@ -118,6 +118,18 @@ class CrashForgeAddonPreferences(AddonPreferences):
     def draw(self, context):
         layout = self.layout
 
+        # Seeded lazily on first draw rather than in register(): the
+        # bpy.context.preferences.addons[__package__] entry that register()
+        # would need to reach self through does not reliably exist yet at
+        # register time (e.g. this sandbox harness calls register() directly,
+        # with no addon-enable step in between) — draw() always has a valid
+        # self, so seeding here has nothing to guard against.
+        if len(self.material_keywords) == 0:
+            for keyword, material_class in DEFAULT_MATERIAL_KEYWORDS:
+                item = self.material_keywords.add()
+                item.keyword = keyword
+                item.material_class = material_class
+
         box = layout.box()
         box.label(text="Material Keyword Mapping", icon='MATERIAL')
         row = box.row()
@@ -165,13 +177,6 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-
-    prefs = bpy.context.preferences.addons[__package__].preferences
-    if len(prefs.material_keywords) == 0:
-        for keyword, material_class in DEFAULT_MATERIAL_KEYWORDS:
-            item = prefs.material_keywords.add()
-            item.keyword = keyword
-            item.material_class = material_class
 
 
 def unregister():

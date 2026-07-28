@@ -61,17 +61,20 @@ def _poll_impact_target(self, obj):
     return obj.type == 'MESH'
 
 
-# Collision margins applied to car + impact target when boost_collision_margins
+# Collision margins applied to car + impact target when boost_tunneling_defense
 # is on (Drive stage) — tunneling defense at approach speed.
 COLLISION_MARGIN_BOOSTED = 0.02
 COLLISION_MARGIN_DEFAULT = 0.001
 
 
 def _update_collision_margins(self, context):
-    margin = COLLISION_MARGIN_BOOSTED if self.boost_collision_margins else COLLISION_MARGIN_DEFAULT
+    margin = COLLISION_MARGIN_BOOSTED if self.boost_tunneling_defense else COLLISION_MARGIN_DEFAULT
     for obj in (self.car_object, self.impact_target):
         if obj is not None and obj.rigid_body is not None:
             obj.rigid_body.collision_margin = margin
+            # collision_margin is ignored unless use_margin is on — without
+            # this the boost checkbox silently does nothing.
+            obj.rigid_body.use_margin = self.boost_tunneling_defense
 
 
 class CrashForgeSceneProps(PropertyGroup):
@@ -101,7 +104,7 @@ class CrashForgeSceneProps(PropertyGroup):
         default=0,
         min=0,
     )
-    boost_collision_margins: BoolProperty(
+    boost_tunneling_defense: BoolProperty(
         name="Boost Collision Margins",
         description="Raise rigid body collision margins on the car and impact target — tunneling defense at approach speed",
         default=False,

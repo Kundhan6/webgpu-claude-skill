@@ -156,7 +156,7 @@ class CRASHFORGE_PT_drive(Panel):
             box.label(text=f"Impact Speed: {cf.impact_speed:.2f} m/s")
 
         layout.separator()
-        layout.prop(cf, "boost_collision_margins")
+        layout.prop(cf, "boost_tunneling_defense")
 
 
 class CRASHFORGE_PT_rig(Panel):
