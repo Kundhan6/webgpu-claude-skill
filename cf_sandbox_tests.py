@@ -82,6 +82,41 @@ class Vec:
     def dot(self, o): return sum(a * b for a, b in zip(self.v, o.v))
 
 
+# Blender rejects an out-of-range subtype/unit at registration time with
+# "<name> <Kind>Property could not register". The stub below accepts any
+# kwargs, so these tables let C8 catch it here instead of in Blender.
+_SCALAR_FLOAT_SUBTYPES = {
+    'PIXEL', 'UNSIGNED', 'PERCENTAGE', 'FACTOR', 'ANGLE', 'TIME',
+    'TIME_ABSOLUTE', 'DISTANCE', 'DISTANCE_CAMERA', 'POWER', 'TEMPERATURE',
+    'WAVELENGTH', 'COLOR_TEMPERATURE', 'FREQUENCY', 'NONE',
+}
+# Vector properties accept the scalar list PLUS these — note VELOCITY is
+# valid on a vector but NOT on a plain FloatProperty.
+_VECTOR_EXTRA_SUBTYPES = {
+    'COLOR', 'TRANSLATION', 'DIRECTION', 'VELOCITY', 'ACCELERATION', 'MATRIX',
+    'EULER', 'QUATERNION', 'AXISANGLE', 'XYZ', 'XYZ_LENGTH', 'COLOR_GAMMA',
+    'COORDINATES', 'LAYER', 'LAYER_MEMBER',
+}
+_STRING_SUBTYPES = {
+    'FILE_PATH', 'DIR_PATH', 'FILE_NAME', 'BYTE_STRING', 'PASSWORD', 'NONE',
+}
+_UNITS = {
+    'NONE', 'LENGTH', 'AREA', 'VOLUME', 'ROTATION', 'TIME', 'TIME_ABSOLUTE',
+    'VELOCITY', 'ACCELERATION', 'MASS', 'CAMERA', 'POWER', 'TEMPERATURE',
+    'WAVELENGTH', 'COLOR_TEMPERATURE', 'FREQUENCY',
+}
+
+
+def valid_subtypes_for(kind):
+    if kind == "StringProperty":
+        return _STRING_SUBTYPES
+    if "Vector" in kind:
+        return _SCALAR_FLOAT_SUBTYPES | _VECTOR_EXTRA_SUBTYPES
+    if kind in ("FloatProperty", "IntProperty"):
+        return _SCALAR_FLOAT_SUBTYPES
+    return None  # not subtype-bearing
+
+
 class PropDef:
     """Stand-in for a bpy.props.*Property() call. Records its own config."""
     def __init__(self, kind, kwargs):
@@ -390,6 +425,26 @@ def test_class_contracts(mod):
         "PASS" if all(v for v in enums.values()) else "WARN",
         "; ".join(f"{k}={v}" for k, v in enums.items()) or "no enums found",
         {"enums": enums})
+
+    # C8: subtype/unit must be a value Blender actually accepts. The stub
+    # takes any kwargs, so without this an invalid one only surfaces as a
+    # registration RuntimeError on a real install.
+    badprops = []
+    for c in classes:
+        for key, val in getattr(c, "__annotations__", {}).items():
+            if not isinstance(val, PropDef):
+                continue
+            allowed = valid_subtypes_for(val.kind)
+            sub = val.kwargs.get("subtype")
+            if allowed is not None and sub is not None and sub not in allowed:
+                badprops.append(f"{c.__name__}.{key}: subtype={sub!r} invalid for {val.kind}")
+            unit = val.kwargs.get("unit")
+            if unit is not None and unit not in _UNITS:
+                badprops.append(f"{c.__name__}.{key}: unit={unit!r} is not a Blender unit")
+    rec("C8", "property subtype/unit values are registrable", grp,
+        "PASS" if not badprops else "FAIL",
+        "\n".join(badprops) if badprops else "",
+        {"invalid": badprops})
 
     try:
         mod.unregister()

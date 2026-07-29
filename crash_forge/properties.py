@@ -128,7 +128,8 @@ class CrashForgeSceneProps(PropertyGroup):
         description="Car speed at impact, from drive-key finite difference (computed); drives dust/debris scaling",
         default=0.0,
         min=0.0,
-        subtype='VELOCITY',
+        # VELOCITY is a valid unit but NOT a valid FloatProperty subtype —
+        # passing it as subtype fails registration outright.
         unit='VELOCITY',
     )
     slowmo_amount: EnumProperty(
