@@ -41,6 +41,26 @@ BREAKING_THRESHOLD_BY_MATERIAL = {
 
 COLLIDER_THICKNESS_OUTER = 0.02
 
+# collision_collections is a 20-slot boolean array; two rigid bodies only
+# collide if they share an enabled slot. Slot 0 is "actually touches the
+# world" — the hub, breakaway parts, and scene obstacles all sit there.
+# Slot 1 is "permanently welded, carried along by its constraint only" — a
+# body on slot 1 alone shares no slot with anything, so it can never
+# generate its own collision response. Without this, ~130 touching car
+# panels (which naturally overlap each other and the hub at rest) fight
+# every constraint holding them together and the whole car flies apart on
+# the very first simulated frame.
+COLLISION_LAYER_ACTIVE = 0
+COLLISION_LAYER_WELDED_INERT = 1
+
+
+def _set_collision_layer(obj, layer_index):
+    body = obj.rigid_body
+    if body is None:
+        return
+    layers = [i == layer_index for i in range(len(body.collision_collections))]
+    body.collision_collections = layers
+
 
 def _prefs(context):
     addon = context.preferences.addons.get(_ADDON_PACKAGE)
@@ -180,6 +200,10 @@ def _add_weld_constraint(context, scene, hub, obj, use_breaking, breaking_thresh
     constraint.use_breaking = use_breaking
     if use_breaking:
         constraint.breaking_threshold = breaking_threshold
+    # Touching, constrained parts fighting their own overlap is the classic
+    # cause of a rig exploding on frame 1 — the two are meant to move
+    # together, not push each other apart.
+    constraint.disable_collisions = True
 
     world = scene.rigidbody_world
     if world and world.constraints and empty.name not in world.constraints.objects:
@@ -201,6 +225,7 @@ def _weld_solid_parts(context, scene, hub, solid_parts):
     hub_body.use_margin = True
     hub_body.collision_margin = 0.02
     _link_to_world(scene, hub)
+    _set_collision_layer(hub, COLLISION_LAYER_ACTIVE)
 
     welded = 0
     for obj in solid_parts:
@@ -212,6 +237,10 @@ def _weld_solid_parts(context, scene, hub, solid_parts):
         body.collision_shape = 'CONVEX_HULL'
         body.mass = _estimate_mass(obj, obj.crashforge.material_class)
         _link_to_world(scene, obj)
+        # Permanently welded — it never needs to collide on its own, only
+        # to be carried by the constraint. Keeping it off the active layer
+        # stops it fighting the hub and its likewise-inert neighbors.
+        _set_collision_layer(obj, COLLISION_LAYER_WELDED_INERT)
 
         if _add_weld_constraint(context, scene, hub, obj, use_breaking=False,
                                  breaking_threshold=0.0, name_prefix="CF_Weld"):
@@ -230,6 +259,9 @@ def _build_breakaways(context, scene, hub, parts):
         body.collision_shape = 'CONVEX_HULL'
         body.mass = _estimate_mass(obj, obj.crashforge.material_class)
         _link_to_world(scene, obj)
+        # Stays on the active layer, unlike welded parts: once this breaks
+        # free it needs to actually hit the ground and other debris.
+        _set_collision_layer(obj, COLLISION_LAYER_ACTIVE)
 
         threshold = BREAKING_THRESHOLD_BY_MATERIAL.get(obj.crashforge.material_class, 1000.0)
         if _add_weld_constraint(context, scene, hub, obj, use_breaking=True,
@@ -261,6 +293,7 @@ def _prepare_scene_obstacles(context, scene, car_names):
         if obj.rigid_body is None:
             _add_rigid_body(context, obj, 'PASSIVE')
             _link_to_world(scene, obj)
+        _set_collision_layer(obj, COLLISION_LAYER_ACTIVE)
         _add_collider(obj)
         count += 1
     return count
