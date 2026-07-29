@@ -1,9 +1,15 @@
 """One-click SETUP CAR: analyze, tag (local + Claude), and build the drive rig.
 
-The rig uses a parent hierarchy, not a join. Parts stay separate objects so
-they keep their own roles; an empty called CF_CarRoot carries a COMPOUND
-rigid body that fuses the solid parts into one collider. The car therefore
-drives and hits as a single object while the breakable parts stay breakable.
+Parts stay separate objects, not joined — each keeps its own role. One real
+mesh part (the "hub", e.g. the chassis) carries the driven rigid body; every
+other solid part gets its own rigid body permanently welded to the hub with
+a non-breaking FIXED constraint, so the whole car moves as one piece. This
+is NOT Blender's parent-based "Compound Parent" collision shape — that only
+works through actual object parenting with each child supplying a shape, and
+more importantly a rigid body can only ever live on a MESH/CURVE/SURFACE/FONT
+object, never an Empty, so there is no way to make a plain Empty the shared
+physics root. Breakaway parts (DETACH/FRACTURE) get the same weld but with
+use_breaking=True, so a hard hit snaps them free instead of holding forever.
 """
 
 import threading
@@ -11,7 +17,6 @@ import threading
 import bpy
 from bpy.props import BoolProperty, StringProperty
 from bpy.types import Operator
-from mathutils import Vector
 
 from ..ai import heuristic, tagger
 from ..properties import MATERIAL_DENSITY_KG_M3
@@ -19,11 +24,9 @@ from ..utils.register_utils import register_classes, unregister_classes
 
 _ADDON_PACKAGE = __package__.split(".")[0]
 
-CAR_ROOT_NAME = "CF_CarRoot"
-
-# Parts welded into the compound collider — they move as one with the car.
+# Parts welded rigidly to the hub — they move as one with the car.
 SOLID_ROLES = {'RIGID', 'PASSIVE', 'DEFORM'}
-# Parts kept as separate bodies held on by a breakable constraint.
+# Parts welded with a breakable constraint instead.
 BREAKAWAY_ROLES = {'DETACH', 'FRACTURE'}
 
 BREAKING_THRESHOLD_BY_MATERIAL = {
@@ -100,6 +103,13 @@ def _link_to_world(scene, obj):
 
 
 def _add_rigid_body(context, obj, body_type):
+    """bpy.ops.rigidbody.object_add only accepts MESH/CURVE/SURFACE/FONT —
+    never an Empty. Every caller here passes a real mesh part, but this
+    stays defensive so a bad call reports cleanly instead of crashing the
+    whole setup.
+    """
+    if obj.type not in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
+        raise RuntimeError(f"'{obj.name}' is a {obj.type}, not a mesh — it can't carry a rigid body.")
     if obj.rigid_body is None:
         with context.temp_override(object=obj, active_object=obj, selected_objects=[obj]):
             bpy.ops.rigidbody.object_add(type=body_type)
@@ -127,58 +137,91 @@ def _estimate_mass(obj, material_class):
     return max(volume * density, 0.05)
 
 
-def _make_car_root(context, scene, objects):
-    root = bpy.data.objects.get(CAR_ROOT_NAME)
-    if root is None:
-        root = bpy.data.objects.new(CAR_ROOT_NAME, None)
-        scene.collection.objects.link(root)
-    root.empty_display_type = 'ARROWS'
+def _pick_hub(objects):
+    """Choose a real mesh part to drive and to weld everything else to.
 
-    centre = Vector((0.0, 0.0, 0.0))
-    for obj in objects:
-        centre += obj.matrix_world.translation
-    if objects:
-        centre /= len(objects)
-    root.location = centre
-    root.crashforge.crashforge_generated = True
+    Prefers a PASSIVE-tagged part (chassis/frame — least likely to get
+    re-tagged later); otherwise the largest solid part by bounding volume.
+    Returns None if there's nothing solid to anchor on.
+    """
+    solids = [o for o in objects if o.crashforge.role in SOLID_ROLES]
+    if not solids:
+        return None
 
-    context.view_layer.update()
-    return root
+    passive = [o for o in solids if o.crashforge.role == 'PASSIVE']
+    pool = passive or solids
 
+    def volume(obj):
+        d = obj.dimensions
+        return d.x * d.y * d.z
 
-def _parent_keep_transform(child, parent):
-    child.parent = parent
-    child.matrix_parent_inverse = parent.matrix_world.inverted()
+    return max(pool, key=volume)
 
 
-def _build_compound(context, scene, root, solid_parts):
-    """Root carries the compound body; solid children supply its shapes."""
-    root_body = _add_rigid_body(context, root, 'ACTIVE')
-    if root_body is None:
-        raise RuntimeError("Could not give CF_CarRoot a rigid body.")
+def _add_weld_constraint(context, scene, hub, obj, use_breaking, breaking_threshold, name_prefix):
+    """FIXED rigid-body constraint on a small marker Empty. Constraints (unlike
+    rigid bodies) are fine on Empty objects — only rigid bodies require a mesh.
+    """
+    empty = bpy.data.objects.new(f"{name_prefix}_{obj.name}", None)
+    empty.empty_display_size = 0.08
+    empty.location = obj.matrix_world.translation
+    scene.collection.objects.link(empty)
+    empty.crashforge.crashforge_generated = True
 
-    root_body.collision_shape = 'COMPOUND'
-    root_body.kinematic = True
-    root_body.use_margin = True
-    root_body.collision_margin = 0.02
-    _link_to_world(scene, root)
+    with context.temp_override(object=empty, active_object=empty, selected_objects=[empty]):
+        bpy.ops.rigidbody.constraint_add(type='FIXED')
 
-    total_mass = 0.0
+    constraint = empty.rigid_body_constraint
+    if constraint is None:
+        return False
+
+    constraint.object1 = hub
+    constraint.object2 = obj
+    constraint.use_breaking = use_breaking
+    if use_breaking:
+        constraint.breaking_threshold = breaking_threshold
+
+    world = scene.rigidbody_world
+    if world and world.constraints and empty.name not in world.constraints.objects:
+        world.constraints.objects.link(empty)
+    return True
+
+
+def _weld_solid_parts(context, scene, hub, solid_parts):
+    """Give every solid part its own rigid body, permanently welded to the
+    hub — the car drives and hits as one piece without ever being joined.
+    """
+    hub_body = _add_rigid_body(context, hub, 'ACTIVE')
+    if hub_body is None:
+        raise RuntimeError(f"Could not add a rigid body to '{hub.name}'.")
+
+    hub_body.collision_shape = 'CONVEX_HULL'
+    hub_body.mass = _estimate_mass(hub, hub.crashforge.material_class)
+    hub_body.kinematic = True
+    hub_body.use_margin = True
+    hub_body.collision_margin = 0.02
+    _link_to_world(scene, hub)
+
+    welded = 0
     for obj in solid_parts:
-        _parent_keep_transform(obj, root)
+        if obj is hub:
+            continue
         body = _add_rigid_body(context, obj, 'ACTIVE')
-        if body is not None:
-            body.collision_shape = 'CONVEX_HULL'
-            body.mass = _estimate_mass(obj, obj.crashforge.material_class)
-            total_mass += body.mass
-            _link_to_world(scene, obj)
+        if body is None:
+            continue
+        body.collision_shape = 'CONVEX_HULL'
+        body.mass = _estimate_mass(obj, obj.crashforge.material_class)
+        _link_to_world(scene, obj)
 
-    root_body.mass = max(total_mass, 1.0)
-    return root_body
+        if _add_weld_constraint(context, scene, hub, obj, use_breaking=False,
+                                 breaking_threshold=0.0, name_prefix="CF_Weld"):
+            welded += 1
+
+    return hub_body, welded
 
 
-def _build_breakaways(context, scene, root, parts):
-    """Own rigid body plus a breakable FIXED constraint back to the root."""
+def _build_breakaways(context, scene, hub, parts):
+    """Own rigid body plus a breakable FIXED constraint back to the hub."""
     made = 0
     for obj in parts:
         body = _add_rigid_body(context, obj, 'ACTIVE')
@@ -188,26 +231,9 @@ def _build_breakaways(context, scene, root, parts):
         body.mass = _estimate_mass(obj, obj.crashforge.material_class)
         _link_to_world(scene, obj)
 
-        empty = bpy.data.objects.new(f"CF_Break_{obj.name}", None)
-        empty.empty_display_size = 0.1
-        empty.location = obj.matrix_world.translation
-        scene.collection.objects.link(empty)
-        empty.crashforge.crashforge_generated = True
-
-        with context.temp_override(object=empty, active_object=empty, selected_objects=[empty]):
-            bpy.ops.rigidbody.constraint_add(type='FIXED')
-
-        constraint = empty.rigid_body_constraint
-        if constraint is not None:
-            constraint.object1 = root
-            constraint.object2 = obj
-            constraint.use_breaking = True
-            constraint.breaking_threshold = BREAKING_THRESHOLD_BY_MATERIAL.get(
-                obj.crashforge.material_class, 1000.0
-            )
-            world = scene.rigidbody_world
-            if world and world.constraints and empty.name not in world.constraints.objects:
-                world.constraints.objects.link(empty)
+        threshold = BREAKING_THRESHOLD_BY_MATERIAL.get(obj.crashforge.material_class, 1000.0)
+        if _add_weld_constraint(context, scene, hub, obj, use_breaking=True,
+                                 breaking_threshold=threshold, name_prefix="CF_Break"):
             made += 1
     return made
 
@@ -325,21 +351,27 @@ class CRASHFORGE_OT_setup_car(Operator):
 
         try:
             _ensure_world(context, scene)
-            root = _make_car_root(context, scene, objects)
 
             solid = [o for o in objects if o.crashforge.role in SOLID_ROLES]
             breakaway = [o for o in objects if o.crashforge.role in BREAKAWAY_ROLES]
 
-            _build_compound(context, scene, root, solid)
-            broken = _build_breakaways(context, scene, root, breakaway)
+            hub = _pick_hub(objects)
+            if hub is None:
+                raise RuntimeError(
+                    "No Rigid/Deform/Passive parts found to build the car around — "
+                    "everything is tagged Detach or Fracture."
+                )
 
-            car_names = {o.name for o in objects} | {root.name}
+            hub_body, welded = _weld_solid_parts(context, scene, hub, solid)
+            broken = _build_breakaways(context, scene, hub, breakaway)
+
+            car_names = {o.name for o in objects}
             obstacles = _prepare_scene_obstacles(context, scene, car_names)
         except Exception as exc:
             self.report({'ERROR'}, f"Crash Forge: rig build failed: {exc}")
             return {'CANCELLED'}
 
-        scene.crashforge.car_object = root
+        scene.crashforge.car_object = hub
         scene.crashforge_setup_done = True
 
         counts = {}
@@ -347,7 +379,8 @@ class CRASHFORGE_OT_setup_car(Operator):
             counts[obj.crashforge.role] = counts.get(obj.crashforge.role, 0) + 1
         summary = ", ".join(f"{n} {role.lower()}" for role, n in sorted(counts.items()))
         scene.crashforge_setup_summary = (
-            f"{len(objects)} parts: {summary}. {broken} breakaway, {obstacles} obstacle(s)."
+            f"Hub: {hub.name}. {len(objects)} parts: {summary}. "
+            f"{welded} welded, {broken} breakaway, {obstacles} obstacle(s)."
         )
 
         detail = f" ({ai_applied} tagged by Claude)" if ai_applied else (f" ({ai_note})" if ai_note else "")
