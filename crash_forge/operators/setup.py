@@ -299,6 +299,38 @@ def _prepare_scene_obstacles(context, scene, car_names):
     return count
 
 
+def _cleanup_stale_rig(context, scene, objects):
+    """Undo a previous Setup Car run before rebuilding fresh.
+
+    Re-running Setup Car without this stacks a new rig on top of whatever
+    weld/breakaway constraints, rigid bodies, and keyframes the last run
+    (successful or exploded) already left behind, instead of replacing
+    them — the classic cause of "I fixed it but nothing changed."
+    """
+    stale_empties = [
+        o for o in bpy.data.objects
+        if o.type == 'EMPTY' and o.crashforge.crashforge_generated
+    ]
+    world = scene.rigidbody_world
+    for empty in stale_empties:
+        if world and world.constraints and empty.name in world.constraints.objects:
+            world.constraints.objects.unlink(empty)
+        bpy.data.objects.remove(empty, do_unlink=True)
+
+    for obj in objects:
+        obj.animation_data_clear()
+        if obj.rigid_body is not None:
+            with context.temp_override(object=obj, active_object=obj, selected_objects=[obj]):
+                bpy.ops.rigidbody.object_remove()
+
+    try:
+        bpy.ops.ptcache.free_bake_all()
+    except Exception:
+        pass
+
+    scene.frame_set(scene.frame_start)
+
+
 class CRASHFORGE_OT_setup_car(Operator):
     bl_idname = "crashforge.setup_car"
     bl_label = "Setup Car"
@@ -383,6 +415,7 @@ class CRASHFORGE_OT_setup_car(Operator):
         objects = [o for o in self.objects if o.name in scene.objects]
 
         try:
+            _cleanup_stale_rig(context, scene, objects)
             _ensure_world(context, scene)
 
             solid = [o for o in objects if o.crashforge.role in SOLID_ROLES]
