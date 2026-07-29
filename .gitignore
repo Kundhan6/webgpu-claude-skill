@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+cf_sandbox_report.json
+crash_forge.zip
