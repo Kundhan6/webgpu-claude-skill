@@ -7,6 +7,8 @@ from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
 from bpy.types import Operator, UIList
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
+from ..utils.register_utils import register_classes, unregister_classes
+
 _ADDON_PACKAGE = __package__.split(".")[0]
 
 # Bounding-box thinness ratio (min dimension / max dimension) below which an
@@ -230,8 +232,7 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
     bpy.types.Scene.crashforge_tag_index = IntProperty(default=0)
     bpy.types.Scene.crashforge_tags_touched = BoolProperty(default=False)
 
@@ -245,5 +246,4 @@ def unregister():
         del bpy.types.Scene.crashforge_tag_index
     except AttributeError:
         pass
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

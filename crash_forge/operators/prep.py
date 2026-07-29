@@ -6,6 +6,8 @@ from bpy.props import CollectionProperty, EnumProperty, IntProperty, StringPrope
 from bpy.types import Operator, PropertyGroup
 from mathutils import Quaternion, Vector
 
+from ..utils.register_utils import register_classes, unregister_classes
+
 _ADDON_PACKAGE = __package__.split(".")[0]
 
 DOUBLES_DISTANCE = 0.0001
@@ -235,8 +237,7 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
     bpy.types.Scene.crashforge_issues = CollectionProperty(type=CrashForgeIssueEntry)
     bpy.types.Scene.crashforge_issues_index = IntProperty(default=0)
 
@@ -250,5 +251,4 @@ def unregister():
         del bpy.types.Scene.crashforge_issues
     except AttributeError:
         pass
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

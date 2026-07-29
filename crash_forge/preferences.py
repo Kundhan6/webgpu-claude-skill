@@ -8,6 +8,7 @@ from bpy.types import AddonPreferences, Operator, PropertyGroup, UIList
 
 from .properties import MATERIAL_CLASS_ITEMS
 from .utils import env_check
+from .utils.register_utils import register_classes, unregister_classes
 
 
 # keyword -> material_class, seeded once so Sort into Collections (Prep
@@ -175,10 +176,8 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
 
 
 def unregister():
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

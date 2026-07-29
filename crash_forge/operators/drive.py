@@ -9,6 +9,7 @@ from bpy.types import Operator
 from mathutils import Vector
 
 from ..utils import fcurve_compat
+from ..utils.register_utils import register_classes, unregister_classes
 
 # Simple arcade-style kinematic bicycle model — speed integrates from W/S,
 # yaw rate from A/D scaled by current speed (no turning at a standstill).
@@ -329,10 +330,8 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
 
 
 def unregister():
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

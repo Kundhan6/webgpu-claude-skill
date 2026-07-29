@@ -5,6 +5,8 @@ five stage panels arrive with their own stages.
 import bpy
 from bpy.types import Panel
 
+from .utils.register_utils import register_classes, unregister_classes
+
 STATUS_LABELS = ("Prep", "Tag", "Drive", "Rig", "Bake", "Export")
 
 
@@ -259,10 +261,8 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
 
 
 def unregister():
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

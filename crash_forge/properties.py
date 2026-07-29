@@ -16,6 +16,8 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
+from .utils.register_utils import register_classes, unregister_classes
+
 
 # (substeps, iterations) for scene.rigidbody_world, keyed by slowmo_amount.
 SLOWMO_SUBSTEPS_ITERATIONS = {
@@ -231,8 +233,7 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
     bpy.types.Scene.crashforge = PointerProperty(type=CrashForgeSceneProps)
     bpy.types.Object.crashforge = PointerProperty(type=CrashForgeObjectProps)
 
@@ -246,5 +247,4 @@ def unregister():
         del bpy.types.Scene.crashforge
     except AttributeError:
         pass
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

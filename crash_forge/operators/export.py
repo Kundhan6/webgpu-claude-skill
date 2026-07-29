@@ -9,6 +9,8 @@ import bpy
 from bpy.props import StringProperty
 from bpy.types import Operator
 
+from ..utils.register_utils import register_classes, unregister_classes
+
 ALEMBIC_ROLES = {'FRACTURE', 'DEFORM'}
 
 
@@ -142,8 +144,7 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
     bpy.types.Scene.crashforge_last_export_timestamp = StringProperty(default="")
 
 
@@ -152,5 +153,4 @@ def unregister():
         del bpy.types.Scene.crashforge_last_export_timestamp
     except AttributeError:
         pass
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

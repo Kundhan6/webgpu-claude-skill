@@ -6,6 +6,8 @@ import bpy
 from bpy.props import FloatProperty
 from bpy.types import Operator
 
+from ..utils.register_utils import register_classes, unregister_classes
+
 # Advisory-only estimate constants (placeholders — tune once real bakes are measured).
 FLUID_BYTES_PER_VOXEL = 4 * 6  # ~6 float channels (density/heat/velocity xyz) per voxel
 CLOTH_BYTES_PER_VERTEX_FRAME = 4 * 6  # position + velocity per vertex per frame
@@ -167,8 +169,7 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
     bpy.types.Scene.crashforge_bake_estimate_mb = FloatProperty(default=0.0)
 
 
@@ -177,5 +178,4 @@ def unregister():
         del bpy.types.Scene.crashforge_bake_estimate_mb
     except AttributeError:
         pass
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)

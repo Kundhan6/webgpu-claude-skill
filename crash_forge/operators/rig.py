@@ -21,6 +21,7 @@ from ..properties import (
     SLOWMO_SUBSTEPS_ITERATIONS,
 )
 from ..utils import env_check
+from ..utils.register_utils import register_classes, unregister_classes
 
 # --- Placeholder tuning constants (flagged — confirm once tested in Blender) ---
 
@@ -671,10 +672,8 @@ classes = (
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    register_classes(classes)
 
 
 def unregister():
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    unregister_classes(classes)
