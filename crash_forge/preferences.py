@@ -107,6 +107,18 @@ class CrashForgeAddonPreferences(AddonPreferences):
     material_keywords: CollectionProperty(type=CrashForgeMaterialKeywordItem)
     material_keywords_index: IntProperty(default=0)
 
+    claude_api_key: StringProperty(
+        name="Claude API Key",
+        description="Used to auto-tag parts the local rules can't place. Leave blank to tag locally only",
+        default="",
+        subtype='PASSWORD',
+    )
+    use_ai_tagging: BoolProperty(
+        name="Use Claude for Tagging",
+        description="Ask Claude about parts the local name and shape rules can't confidently place",
+        default=True,
+    )
+
     verify_ran: BoolProperty(default=False)
     blender_version_str: StringProperty(default="")
     cell_fracture_available: BoolProperty(default=False)
@@ -130,6 +142,15 @@ class CrashForgeAddonPreferences(AddonPreferences):
                 item = self.material_keywords.add()
                 item.keyword = keyword
                 item.material_class = material_class
+
+        box = layout.box()
+        box.label(text="Claude AI Tagging", icon='SHADERFX')
+        box.prop(self, "use_ai_tagging")
+        box.prop(self, "claude_api_key")
+        col = box.column(align=True)
+        col.label(text="Get a key at console.anthropic.com. Optional —")
+        col.label(text="parts still get tagged locally without one.")
+        box.operator("crashforge.install_claude_sdk", icon='CONSOLE')
 
         box = layout.box()
         box.label(text="Material Keyword Mapping", icon='MATERIAL')

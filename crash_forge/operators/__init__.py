@@ -8,6 +8,7 @@ if "prep" in locals():
     importlib.reload(rig)
     importlib.reload(bake)
     importlib.reload(export)
+    importlib.reload(setup)
 else:
     from . import prep
     from . import tag
@@ -15,8 +16,10 @@ else:
     from . import rig
     from . import bake
     from . import export
+    from . import setup
 
-modules = (prep, tag, drive, rig, bake, export)
+# setup registers the Scene props the simple panel reads, so it goes first.
+modules = (setup, prep, tag, drive, rig, bake, export)
 
 
 def register():

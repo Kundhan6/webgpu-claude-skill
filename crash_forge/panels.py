@@ -11,6 +11,8 @@ STATUS_LABELS = ("Prep", "Tag", "Drive", "Rig", "Bake", "Export")
 
 
 class CRASHFORGE_PT_main(Panel):
+    """The whole addon in three buttons. Everything else lives under Advanced."""
+
     bl_label = "Crash Forge"
     bl_idname = "CRASHFORGE_PT_main"
     bl_space_type = 'VIEW_3D'
@@ -19,40 +21,71 @@ class CRASHFORGE_PT_main(Panel):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row(align=True)
-        for label, ok in self._status_dots(context):
-            sub = row.row(align=True)
-            sub.label(text="", icon='RADIOBUT_ON' if ok else 'RADIOBUT_OFF')
-            sub.label(text=label)
-
-        layout.separator()
-        layout.operator("crashforge.rebuild_from_tags", icon='FILE_REFRESH')
-
-    def _status_dots(self, context):
         scene = context.scene
-        prep_clean = len(getattr(scene, "crashforge_issues", [])) == 0
-        tags_touched = getattr(scene, "crashforge_tags_touched", False)
+        setup_done = getattr(scene, "crashforge_setup_done", False)
         car = scene.crashforge.car_object
-        drive_keyed = bool(car and car.animation_data and car.animation_data.action)
-        rig_built = any(obj.crashforge.crashforge_generated for obj in scene.objects)
-        baked = any(
-            (obj.rigid_body and obj.rigid_body.type == 'ACTIVE')
-            or any(m.type in {'CLOTH', 'FLUID'} for m in obj.modifiers)
-            for obj in scene.objects
-        ) and any(
-            getattr(getattr(m, "point_cache", None), "is_baked", False)
-            for obj in scene.objects
-            for m in obj.modifiers
-        )
-        exported = bool(getattr(scene, "crashforge_last_export_timestamp", ""))
-        return [
-            (STATUS_LABELS[0], prep_clean),
-            (STATUS_LABELS[1], tags_touched),
-            (STATUS_LABELS[2], drive_keyed),
-            (STATUS_LABELS[3], rig_built),
-            (STATUS_LABELS[4], baked),
-            (STATUS_LABELS[5], exported),
-        ]
+        driven = bool(car and car.animation_data and car.animation_data.action)
+
+        col = layout.column(align=True)
+        col.scale_y = 1.6
+
+        step = col.row(align=True)
+        step.operator("crashforge.setup_car", text="1.  Setup Car", icon='AUTO')
+
+        step = col.row(align=True)
+        step.enabled = setup_done
+        step.operator("crashforge.drive_modal", text="2.  Drive", icon='PLAY')
+
+        step = col.row(align=True)
+        step.enabled = driven
+        step.operator("crashforge.bake_all", text="3.  Crash", icon='PHYSICS')
+
+        if not setup_done:
+            box = layout.box()
+            box.label(text="Select your car's parts, then", icon='INFO')
+            box.label(text="press Setup Car.")
+            return
+
+        summary = getattr(scene, "crashforge_setup_summary", "")
+        if summary:
+            box = layout.box()
+            for line in _wrap(summary, 34):
+                box.label(text=line)
+
+        if not driven:
+            layout.label(text="Drive: W/S speed, A/D steer, Esc done.", icon='EVENT_W')
+
+
+def _wrap(text, width):
+    """Blender labels don't wrap, so break the summary into short lines."""
+    words = text.split()
+    lines, current = [], ""
+    for word in words:
+        candidate = f"{current} {word}".strip()
+        if len(candidate) > width and current:
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        lines.append(current)
+    return lines
+
+
+class CRASHFORGE_PT_advanced(Panel):
+    """Parent for the original six stage panels."""
+
+    bl_label = "Advanced"
+    bl_idname = "CRASHFORGE_PT_advanced"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Crash Forge"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Per-stage controls.", icon='PREFERENCES')
+        layout.operator("crashforge.rebuild_from_tags", icon='FILE_REFRESH')
 
 
 class CRASHFORGE_PT_prep(Panel):
@@ -61,6 +94,7 @@ class CRASHFORGE_PT_prep(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Crash Forge"
+    bl_parent_id = "CRASHFORGE_PT_advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -94,6 +128,7 @@ class CRASHFORGE_PT_tag(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Crash Forge"
+    bl_parent_id = "CRASHFORGE_PT_advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -133,6 +168,7 @@ class CRASHFORGE_PT_drive(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Crash Forge"
+    bl_parent_id = "CRASHFORGE_PT_advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -167,6 +203,7 @@ class CRASHFORGE_PT_rig(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Crash Forge"
+    bl_parent_id = "CRASHFORGE_PT_advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -192,6 +229,7 @@ class CRASHFORGE_PT_bake(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Crash Forge"
+    bl_parent_id = "CRASHFORGE_PT_advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -230,6 +268,7 @@ class CRASHFORGE_PT_export(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Crash Forge"
+    bl_parent_id = "CRASHFORGE_PT_advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -251,6 +290,7 @@ class CRASHFORGE_PT_export(Panel):
 
 classes = (
     CRASHFORGE_PT_main,
+    CRASHFORGE_PT_advanced,
     CRASHFORGE_PT_prep,
     CRASHFORGE_PT_tag,
     CRASHFORGE_PT_drive,
