@@ -51,6 +51,11 @@ CLOTH_QUALITY_STEPS = 12
 CLOTH_COLLISION_QUALITY = 5
 CLOTH_DISTANCE_MIN = 0.0015
 
+# Collider settings on everything cloth can hit — placeholders, tune once
+# crumple is visible in Blender.
+COLLIDER_THICKNESS_OUTER = 0.02
+COLLIDER_DAMPING = 0.1
+
 DUST_RESOLUTION_MAX = 96
 DUST_NOISE_POS_SCALE = 2.0
 
@@ -175,6 +180,48 @@ def _apply_deform(obj, crumple_intensity):
 
     _mark_modifier_generated(mod)
     return mod
+
+
+def _ensure_collider(obj):
+    """Give obj a COLLISION modifier so cloth actually collides with it.
+
+    Cloth and rigid bodies are two separate solvers: a PASSIVE rigid body
+    does NOT stop cloth. Without this, a crumpling panel passes straight
+    through the divider. Note the coupling is one-way — cloth reacts to the
+    collider, but exerts no force back on it, so crumple is cosmetic and
+    feeds no momentum into the rigid body sim.
+    """
+    for mod in obj.modifiers:
+        if mod.type == 'COLLISION':
+            return mod
+
+    mod = obj.modifiers.new(name="CrashForgeCollision", type='COLLISION')
+    settings = getattr(obj, "collision", None)
+    if settings is not None:
+        # Thickness_outer keeps fast cloth from punching through a thin wall.
+        if hasattr(settings, "thickness_outer"):
+            settings.thickness_outer = COLLIDER_THICKNESS_OUTER
+        if hasattr(settings, "damping"):
+            settings.damping = COLLIDER_DAMPING
+    _mark_modifier_generated(mod)
+    return mod
+
+
+def _setup_cloth_colliders(scene, deform_objects):
+    """Every mesh a DEFORM part could touch needs to be a cloth collider."""
+    if not deform_objects:
+        return 0
+
+    deform_names = {o.name for o in deform_objects}
+    count = 0
+    for obj in scene.objects:
+        if obj.type != 'MESH' or obj.name in deform_names:
+            continue
+        # Anything solid in the scene is a potential crumple surface: the
+        # divider, the chassis, static props, and the car itself.
+        _ensure_collider(obj)
+        count += 1
+    return count
 
 
 # --- Step 4: Crumple-then-Shatter --------------------------------------------
@@ -485,14 +532,24 @@ class CRASHFORGE_OT_build_rig(Operator):
 
         _configure_mass(context, mesh_objects)
 
-        for obj in list(mesh_objects):
-            if obj.crashforge.role == 'DEFORM':
-                _apply_deform(obj, scene.crashforge.crumple_intensity)
-                if obj.crashforge.crumple_then_shatter:
-                    try:
-                        _apply_crumple_then_shatter(context, obj, scene)
-                    except Exception as exc:
-                        warnings.append(f"Crumple-then-Shatter failed on '{obj.name}': {exc}")
+        deform_objects = [obj for obj in mesh_objects if obj.crashforge.role == 'DEFORM']
+
+        # Colliders must exist before the cloth bake in Crumple-then-Shatter,
+        # or the peak-crush scan measures a panel falling through the divider.
+        try:
+            collider_count = _setup_cloth_colliders(scene, deform_objects)
+            if deform_objects and collider_count == 0:
+                warnings.append("No collider surfaces found for DEFORM parts — crumple will not hit anything.")
+        except Exception as exc:
+            warnings.append(f"Cloth collider setup failed: {exc}")
+
+        for obj in list(deform_objects):
+            _apply_deform(obj, scene.crashforge.crumple_intensity)
+            if obj.crashforge.crumple_then_shatter:
+                try:
+                    _apply_crumple_then_shatter(context, obj, scene)
+                except Exception as exc:
+                    warnings.append(f"Crumple-then-Shatter failed on '{obj.name}': {exc}")
 
         cell_fracture_ok, cell_fracture_msg = env_check.check_cell_fracture()
         fracture_targets = [obj for obj in mesh_objects if obj.crashforge.role == 'FRACTURE' and obj.name in scene.objects]
