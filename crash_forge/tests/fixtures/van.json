@@ -1,0 +1,288 @@
+[
+  {
+    "name": "Body",
+    "bbox_min": [
+      -2.8,
+      -0.95,
+      0.4
+    ],
+    "bbox_max": [
+      2.8,
+      0.95,
+      1.6
+    ],
+    "centroid": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "vert_count": 6000,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Wheel_FL",
+    "bbox_min": [
+      1.8599999999999999,
+      -1.0975,
+      0.0
+    ],
+    "bbox_max": [
+      2.6199999999999997,
+      -0.8975,
+      0.76
+    ],
+    "centroid": [
+      2.2399999999999998,
+      -0.9974999999999999,
+      0.38
+    ],
+    "vert_count": 800,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Wheel_FR",
+    "bbox_min": [
+      1.8599999999999999,
+      0.8975,
+      0.0
+    ],
+    "bbox_max": [
+      2.6199999999999997,
+      1.0975,
+      0.76
+    ],
+    "centroid": [
+      2.2399999999999998,
+      0.9974999999999999,
+      0.38
+    ],
+    "vert_count": 800,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Wheel_RL",
+    "bbox_min": [
+      -2.6199999999999997,
+      -1.0975,
+      0.0
+    ],
+    "bbox_max": [
+      -1.8599999999999999,
+      -0.8975,
+      0.76
+    ],
+    "centroid": [
+      -2.2399999999999998,
+      -0.9974999999999999,
+      0.38
+    ],
+    "vert_count": 800,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Wheel_RR",
+    "bbox_min": [
+      -2.6199999999999997,
+      0.8975,
+      0.0
+    ],
+    "bbox_max": [
+      -1.8599999999999999,
+      1.0975,
+      0.76
+    ],
+    "centroid": [
+      -2.2399999999999998,
+      0.9974999999999999,
+      0.38
+    ],
+    "vert_count": 800,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Hood",
+    "bbox_min": [
+      0.7,
+      -0.9025,
+      1.15
+    ],
+    "bbox_max": [
+      2.2399999999999998,
+      0.9025,
+      1.25
+    ],
+    "centroid": [
+      1.4699999999999998,
+      0.0,
+      1.2
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": true
+  },
+  {
+    "name": "Boot",
+    "bbox_min": [
+      -2.2399999999999998,
+      -0.9025,
+      1.15
+    ],
+    "bbox_max": [
+      -0.7,
+      0.9025,
+      1.25
+    ],
+    "centroid": [
+      -1.4699999999999998,
+      0.0,
+      1.2
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": true
+  },
+  {
+    "name": "Bumper_F",
+    "bbox_min": [
+      2.856,
+      -0.95,
+      0.3
+    ],
+    "bbox_max": [
+      3.08,
+      0.95,
+      0.5
+    ],
+    "centroid": [
+      2.968,
+      0.0,
+      0.4
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Bumper_R",
+    "bbox_min": [
+      -3.08,
+      -0.95,
+      0.3
+    ],
+    "bbox_max": [
+      -2.856,
+      0.95,
+      0.5
+    ],
+    "centroid": [
+      -2.968,
+      0.0,
+      0.4
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": false
+  },
+  {
+    "name": "Door_L",
+    "bbox_min": [
+      -1.4,
+      -0.969,
+      0.6
+    ],
+    "bbox_max": [
+      1.4,
+      -0.8929999999999999,
+      1.4
+    ],
+    "centroid": [
+      0.0,
+      -0.9309999999999999,
+      1.0
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": true
+  },
+  {
+    "name": "Door_R",
+    "bbox_min": [
+      -1.4,
+      0.8929999999999999,
+      0.6
+    ],
+    "bbox_max": [
+      1.4,
+      0.969,
+      1.4
+    ],
+    "centroid": [
+      0.0,
+      0.9309999999999999,
+      1.0
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.0,
+    "is_planar": true
+  },
+  {
+    "name": "Glass_Windshield",
+    "bbox_min": [
+      2.1839999999999997,
+      -0.8075,
+      1.25
+    ],
+    "bbox_max": [
+      2.7439999999999998,
+      0.8075,
+      1.85
+    ],
+    "centroid": [
+      2.4639999999999995,
+      0.0,
+      1.55
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.9,
+    "is_planar": true
+  },
+  {
+    "name": "Glass_Rear",
+    "bbox_min": [
+      -2.7439999999999998,
+      -0.8075,
+      1.25
+    ],
+    "bbox_max": [
+      -2.1839999999999997,
+      0.8075,
+      1.8
+    ],
+    "centroid": [
+      -2.4639999999999995,
+      0.0,
+      1.525
+    ],
+    "vert_count": 500,
+    "material_names": [],
+    "max_transmission": 0.9,
+    "is_planar": true
+  }
+]
