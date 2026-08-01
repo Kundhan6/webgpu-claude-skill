@@ -1,18 +1,28 @@
 """CF_ naming convention and the cf_generated tag contract (§7.1). No bpy import.
 
-Deliberately minimal for now: only what CF_Reset (M2) needs. The full
-name-generator/parser set for every constraint kind (hinge, motor, break,
-no-collide pair — §7.1's full table) is M3 scope, once core/pairs.py and
-core/classify.py exist to feed it from real part data. Building it now
-would be exactly the "jump ahead to the interesting physics" the working
-rules say not to do.
+Full §7.1 name table now that core/pairs.py and core/classify.py exist to
+feed it from real part data (M3): CF_Proxy, CF_Barrier, CF_Hinge_<wheel>,
+CF_Motor_<wheel>, CF_Break_<part>, CF_NoCol_<a>__<b>, CF_RBW, CF_RBWC.
 """
 import uuid
+from dataclasses import dataclass, field
 
 CF_PREFIX = "CF_"
 CF_GENERATED_KEY = "cf_generated"
 CF_STAGE_KEY = "cf_stage"
 CF_UID_KEY = "cf_uid"
+
+# §7.1's fixed names — never generated, always exactly this.
+PROXY_NAME = f"{CF_PREFIX}Proxy"
+BARRIER_NAME = f"{CF_PREFIX}Barrier"
+RBW_COLLECTION_NAME = f"{CF_PREFIX}RBW"
+RBWC_COLLECTION_NAME = f"{CF_PREFIX}RBWC"
+
+_HINGE_PREFIX = f"{CF_PREFIX}Hinge_"
+_MOTOR_PREFIX = f"{CF_PREFIX}Motor_"
+_BREAK_PREFIX = f"{CF_PREFIX}Break_"
+_NOCOL_PREFIX = f"{CF_PREFIX}NoCol_"
+_NOCOL_SEPARATOR = "__"
 
 # original_state wire format (§7.2/§8.0 step 5). Bump this the moment the
 # record shape changes — CF_Prep (M4) and CF_Reset are two independent
@@ -113,3 +123,67 @@ def parse_snapshot(snapshot):
         return [], "original_state snapshot is missing its 'records' list"
 
     return records, None
+
+
+# --- §7.1 constraint/object name generators -------------------------------
+
+def hinge_name(wheel: str) -> str:
+    """§9.1: CF_Hinge_<wheel>."""
+    return f"{_HINGE_PREFIX}{wheel}"
+
+
+def motor_name(wheel: str) -> str:
+    """§9.2: CF_Motor_<wheel>."""
+    return f"{_MOTOR_PREFIX}{wheel}"
+
+
+def break_name(part: str) -> str:
+    """§9.3: CF_Break_<part>."""
+    return f"{_BREAK_PREFIX}{part}"
+
+
+def nocol_name(a: str, b: str) -> str:
+    """§9.4: CF_NoCol_<a>__<b>. Order matters for the generated name (not
+    for the physics it represents) — callers that want a canonical form
+    regardless of pair order should sort (a, b) themselves before calling."""
+    return f"{_NOCOL_PREFIX}{a}{_NOCOL_SEPARATOR}{b}"
+
+
+@dataclass(frozen=True)
+class ParsedCFName:
+    """Result of parse_cf_name(). `kind` is one of "proxy", "barrier",
+    "rbw", "rbwc", "hinge", "motor", "break", "nocol", or "unknown".
+    `args` holds the part name(s) embedded in the name, empty for the
+    fixed singleton names."""
+    kind: str
+    args: tuple = field(default_factory=tuple)
+
+
+def parse_cf_name(name: str) -> ParsedCFName:
+    """The inverse of the generators above — round-trips any name they
+    produce back to its kind and embedded part name(s). A name Crash
+    Forge didn't generate (including a bare "CF_" prefix with no
+    recognised pattern) parses as kind="unknown", not an exception:
+    scanning arbitrary scene objects for CF_ names must not crash on
+    something that merely happens to start with the prefix.
+    """
+    if name == PROXY_NAME:
+        return ParsedCFName("proxy")
+    if name == BARRIER_NAME:
+        return ParsedCFName("barrier")
+    if name == RBW_COLLECTION_NAME:
+        return ParsedCFName("rbw")
+    if name == RBWC_COLLECTION_NAME:
+        return ParsedCFName("rbwc")
+    if name.startswith(_HINGE_PREFIX):
+        return ParsedCFName("hinge", (name[len(_HINGE_PREFIX):],))
+    if name.startswith(_MOTOR_PREFIX):
+        return ParsedCFName("motor", (name[len(_MOTOR_PREFIX):],))
+    if name.startswith(_BREAK_PREFIX):
+        return ParsedCFName("break", (name[len(_BREAK_PREFIX):],))
+    if name.startswith(_NOCOL_PREFIX):
+        rest = name[len(_NOCOL_PREFIX):]
+        if _NOCOL_SEPARATOR in rest:
+            a, b = rest.split(_NOCOL_SEPARATOR, 1)
+            return ParsedCFName("nocol", (a, b))
+    return ParsedCFName("unknown", (name,))
