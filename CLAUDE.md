@@ -15,16 +15,37 @@ this is pitfalls and rationale, not a tour.
 
 ## Status
 
-M0–M3 complete: package skeleton, Stage 0 probe, CF_Reset, core/
-detection modules (geometry/classify/pairs/impact/density/naming). M4
-(Stage 1 Prep) has not started.
+M0–M4 complete: package skeleton, Stage 0 probe, CF_Reset, core/
+detection modules (geometry/classify/pairs/impact/density/naming), and
+CF_Prep (Stage 1). M5 (Stage 2 Rig + the V8 explosion test) has not
+started — stop and report after it per §14, don't cascade further.
+
+CF_Prep is unverified against a real car — nobody has run it in Blender
+yet. `core/validate.py`'s V1/V2/V3/V5 and the added V21 (ambiguous "__"
+part names) are Tier-A-tested against synthetic data only.
+`core/geometry`/`classify`'s thresholds were deliberately left untouched
+this session — no further tuning against synthetic fixtures.
 
 Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-97/97 passing as of the last session. Tier A + Tier B only — no Blender
-needed to run this at all.
+129/129 passing as of the last session. Tier A + Tier B only — no
+Blender needed to run this at all.
+
+Two fixes carried forward into this session, both landed before M4:
+
+- `core/naming.py::nocol_name()`'s "__"-in-a-part-name check used to only
+  fire during Stage 2 Rig's pair generation. Pulled forward into Prep as
+  an added validation (`core/validate.py::validate_no_ambiguous_part_names`,
+  reported as `V21` — not one of §11's original ten rows). `Door__L` (a
+  real pattern on downloaded car models) now hard-stops at Prep, named,
+  instead of blowing up deep in Rig.
+- `bl/scene.py::reset_self_check()`'s rigidbody-world stale-object scan
+  matched `o.name.startswith("CF_")` instead of `is_cf_generated(o)` — a
+  generated object renamed after creation would've passed that check as
+  "clean" while still orphaned, silently breaking V20. Fixed to match by
+  identity; see `tests/test_reset_identity.py`.
 
 ## Blender version
 
@@ -123,6 +144,20 @@ V11's 5-frame boundary, §12.5's ~200k-vert ceiling, §8.5's 0.5×max_speed
 threshold) deliberately stay local to their own module, not here —
 retuning those means the spec changed, not that a real car disagreed
 with a guess.
+
+`core/validate.py` (M4, new) has zero invented constants — its V1/V2/V3/V5
+thresholds (unit scale 1.0, frame_end ≥ 250, part count 4–25) are all
+exact values §11's own table gives, not tuned guesses, so none of them
+belong in tuning.py either.
+
+**One threshold sits outside this whole system and should probably move
+into it eventually:** `bl/extract.py::PLANAR_THIN_RATIO` (0.15) is a
+direct copy of `tools/dump_car.py`'s own `PLANAR_THIN_RATIO` — duplicated
+on purpose, since dump_car.py must stay a standalone script that never
+imports `crash_forge`. It's tuned-not-verified by the same definition as
+everything above, just not tracked in tuning.py because it lives in `bl/`
+(which imports bpy) rather than `core/`. If a real car disagrees with it,
+change both copies together.
 
 ## Getting a real fixture
 

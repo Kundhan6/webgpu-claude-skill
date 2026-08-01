@@ -10,7 +10,14 @@ import json
 
 import bpy
 
-from ..core.naming import CF_GENERATED_KEY, CF_UID_KEY, match_snapshot_records, parse_snapshot
+from ..core.naming import (
+    CF_GENERATED_KEY,
+    CF_UID_KEY,
+    build_snapshot,
+    match_snapshot_records,
+    new_cf_uid,
+    parse_snapshot,
+)
 from ..core.report import StageResult
 
 
@@ -159,6 +166,49 @@ def touched_car_parts(scene):
         if obj.name in snapshot_names or has_cf_prop:
             touched.append(obj)
     return touched
+
+
+def _ensure_cf_uid(obj) -> str:
+    """Stamp obj["cf_uid"] once and reuse it on every later call — a
+    fresh uid on every CF_Prep run would break idempotency (§3 rule 4):
+    a snapshot taken on run 2 would then reference a different uid than
+    run 1's, even though nothing about the object changed."""
+    uid = obj.get(CF_UID_KEY)
+    if not uid:
+        uid = new_cf_uid()
+        obj[CF_UID_KEY] = uid
+    return uid
+
+
+def snapshot_car_parts(parts) -> dict:
+    """§8.1 step 1: build the original_state snapshot (build_snapshot's
+    wire format, §7.2) CF_Reset's restore_original_state() above already
+    knows how to read. `parts`: the bpy mesh objects CF_Prep found in the
+    car hierarchy (bl/extract.py::collect_car_parts()).
+
+    Only stamps cf_uid on objects in `parts` itself — never on some
+    external parent outside the car hierarchy — so a part's own parent
+    reference only carries a cf_uid when that parent is *also* one of
+    the car's tracked parts (looked up from `parts`, not re-stamped from
+    scratch, so every part gets exactly one uid regardless of walk
+    order). A parent outside `parts` is recorded by name only, the same
+    fallback match_snapshot_records() already provides for a record
+    with no uid.
+    """
+    uid_by_name = {obj.name: _ensure_cf_uid(obj) for obj in parts}
+
+    records = []
+    for obj in parts:
+        parent = obj.parent
+        parent_uid = uid_by_name.get(parent.name) if parent is not None else None
+        records.append({
+            "cf_uid": uid_by_name[obj.name],
+            "name": obj.name,
+            "matrix_world": [list(row) for row in obj.matrix_world],
+            "parent_uid": parent_uid,
+            "parent_name": parent.name if parent is not None else None,
+        })
+    return build_snapshot(records)
 
 
 def clean_original_part(context, obj) -> None:
