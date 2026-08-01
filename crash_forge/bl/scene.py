@@ -262,7 +262,14 @@ def reset_self_check(scene) -> list:
         for coll_name, coll in (("collection", rbw.collection), ("constraints", rbw.constraints)):
             if coll is None:
                 continue
-            stale = [o.name for o in coll.objects if o.name.startswith("CF_")]
+            # Identity is is_cf_generated(), never a parsed/prefixed name (§3
+            # rule 8 says generated objects *are* prefixed CF_, but this
+            # self-check is the last line of defence against exactly the
+            # case that guarantee doesn't hold — a generated object renamed
+            # after creation, or any other name that doesn't happen to
+            # start with "CF_". A name-based check here would let that
+            # object sail through as "clean" and silently violate V20.
+            stale = [o.name for o in coll.objects if is_cf_generated(o)]
             if stale:
-                problems.append(f"rigidbody_world.{coll_name} still has CF_ objects: {stale}")
+                problems.append(f"rigidbody_world.{coll_name} still has cf_generated objects: {stale}")
     return problems

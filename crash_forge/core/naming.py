@@ -22,7 +22,11 @@ _HINGE_PREFIX = f"{CF_PREFIX}Hinge_"
 _MOTOR_PREFIX = f"{CF_PREFIX}Motor_"
 _BREAK_PREFIX = f"{CF_PREFIX}Break_"
 _NOCOL_PREFIX = f"{CF_PREFIX}NoCol_"
-_NOCOL_SEPARATOR = "__"
+
+# Public: core/validate.py (Prep's added V21, see below) needs this to
+# catch an ambiguous part name *before* Rig ever calls nocol_name() on it.
+NOCOL_SEPARATOR = "__"
+_NOCOL_SEPARATOR = NOCOL_SEPARATOR  # internal alias, keeps the rest of this file unchanged
 
 # original_state wire format (§7.2/§8.0 step 5). Bump this the moment the
 # record shape changes — CF_Prep (M4) and CF_Reset are two independent
@@ -147,6 +151,18 @@ class AmbiguousNoColNameError(ValueError):
     CF_NoCol_ name impossible to round-trip unambiguously."""
 
 
+def name_is_nocol_safe(name: str) -> bool:
+    """True if `name` can be embedded in a CF_NoCol_<a>__<b> name and
+    parsed back unambiguously — i.e. nocol_name() will not raise for it.
+
+    Pulled out as its own function (not just inlined in nocol_name's
+    guard) so Prep validation can run this same check on every part name
+    up front (§3 rule 10: fail loud, fail early) instead of only
+    discovering an offending name deep in Stage 2 Rig's per-pair
+    constraint generation, on whichever pair happens to include it."""
+    return NOCOL_SEPARATOR not in name
+
+
 def nocol_name(a: str, b: str) -> str:
     """§9.4: CF_NoCol_<a>__<b>. Order matters for the generated name (not
     for the physics it represents) — callers that want a canonical form
@@ -160,9 +176,9 @@ def nocol_name(a: str, b: str) -> str:
     early) means refusing to generate a name that can't be parsed back,
     not guessing and hoping the guess matches what the caller meant.
     """
-    if _NOCOL_SEPARATOR in a or _NOCOL_SEPARATOR in b:
+    if not name_is_nocol_safe(a) or not name_is_nocol_safe(b):
         raise AmbiguousNoColNameError(
-            f"nocol_name({a!r}, {b!r}): a part name containing {_NOCOL_SEPARATOR!r} "
+            f"nocol_name({a!r}, {b!r}): a part name containing {NOCOL_SEPARATOR!r} "
             f"cannot be embedded in a CF_NoCol_ pair name and parsed back unambiguously"
         )
     return f"{_NOCOL_PREFIX}{a}{_NOCOL_SEPARATOR}{b}"
