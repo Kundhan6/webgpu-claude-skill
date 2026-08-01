@@ -11,10 +11,18 @@ no Blender involved.
     impact_frame = argmax(decel) over frames where speed[f-1] > 0.5 * max(speed)
     impact_vector = normalize(p[impact_frame-1] - p[impact_frame-2])
     impact_speed  = speed[impact_frame-1]
+
+Every exit path is a sentinel (None from detect_impact, or a zero vector
+from _impact_vector) — nothing here raises on malformed or edge-case
+input. A bad frame index reads through Python's negative-index
+wraparound as silently-wrong data, not a crash; sentinels are the only
+way to make "nothing to report" distinguishable from "garbage".
 """
 import math
 from dataclasses import dataclass
 from typing import Optional, Sequence
+
+from . import tuning
 
 
 @dataclass(frozen=True)
@@ -39,6 +47,25 @@ def _normalize(v):
     return tuple(c / length for c in v)
 
 
+def _impact_vector(positions, impact_index: int) -> tuple:
+    """The pre-impact direction vector, or a (0.0, 0.0, 0.0) sentinel if
+    there isn't enough history to compute one safely.
+
+    `positions[impact_index - 2]` underflows for impact_index < 2 — not
+    with an exception (Python's negative-index wraparound silently reads
+    from the *end* of the list instead), which is worse than a crash: it
+    returns a plausible-looking but meaningless vector instead of
+    signalling anything went wrong. This check is independent of
+    detect_impact's V11 boundary rejection (which today happens to
+    already exclude impact_index < 2, since its 5-frame margin is wider)
+    — deliberately not relying on that: if V11's margin ever changed,
+    this still has to hold on its own.
+    """
+    if impact_index < 2:
+        return (0.0, 0.0, 0.0)
+    return _normalize(_sub(positions[impact_index - 1], positions[impact_index - 2]))
+
+
 def detect_impact(samples: Sequence[tuple], fps: float) -> Optional[ImpactResult]:
     """`samples`: chronologically ordered (frame, position) pairs for the
     chassis, one per baked frame, evenly spaced. Returns None if no
@@ -58,24 +85,25 @@ def detect_impact(samples: Sequence[tuple], fps: float) -> Optional[ImpactResult
         speed.append(_length(_sub(positions[i], positions[i - 1])) * fps)
 
     max_speed = max(speed)
-    if max_speed <= 0:
+    # Not a bare `<= 0`: tiny positive floating-point noise (not exactly
+    # 0.0) on an essentially-stationary chassis would otherwise let the
+    # 0.5×max_speed candidate threshold admit frames, and the epsilon
+    # below — which scales *with* max_speed — shrink to the point that
+    # the same noise clears it too. An absolute floor closes both gaps.
+    if max_speed <= tuning.IMPACT_MIN_MAX_SPEED:
         return None  # the car never moved at all
 
     decel = [0.0] * len(speed)
     for i in range(1, len(speed)):
         decel[i] = speed[i - 1] - speed[i]
 
-    threshold = 0.5 * max_speed
+    threshold = 0.5 * max_speed  # §8.5's literal formula
     candidate_indices = [i for i in range(1, len(speed)) if speed[i - 1] > threshold]
     if not candidate_indices:
         return None
 
     impact_index = max(candidate_indices, key=lambda i: decel[i])
-    # A relative epsilon, not a bare > 0: constant-velocity synthetic (and
-    # real baked) data accumulates floating-point noise that can leave a
-    # frame's decel marginally positive with no real deceleration behind
-    # it at all — that noise must not read as an impact.
-    epsilon = 1e-6 * max_speed
+    epsilon = tuning.IMPACT_EPSILON_FACTOR * max_speed
     if decel[impact_index] <= epsilon:
         return None  # never actually decelerating — no real impact happened
 
@@ -84,14 +112,11 @@ def detect_impact(samples: Sequence[tuple], fps: float) -> Optional[ImpactResult
     # 1-2 frame spike) from smooth braking (many frames of similar, small
     # decel) — the argmax picks *some* frame either way. A real wall
     # impact's peak decel is dramatically larger than the surrounding
-    # deceleration; gradual braking's isn't. This ratio is the
-    # distinguishing check; SPIKE_FACTOR is a documented, tunable
-    # assumption pending real baked-data calibration via Tier C.
-    SPIKE_FACTOR = 3.0
+    # deceleration; gradual braking's isn't.
     other_candidates = [i for i in candidate_indices if i != impact_index]
     if other_candidates:
         mean_other_decel = sum(decel[i] for i in other_candidates) / len(other_candidates)
-        if mean_other_decel > 0 and decel[impact_index] < SPIKE_FACTOR * mean_other_decel:
+        if mean_other_decel > 0 and decel[impact_index] < tuning.IMPACT_SPIKE_FACTOR * mean_other_decel:
             return None  # deceleration is too gradual/uniform to be a real wall impact
 
     # V11 (§11): a candidate within 5 frames of either end of the range
@@ -101,11 +126,7 @@ def detect_impact(samples: Sequence[tuple], fps: float) -> Optional[ImpactResult
     if impact_index < 5 or impact_index > len(speed) - 1 - 5:
         return None
 
-    if impact_index < 2:
-        # Not enough history to compute a pre-impact vector.
-        return None
-
-    vector = _normalize(_sub(positions[impact_index - 1], positions[impact_index - 2]))
+    vector = _impact_vector(positions, impact_index)
     impact_speed = speed[impact_index - 1]
 
     return ImpactResult(frame=frames[impact_index], vector=vector, speed=impact_speed)

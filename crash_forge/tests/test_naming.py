@@ -1,11 +1,14 @@
 """Tier A (§13) — pure core, no bpy. Round-trip name generation and parsing
 for the full §7.1 table.
 """
+import pytest
+
 from crash_forge.core.naming import (
     BARRIER_NAME,
     PROXY_NAME,
     RBW_COLLECTION_NAME,
     RBWC_COLLECTION_NAME,
+    AmbiguousNoColNameError,
     break_name,
     hinge_name,
     motor_name,
@@ -73,6 +76,24 @@ def test_nocol_handles_part_names_that_themselves_contain_underscores():
     parsed = parse_cf_name(name)
     assert parsed.kind == "nocol"
     assert parsed.args == ("Wheel_FL", "Bumper_F")
+
+
+def test_nocol_rejects_part_name_containing_the_separator_in_a():
+    """CF_NoCol_door__l__Body is genuinely ambiguous — there is no way to
+    tell whether it came from ("door__l", "Body") or ("door", "l__Body").
+    Must refuse to generate it, not guess."""
+    with pytest.raises(AmbiguousNoColNameError):
+        nocol_name("door__l", "Body")
+
+
+def test_nocol_rejects_part_name_containing_the_separator_in_b():
+    with pytest.raises(AmbiguousNoColNameError):
+        nocol_name("Body", "door__l")
+
+
+def test_nocol_rejects_when_both_names_contain_the_separator():
+    with pytest.raises(AmbiguousNoColNameError):
+        nocol_name("a__b", "c__d")
 
 
 def test_generated_names_are_distinguishable_by_kind():

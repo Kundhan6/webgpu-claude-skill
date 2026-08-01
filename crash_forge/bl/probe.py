@@ -34,6 +34,35 @@ RIGIDBODY_WORLD_PROPS = (
     "substeps_per_frame", "solver_iterations",
 )
 
+# §6's table, one stable row id per row, in table order. run_probe()
+# guarantees an entry in result.data["rows"] for every one of these,
+# regardless of whether the underlying check passed, failed, or the type
+# didn't exist at all — a row a test can assert against directly, so a
+# check that silently produces no evidence of having run (the exact bug
+# four of these rows had) fails a test instead of just looking clean.
+PROBE_ROWS = (
+    "rigidbody.object_add",
+    "rigidbody.constraint_add",
+    "RigidBodyConstraint.type",
+    "RigidBodyConstraint.props",
+    "motor_properties",
+    "RigidBodyObject.collision_shape",
+    "scene.rigidbody_world",
+    "SoftBodySettings",
+    "object.surfacedeform_bind",
+    "SurfaceDeformModifier",
+    "RemeshModifier",
+    "object.shade_auto_smooth",
+    "nla.bake",
+    "object.quick_explode",
+    "ptcache",
+    "mesh_attributes",
+)
+
+
+def _mark_row(result: StageResult, row_id: str, status) -> None:
+    result.data.setdefault("rows", {})[row_id] = status
+
 
 # --- bl_rna introspection helpers ---------------------------------------
 
@@ -318,30 +347,43 @@ def _probe_mesh_attributes(result: StageResult) -> None:
 
 def run_probe() -> StageResult:
     result = StageResult()
+    # Every row starts "not run" — anything still at that value once this
+    # function returns means its check-block forgot to mark it, which is
+    # exactly the class of bug test_probe_complete.py exists to catch.
+    result.data["rows"] = {row: "not run" for row in PROBE_ROWS}
 
     # bpy.ops.rigidbody.object_add — §1.1's failure, probed directly.
     if _op_exists("rigidbody.object_add") is None:
         result.error("bpy.ops.rigidbody.object_add: MISSING")
+        _mark_row(result, "rigidbody.object_add", False)
     else:
         result.data["operators.rigidbody.object_add"] = True
+        _mark_row(result, "rigidbody.object_add", True)
         _probe_rigidbody_object_add_poll(result)
 
     if _op_exists("rigidbody.constraint_add") is None:
         result.error("bpy.ops.rigidbody.constraint_add: MISSING")
+        _mark_row(result, "rigidbody.constraint_add", False)
     else:
         result.data["operators.rigidbody.constraint_add"] = True
+        _mark_row(result, "rigidbody.constraint_add", True)
 
-    # RigidBodyConstraint
+    # RigidBodyConstraint — covers three §6 rows: .type, the prop list, motor props.
     rbc_type = getattr(bpy.types, "RigidBodyConstraint", None)
     if rbc_type is None:
         result.error("bpy.types.RigidBodyConstraint: MISSING")
+        _mark_row(result, "RigidBodyConstraint.type", False)
+        _mark_row(result, "RigidBodyConstraint.props", False)
+        _mark_row(result, "motor_properties", False)
     else:
         enum_ids = _enum_ids(rbc_type, "type") or set()
         missing = {"FIXED", "HINGE", "MOTOR", "GENERIC"} - enum_ids
         if missing:
             result.error(f"RigidBodyConstraint.type missing enum values: {sorted(missing)}")
+            _mark_row(result, "RigidBodyConstraint.type", False)
         else:
             result.data["rigidbody_constraint_type_enum"] = sorted(enum_ids)
+            _mark_row(result, "RigidBodyConstraint.type", sorted(enum_ids))
 
         # Record every checked prop explicitly — a check that silently
         # passes with no data entry is indistinguishable from a check that
@@ -349,6 +391,7 @@ def run_probe() -> StageResult:
         # own report too).
         constraint_props = {p: _has_prop(rbc_type, p) for p in RIGIDBODY_CONSTRAINT_PROPS}
         result.data["rigidbody_constraint_props"] = constraint_props
+        _mark_row(result, "RigidBodyConstraint.props", constraint_props)
         for prop_name, present in constraint_props.items():
             if not present:
                 result.error(f"RigidBodyConstraint.{prop_name}: MISSING")
@@ -360,8 +403,10 @@ def run_probe() -> StageResult:
                 "RigidBodyConstraint: no motor-related properties found at all "
                 "(expected something like use_motor_ang, motor_ang_target_velocity, motor_ang_max_impulse)"
             )
+            _mark_row(result, "motor_properties", False)
         else:
             result.data["rigidbody_constraint_motor_props"] = motor_props
+            _mark_row(result, "motor_properties", motor_props)
             for expected in ("use_motor_ang", "motor_ang_target_velocity", "motor_ang_max_impulse"):
                 if expected not in motor_props:
                     result.warn(
@@ -373,21 +418,26 @@ def run_probe() -> StageResult:
     rbo_type = getattr(bpy.types, "RigidBodyObject", None)
     if rbo_type is None:
         result.error("bpy.types.RigidBodyObject: MISSING")
+        _mark_row(result, "RigidBodyObject.collision_shape", False)
     else:
         enum_ids = _enum_ids(rbo_type, "collision_shape") or set()
         missing = {"COMPOUND", "CONVEX_HULL", "MESH"} - enum_ids
         if missing:
             result.error(f"RigidBodyObject.collision_shape missing enum values: {sorted(missing)}")
+            _mark_row(result, "RigidBodyObject.collision_shape", False)
         else:
             result.data["rigidbody_object_collision_shape_enum"] = sorted(enum_ids)
+            _mark_row(result, "RigidBodyObject.collision_shape", sorted(enum_ids))
 
     # scene.rigidbody_world
     rbw_type = getattr(bpy.types, "RigidBodyWorld", None)
     if rbw_type is None:
         result.error("bpy.types.RigidBodyWorld: MISSING")
+        _mark_row(result, "scene.rigidbody_world", False)
     else:
         world_props = {p: _has_prop(rbw_type, p) for p in RIGIDBODY_WORLD_PROPS}
         result.data["rigidbody_world_props"] = world_props
+        _mark_row(result, "scene.rigidbody_world", world_props)
         for prop_name, present in world_props.items():
             if not present:
                 result.error(f"RigidBodyWorld.{prop_name}: MISSING")
@@ -396,6 +446,7 @@ def run_probe() -> StageResult:
     sb_type = getattr(bpy.types, "SoftBodySettings", None)
     if sb_type is None:
         result.error("bpy.types.SoftBodySettings: MISSING")
+        _mark_row(result, "SoftBodySettings", False)
     else:
         ranges = {}
         for prop_name in SOFTBODY_NUMERIC_PROPS:
@@ -410,24 +461,30 @@ def run_probe() -> StageResult:
             if not _has_prop(sb_type, prop_name):
                 result.error(f"SoftBodySettings.{prop_name}: MISSING")
         result.data["softbody_ranges"] = ranges
+        _mark_row(result, "SoftBodySettings", ranges)
 
     # Surface Deform
     op = _op_exists("object.surfacedeform_bind")
     if op is None:
         result.error("bpy.ops.object.surfacedeform_bind: MISSING")
+        _mark_row(result, "object.surfacedeform_bind", False)
     else:
         params = _op_param_names(op)
         if params is not None and "modifier" not in params:
             result.error(f"object.surfacedeform_bind: 'modifier' param not found, actual params: {sorted(params)}")
+            _mark_row(result, "object.surfacedeform_bind", False)
         else:
             result.data["surfacedeform_bind_params"] = sorted(params) if params else []
+            _mark_row(result, "object.surfacedeform_bind", sorted(params) if params else [])
 
     sdm_type = getattr(bpy.types, "SurfaceDeformModifier", None)
     if sdm_type is None:
         result.error("bpy.types.SurfaceDeformModifier: MISSING")
+        _mark_row(result, "SurfaceDeformModifier", False)
     else:
         sdm_props = {p: _has_prop(sdm_type, p) for p in ("target", "is_bound")}
         result.data["surfacedeform_modifier_props"] = sdm_props
+        _mark_row(result, "SurfaceDeformModifier", sdm_props)
         for prop_name, present in sdm_props.items():
             if not present:
                 result.error(f"SurfaceDeformModifier.{prop_name}: MISSING")
@@ -436,11 +493,13 @@ def run_probe() -> StageResult:
     remesh_type = getattr(bpy.types, "RemeshModifier", None)
     if remesh_type is None:
         result.error("bpy.types.RemeshModifier: MISSING")
+        _mark_row(result, "RemeshModifier", False)
     else:
         enum_ids = _enum_ids(remesh_type, "mode") or set()
         has_voxel_size = _has_prop(remesh_type, "voxel_size")
         result.data["remesh_mode_enum"] = sorted(enum_ids)
         result.data["remesh_has_voxel_size"] = has_voxel_size
+        _mark_row(result, "RemeshModifier", {"mode_enum": sorted(enum_ids), "has_voxel_size": has_voxel_size})
         if "VOXEL" not in enum_ids:
             result.error(f"RemeshModifier.mode missing VOXEL, got {sorted(enum_ids)}")
         if not has_voxel_size:
@@ -450,8 +509,10 @@ def run_probe() -> StageResult:
     # actually reachable, can only be confirmed live.
     if _op_exists("object.shade_auto_smooth") is None:
         result.error("bpy.ops.object.shade_auto_smooth: MISSING")
+        _mark_row(result, "object.shade_auto_smooth", False)
     else:
         result.data["operators.object.shade_auto_smooth"] = True
+        _mark_row(result, "object.shade_auto_smooth", True)
         result.info(
             "bpy.ops.object.shade_auto_smooth is present; which modifier it adds and its "
             "index in the stack must be confirmed live (Tier C) before Bind (§8.7/V16) relies on it"
@@ -462,32 +523,42 @@ def run_probe() -> StageResult:
     op = _op_exists("nla.bake")
     if op is None:
         result.error("bpy.ops.nla.bake: MISSING")
+        _mark_row(result, "nla.bake", False)
     else:
         params = _op_param_names(op)
         required = {"bake_types", "visual_keying", "clear_constraints"}
         missing = required - (params or set())
         if missing:
             result.error(f"nla.bake missing expected params: {sorted(missing)}, actual: {sorted(params) if params else []}")
+            _mark_row(result, "nla.bake", False)
         else:
             result.data["nla_bake_params"] = sorted(params)
+            _mark_row(result, "nla.bake", sorted(params))
 
     # quick_explode
     op = _op_exists("object.quick_explode")
     if op is None:
         result.error("bpy.ops.object.quick_explode: MISSING")
+        _mark_row(result, "object.quick_explode", False)
     else:
         params = _op_param_names(op)
         result.data["quick_explode_params"] = sorted(params) if params else []
+        _mark_row(result, "object.quick_explode", sorted(params) if params else [])
 
-    # ptcache
+    # ptcache — one §6 row covering both operators.
+    ptcache_status = {}
     for name in ("ptcache.bake", "ptcache.free_bake_all"):
-        if _op_exists(name) is None:
+        exists = _op_exists(name) is not None
+        ptcache_status[name] = exists
+        if not exists:
             result.error(f"bpy.ops.{name}: MISSING")
         else:
             result.data[f"operators.{name}"] = True
+    _mark_row(result, "ptcache", ptcache_status)
 
     # mesh attributes
     _probe_mesh_attributes(result)
+    _mark_row(result, "mesh_attributes", result.data.get("mesh_attributes_on_fresh_mesh", False))
 
     return result
 

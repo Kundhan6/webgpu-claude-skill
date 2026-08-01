@@ -142,10 +142,29 @@ def break_name(part: str) -> str:
     return f"{_BREAK_PREFIX}{part}"
 
 
+class AmbiguousNoColNameError(ValueError):
+    """Raised by nocol_name() when a part name would make the generated
+    CF_NoCol_ name impossible to round-trip unambiguously."""
+
+
 def nocol_name(a: str, b: str) -> str:
     """§9.4: CF_NoCol_<a>__<b>. Order matters for the generated name (not
     for the physics it represents) — callers that want a canonical form
-    regardless of pair order should sort (a, b) themselves before calling."""
+    regardless of pair order should sort (a, b) themselves before calling.
+
+    Raises AmbiguousNoColNameError if either name itself contains "__":
+    there is no way to tell, from CF_NoCol_door__l__Body alone, whether
+    the pair was ("door__l", "Body") or ("door", "l__Body") — splitting
+    on the first or last occurrence of "__" guesses right for one of
+    those and silently wrong for the other. §3 rule 10 (fail loud, fail
+    early) means refusing to generate a name that can't be parsed back,
+    not guessing and hoping the guess matches what the caller meant.
+    """
+    if _NOCOL_SEPARATOR in a or _NOCOL_SEPARATOR in b:
+        raise AmbiguousNoColNameError(
+            f"nocol_name({a!r}, {b!r}): a part name containing {_NOCOL_SEPARATOR!r} "
+            f"cannot be embedded in a CF_NoCol_ pair name and parsed back unambiguously"
+        )
     return f"{_NOCOL_PREFIX}{a}{_NOCOL_SEPARATOR}{b}"
 
 
@@ -166,6 +185,13 @@ def parse_cf_name(name: str) -> ParsedCFName:
     recognised pattern) parses as kind="unknown", not an exception:
     scanning arbitrary scene objects for CF_ names must not crash on
     something that merely happens to start with the prefix.
+
+    For "nocol" specifically: this only ever sees names nocol_name()
+    actually produced (which never embeds a part name containing "__" —
+    it refuses to generate those), so splitting on the first "__" is
+    unambiguous for anything Crash Forge itself generated. A hand-crafted
+    or historical CF_NoCol_ name that violates that constraint parses on
+    a first-occurrence best-effort basis, which is not guaranteed correct.
     """
     if name == PROXY_NAME:
         return ParsedCFName("proxy")

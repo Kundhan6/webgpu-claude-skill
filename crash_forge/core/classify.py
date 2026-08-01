@@ -6,41 +6,25 @@ vertical axis throughout — matching Blender's Z-up world convention and
 §12.1's own "low Z"/"high Z" language — the forward axis is auto-detected
 (the longer of X/Y) and the remaining axis is lateral (left/right).
 
-Several numeric thresholds below (LOW_Z, HIGH_Z, EXTREME, ...) are not
-given exact values anywhere in §12 — only qualitative rules ("low Z",
-"lateral extreme"). They're documented, tunable constants calibrated
-against this module's own synthetic fixtures, not verified facts; expect
-to retune them against a real car in M4.
+Every tuned-not-verified numeric threshold this module uses (LOW_Z,
+HIGH_Z, the forward/lateral "extreme" cutoffs, the wheel score floor, the
+glass fallback's Z cutoff) lives in core/tuning.py, not here — see that
+module for what "tuned" means and why. WHEEL_SIZE_TOLERANCE is the one
+exception: §12.2 gives that value directly ("sizes agreeing within 15%"),
+so it's spec-given, not tuned, and stays local.
 """
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from . import tuning
 from .geometry import centroid as bbox_centroid
 from .geometry import extents, normalize_point, roundness, sizes_agree, thin_axis, union_bbox
 
 VERTICAL_AXIS = 2  # Z, per §12.1's own "low Z"/"high Z" language
 
-# §12.1 step 4 thresholds — see module docstring caveat.
-LOW_Z = 0.35
-HIGH_Z = 0.6
-FORWARD_EXTREME = 0.8
-LATERAL_EXTREME = 0.75
-
-# §12.2 wheel detection.
-WHEEL_SCORE_FLOOR = 0.5
+# §12.2: "sizes agreeing within 15%" — spec-given, not tuned.
 WHEEL_SIZE_TOLERANCE = 0.15
-
-# §12.4 priority-3 glass fallback ("thin planar geometry in the upper half
-# of the car bbox") is the weakest of the three signals by design — a
-# hood/boot deck or a door panel is also thin, planar, and sits in the
-# upper half of the *whole car's* bbox (which includes the wheels pulling
-# the vertical midpoint down). 0.5 catches those false positives; this
-# needs to sit above a typical deck/door's normalised height and below
-# actual glazing's, so it only fires on geometry unambiguously in the
-# roof/glazing band. Tuned against this module's own fixtures, not a
-# verified constant — expect to retune against a real car in M4.
-GLASS_FALLBACK_HIGH_Z = 0.75
 
 
 class PartRole(Enum):
@@ -144,7 +128,7 @@ def detect_wheels(parts, lateral_axis: int, vertical_axis: int, whole_center,
         scored.append((round_score * low_weight, part))
 
     scored.sort(key=lambda pair: pair[0], reverse=True)
-    plausible = [(score, part) for score, part in scored if score > WHEEL_SCORE_FLOOR]
+    plausible = [(score, part) for score, part in scored if score > tuning.CLASSIFY_WHEEL_SCORE_FLOOR]
 
     if len(plausible) < 4:
         return [], 0.0
@@ -204,7 +188,7 @@ def _is_glass(part: PartDescriptor, whole_min, whole_max, vertical_axis: int):
         return True, 0.7
     if part.is_planar:
         norm_z = normalize_point(part.centroid, whole_min, whole_max)[vertical_axis]
-        if norm_z > GLASS_FALLBACK_HIGH_Z:
+        if norm_z > tuning.CLASSIFY_GLASS_FALLBACK_HIGH_Z:
             return True, 0.5
     return False, 0.0
 
@@ -241,15 +225,15 @@ def _classify_remaining_part(part, body_min, body_max, forward_axis, forward_sig
     ext = extents(part.bbox_min, part.bbox_max)
     t_axis = thin_axis(ext)
 
-    if fwd >= FORWARD_EXTREME and vert <= LOW_Z:
+    if fwd >= tuning.CLASSIFY_FORWARD_EXTREME and vert <= tuning.CLASSIFY_LOW_Z:
         return PartRole.BUMPER_F, 0.7
-    if fwd <= (1 - FORWARD_EXTREME) and vert <= LOW_Z:
+    if fwd <= (1 - tuning.CLASSIFY_FORWARD_EXTREME) and vert <= tuning.CLASSIFY_LOW_Z:
         return PartRole.BUMPER_R, 0.7
-    if vert >= HIGH_Z and fwd > 0.5 and part.is_planar and t_axis == vertical_axis:
+    if vert >= tuning.CLASSIFY_HIGH_Z and fwd > 0.5 and part.is_planar and t_axis == vertical_axis:
         return PartRole.HOOD, 0.7
-    if vert >= HIGH_Z and fwd <= 0.5 and part.is_planar and t_axis == vertical_axis:
+    if vert >= tuning.CLASSIFY_HIGH_Z and fwd <= 0.5 and part.is_planar and t_axis == vertical_axis:
         return PartRole.BOOT, 0.7
-    if (lat <= (1 - LATERAL_EXTREME) or lat >= LATERAL_EXTREME) and part.is_planar and t_axis == lateral_axis:
+    if (lat <= (1 - tuning.CLASSIFY_LATERAL_EXTREME) or lat >= tuning.CLASSIFY_LATERAL_EXTREME) and part.is_planar and t_axis == lateral_axis:
         return (PartRole.DOOR_R if lat >= 0.5 else PartRole.DOOR_L), 0.7
     return PartRole.UNKNOWN, 0.3
 

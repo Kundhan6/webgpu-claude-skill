@@ -16,14 +16,10 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 
-MAX_PROXY_VERTS = 200_000
+from . import tuning
 
-# Order-of-magnitude estimate only: a voxel remesh's output vertex count
-# scales roughly with the remeshed surface area divided by voxel_size², not
-# with any exact formula Blender documents — this constant is a documented
-# assumption (~2 verts per voxel-sized surface patch) pending calibration
-# against a real remesh in Tier C, not a verified physical fact.
-ASSUMED_VERTS_PER_VOXEL_AREA = 2.0
+# §12.5: "cannot exceed ~200k verts" — spec-given, not tuned.
+MAX_PROXY_VERTS = 200_000
 
 
 @dataclass(frozen=True)
@@ -45,10 +41,10 @@ def shard_cuts(shard_density: int) -> int:
 def estimate_voxel_vert_count(surface_area: float, voxel_size: float) -> int:
     """Order-of-magnitude vertex-count estimate for a voxel remesh at
     `voxel_size` over a surface of `surface_area` — see
-    ASSUMED_VERTS_PER_VOXEL_AREA's caveat above."""
+    tuning.DENSITY_ASSUMED_VERTS_PER_VOXEL_AREA's caveat above."""
     if voxel_size <= 0:
         return 0
-    return int(surface_area / (voxel_size ** 2) * ASSUMED_VERTS_PER_VOXEL_AREA)
+    return int(surface_area / (voxel_size ** 2) * tuning.DENSITY_ASSUMED_VERTS_PER_VOXEL_AREA)
 
 
 def clamped_voxel_size(
@@ -70,7 +66,7 @@ def clamped_voxel_size(
 
     # Solve for the voxel_size that puts the estimate exactly at max_verts:
     # verts ~= area / voxel_size^2 * k  =>  voxel_size = sqrt(area * k / max_verts)
-    min_voxel_size = math.sqrt(surface_area * ASSUMED_VERTS_PER_VOXEL_AREA / max_verts)
+    min_voxel_size = math.sqrt(surface_area * tuning.DENSITY_ASSUMED_VERTS_PER_VOXEL_AREA / max_verts)
     warning = (
         f"voxel_size {base!r} would produce an estimated {estimated} verts "
         f"(over the {max_verts}-vert ceiling); raised to {min_voxel_size!r}."

@@ -3,7 +3,7 @@
 Synthetic speed curves: clean impact, no impact, impact on frame 1,
 gradual deceleration with no wall. Assert frame and stop conditions.
 """
-from crash_forge.core.impact import detect_impact
+from crash_forge.core.impact import _impact_vector, detect_impact
 
 
 def _constant_motion_positions(n_frames, speed_per_frame):
@@ -82,3 +82,33 @@ def test_too_few_samples_returns_none():
 def test_zero_fps_returns_none():
     samples = [(f, (float(f), 0.0, 0.0)) for f in range(30)]
     assert detect_impact(samples, fps=0.0) is None
+
+
+def test_impact_vector_sentinel_at_index_zero_never_raises_or_wraps():
+    """Direct, V11-independent proof: _impact_vector(positions, 0) must
+    not read positions[-2] via Python's negative-index wraparound (which
+    would silently return data from the *end* of the list, not raise) —
+    it must return the zero-vector sentinel instead."""
+    positions = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (999.0, 999.0, 999.0)]
+    assert _impact_vector(positions, 0) == (0.0, 0.0, 0.0)
+
+
+def test_impact_vector_sentinel_at_index_one_never_raises_or_wraps():
+    positions = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (999.0, 999.0, 999.0)]
+    assert _impact_vector(positions, 1) == (0.0, 0.0, 0.0)
+
+
+def test_impact_vector_computes_normally_from_index_two_onward():
+    positions = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (2.0, 0.0, 0.0)]
+    assert _impact_vector(positions, 2) == (1.0, 0.0, 0.0)
+
+
+def test_tiny_positive_floating_point_noise_max_speed_is_treated_as_stationary():
+    """max(speed) being a tiny positive float (not exactly 0.0) must not
+    let the 0.5×max_speed threshold admit frames and report a fake
+    impact from pure rounding noise."""
+    fps = 24.0
+    noise = 1e-13
+    positions = [(i * noise, 0.0, 0.0) for i in range(30)]
+    samples = list(enumerate(positions))
+    assert detect_impact(samples, fps=fps) is None
