@@ -30,7 +30,7 @@ Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-129/129 passing as of the last session. Tier A + Tier B only — no
+133/133 passing as of the last session. Tier A + Tier B only — no
 Blender needed to run this at all.
 
 Two fixes carried forward into this session, both landed before M4:
