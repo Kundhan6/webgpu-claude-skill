@@ -10,8 +10,22 @@ import json
 
 import bpy
 
-from ..core.naming import CF_GENERATED_KEY, CF_UID_KEY, match_snapshot_records
+from ..core.naming import CF_GENERATED_KEY, CF_UID_KEY, match_snapshot_records, parse_snapshot
 from ..core.report import StageResult
+
+
+def _load_snapshot_records(scene):
+    """Decode + validate scene.crash_forge.original_state. Returns
+    (records, error); records is [] on any failure, including malformed
+    JSON — treated the same as an unrecognised schema, not a crash."""
+    raw = scene.crash_forge.original_state
+    if not raw:
+        return [], None
+    try:
+        parsed = json.loads(raw)
+    except (ValueError, TypeError) as exc:
+        return [], f"original_state is not valid JSON: {exc}"
+    return parse_snapshot(parsed)
 
 
 class CF_PG_scene_state(bpy.types.PropertyGroup):
@@ -130,11 +144,13 @@ def touched_car_parts(scene):
     cf_* custom property, or named in the original_state snapshot — as
     opposed to cf_generated objects, which are Crash Forge's own.
 
-    original_state is a list of per-part records (see restore_original_state);
-    this only needs their names, so a record missing cf_uid (pre-tagging,
-    or a fallback-only match) doesn't matter here."""
-    raw = scene.crash_forge.original_state
-    snapshot_names = {r["name"] for r in json.loads(raw) if r.get("name")} if raw else set()
+    A snapshot this build can't parse (bad JSON, unrecognised
+    schema_version) just yields an empty name set here — cf_* markers on
+    the objects themselves still catch anything Crash Forge touched. The
+    restore step is where an unparseable snapshot actually gets reported;
+    this is only ever an extra net, never the sole source of truth."""
+    records, _error = _load_snapshot_records(scene)
+    snapshot_names = {r["name"] for r in records if r.get("name")}
     touched = []
     for obj in bpy.data.objects:
         if is_cf_generated(obj):
@@ -170,25 +186,35 @@ def restore_original_state(scene) -> StageResult:
     """§8.0 step 5. No-op (empty StageResult) if CF_Prep (M4) never ran, so
     Reset stays safe to call on a scene Crash Forge has never touched.
 
-    original_state is a JSON list of per-part records:
-        {"cf_uid": str|None, "name": str,
-         "matrix_world": [[...]], "parent_uid": str|None, "parent_name": str|None}
-    cf_uid is CF_Prep's stamp on obj["cf_uid"] at snapshot time — the
-    primary key, because object *names* can change between snapshot and
-    Reset (manual rename, Prep re-running, a duplicate-and-delete) and a
-    name-keyed lookup would then silently miss that object forever. Name
-    is kept only as a fallback for a record that never got a uid.
+    original_state is {"schema_version": int, "records": [...]}, each
+    record: {"cf_uid": str|None, "name": str, "matrix_world": [[...]],
+    "parent_uid": str|None, "parent_name": str|None}. cf_uid is CF_Prep's
+    stamp on obj["cf_uid"] at snapshot time — the primary key, because
+    object *names* can change between snapshot and Reset (manual rename,
+    Prep re-running, a duplicate-and-delete) and a name-keyed lookup would
+    then silently miss that object forever. Name is kept only as a
+    fallback for a record that never got a uid.
 
-    Every record either restores a live object or is recorded as missing
-    — restoring some parts and staying silent about the rest is exactly
-    the stale-state trap §1.3 describes; the caller must surface the tally.
+    A snapshot whose schema_version this build doesn't recognise is
+    refused outright — reported as an error, zero objects touched — rather
+    than guessed at. CF_Prep is a separate, not-yet-built stage; the two
+    sides drifting silently is a worse failure than refusing to run.
+
+    Every record that *is* accepted either restores a live object or is
+    recorded as missing — restoring some parts and staying silent about
+    the rest is exactly the stale-state trap §1.3 describes; the caller
+    must surface the tally.
     """
     result = StageResult()
     raw = scene.crash_forge.original_state
     if not raw:
         return result
 
-    records = json.loads(raw)
+    records, error = _load_snapshot_records(scene)
+    if error is not None:
+        result.error(error)
+        return result
+
     live_objects = list(bpy.data.objects)
     live_index = [(obj.get(CF_UID_KEY), obj.name) for obj in live_objects]
 
