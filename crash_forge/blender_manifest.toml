@@ -1,0 +1,20 @@
+schema_version = "1.0.0"
+
+id = "crash_forge"
+version = "0.2.0"
+name = "Crash Forge"
+tagline = "Automated pre-baked rigid-to-soft-body car crash rig"
+maintainer = "Krish <noreply@example.com>"
+type = "add-on"
+
+website = ""
+
+tags = ["Physics", "Animation", "Object"]
+
+blender_version_min = "5.0.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+copyright = ["2026 Krish"]
