@@ -6,6 +6,17 @@ import bpy
 
 from ..bl import scene as bl_scene
 
+_BLENDER_REPORT_LEVELS = {'INFO', 'WARNING', 'ERROR'}
+
+
+def _relay(operator, result):
+    """Surface every Notice a StageResult collected via self.report(), so a
+    partial restore (or any other stage outcome) is visible in the UI/log
+    instead of only living in a return value nobody reads (§1.3)."""
+    for notice in (*result.errors, *result.warnings):
+        level = notice.severity.value if notice.severity.value in _BLENDER_REPORT_LEVELS else 'ERROR'
+        operator.report({level}, notice.message)
+
 
 class CF_OT_reset(bpy.types.Operator):
     bl_idname = "crashforge.reset"
@@ -31,7 +42,9 @@ class CF_OT_reset(bpy.types.Operator):
             bl_scene.clean_original_part(context, obj)
 
         # 5. Restore transforms/parenting from the original_state snapshot.
-        bl_scene.restore_original_state(scene)
+        # Never silent: every record is either restored or named as missing.
+        restore_result = bl_scene.restore_original_state(scene)
+        _relay(self, restore_result)
 
         # Self-check (§8.0): assert both post-conditions before declaring success.
         problems = bl_scene.reset_self_check(scene)

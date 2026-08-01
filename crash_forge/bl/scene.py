@@ -10,7 +10,8 @@ import json
 
 import bpy
 
-from ..core.naming import CF_GENERATED_KEY
+from ..core.naming import CF_GENERATED_KEY, CF_UID_KEY, match_snapshot_records
+from ..core.report import StageResult
 
 
 class CF_PG_scene_state(bpy.types.PropertyGroup):
@@ -127,9 +128,13 @@ def purge_orphaned_constraint_empties(context) -> None:
 def touched_car_parts(scene):
     """Original car parts Crash Forge has touched: anything carrying a
     cf_* custom property, or named in the original_state snapshot — as
-    opposed to cf_generated objects, which are Crash Forge's own."""
+    opposed to cf_generated objects, which are Crash Forge's own.
+
+    original_state is a list of per-part records (see restore_original_state);
+    this only needs their names, so a record missing cf_uid (pre-tagging,
+    or a fallback-only match) doesn't matter here."""
     raw = scene.crash_forge.original_state
-    snapshot_names = set(json.loads(raw).keys()) if raw else set()
+    snapshot_names = {r["name"] for r in json.loads(raw) if r.get("name")} if raw else set()
     touched = []
     for obj in bpy.data.objects:
         if is_cf_generated(obj):
@@ -161,22 +166,59 @@ def clean_original_part(context, obj) -> None:
             del obj[key]
 
 
-def restore_original_state(scene) -> None:
-    """§8.0 step 5. No-op if CF_Prep (M4) never ran, so Reset stays safe to
-    call on a scene Crash Forge has never touched."""
+def restore_original_state(scene) -> StageResult:
+    """§8.0 step 5. No-op (empty StageResult) if CF_Prep (M4) never ran, so
+    Reset stays safe to call on a scene Crash Forge has never touched.
+
+    original_state is a JSON list of per-part records:
+        {"cf_uid": str|None, "name": str,
+         "matrix_world": [[...]], "parent_uid": str|None, "parent_name": str|None}
+    cf_uid is CF_Prep's stamp on obj["cf_uid"] at snapshot time — the
+    primary key, because object *names* can change between snapshot and
+    Reset (manual rename, Prep re-running, a duplicate-and-delete) and a
+    name-keyed lookup would then silently miss that object forever. Name
+    is kept only as a fallback for a record that never got a uid.
+
+    Every record either restores a live object or is recorded as missing
+    — restoring some parts and staying silent about the rest is exactly
+    the stale-state trap §1.3 describes; the caller must surface the tally.
+    """
+    result = StageResult()
     raw = scene.crash_forge.original_state
     if not raw:
-        return
-    snapshot = json.loads(raw)
-    for name, state in snapshot.items():
-        obj = bpy.data.objects.get(name)
-        if obj is None:
-            continue
-        if "matrix_world" in state:
-            obj.matrix_world = state["matrix_world"]
-        if "parent" in state:
-            parent_name = state["parent"]
-            obj.parent = bpy.data.objects.get(parent_name) if parent_name else None
+        return result
+
+    records = json.loads(raw)
+    live_objects = list(bpy.data.objects)
+    live_index = [(obj.get(CF_UID_KEY), obj.name) for obj in live_objects]
+
+    matches, missing = match_snapshot_records(records, live_index)
+
+    restored = 0
+    for record_idx, live_idx in matches.items():
+        record = records[record_idx]
+        obj = live_objects[live_idx]
+
+        if "matrix_world" in record:
+            obj.matrix_world = record["matrix_world"]
+
+        if "parent_uid" in record or "parent_name" in record:
+            obj.parent = _resolve_one(record.get("parent_uid"), record.get("parent_name"), live_index, live_objects)
+
+        restored += 1
+
+    result.data.update(total=len(records), restored=restored, missing=missing)
+    if missing:
+        result.warn(f"Restored {restored} of {len(records)} part(s); {len(missing)} not found: {missing}")
+    else:
+        result.info(f"Restored {restored} of {len(records)} part(s)")
+    return result
+
+
+def _resolve_one(uid, name, live_index, live_objects):
+    matches, _ = match_snapshot_records([{"cf_uid": uid, "name": name}], live_index)
+    idx = matches.get(0)
+    return live_objects[idx] if idx is not None else None
 
 
 def reset_self_check(scene) -> list:
