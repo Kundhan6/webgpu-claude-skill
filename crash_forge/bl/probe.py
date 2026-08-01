@@ -132,6 +132,113 @@ def _probe_rigidbody_object_add_poll(result: StageResult) -> None:
     result.info(f"rigidbody.object_add poll by type: {poll_by_type}")
 
 
+def _probe_auto_smooth_modifier(result: StageResult) -> None:
+    """§4/§15: "Smooth by Angle" auto-smooth is a Geometry Nodes modifier
+    (4.1+, so this part holds on 5.1 as well as 5.2), but §4 flags the
+    *Python API for reading a GN modifier's input properties* as having
+    changed specifically in 5.2 — meaning 5.1 and 5.2 may need different
+    code to reach the same value. Guessing which API shape is live would
+    be exactly the assumption §3 rule 1 forbids, so this empirically
+    checks both known shapes (node_group.interface.items_tree vs the
+    older node_group.inputs) on whatever build is actually running and
+    records which one exists. Runs entirely on a throwaway temp object,
+    cleaned up in `finally`; never touches a real object.
+    """
+    if _op_exists("object.shade_auto_smooth") is None:
+        return  # already reported as missing by the caller
+
+    scene = bpy.context.scene
+    if scene is None:
+        result.warn("auto-smooth modifier probe: no active scene, skipped")
+        return
+
+    mesh = bpy.data.meshes.new("CF_probe_tmp_smooth_mesh")
+    mesh.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], [], [(0, 1, 2, 3)])
+    mesh.update()
+    obj = bpy.data.objects.new("CF_probe_tmp_smooth_obj", mesh)
+    scene.collection.objects.link(obj)
+    prev_active = bpy.context.view_layer.objects.active
+
+    try:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        before = {m.name for m in obj.modifiers}
+        try:
+            with bpy.context.temp_override(object=obj, active_object=obj, selected_objects=[obj]):
+                bpy.ops.object.shade_auto_smooth()
+        except Exception as exc:
+            result.error(f"object.shade_auto_smooth() raised: {exc}")
+            return
+
+        added = [m for m in obj.modifiers if m.name not in before]
+        if not added:
+            result.warn(
+                "object.shade_auto_smooth() added no new modifier on this build "
+                "— it may set a mesh flag instead; §4's 'modifier, not a mesh "
+                "flag' claim needs re-checking on whatever version this ran on"
+            )
+            result.data["auto_smooth_modifier_type"] = None
+            return
+
+        mod = added[0]
+        result.data["auto_smooth_modifier_type"] = type(mod).__name__
+        result.data["auto_smooth_modifier_name"] = mod.name
+        result.info(f"shade_auto_smooth added modifier {mod.name!r} of type {type(mod).__name__}")
+
+        node_group = getattr(mod, "node_group", None)
+        if node_group is None:
+            result.warn("auto-smooth modifier has no node_group — cannot probe its GN input API")
+            return
+
+        interface_items = []
+        if hasattr(node_group, "interface") and hasattr(node_group.interface, "items_tree"):
+            result.data["auto_smooth_gn_interface_api"] = "node_group.interface.items_tree"
+            for item in node_group.interface.items_tree:
+                interface_items.append({
+                    "identifier": getattr(item, "identifier", None),
+                    "name": getattr(item, "name", None),
+                    "in_out": getattr(item, "in_out", None),
+                    "socket_type": getattr(item, "socket_type", None),
+                })
+        elif hasattr(node_group, "inputs"):
+            result.data["auto_smooth_gn_interface_api"] = "node_group.inputs (legacy, pre-4.x-interface-rework)"
+            for item in node_group.inputs:
+                interface_items.append({
+                    "identifier": getattr(item, "identifier", None),
+                    "name": getattr(item, "name", None),
+                })
+        else:
+            result.error(
+                "auto-smooth modifier's node_group exposes neither "
+                "node_group.interface.items_tree nor node_group.inputs — "
+                "GN introspection API on this build is unrecognised"
+            )
+            return
+
+        result.data["auto_smooth_gn_inputs"] = interface_items
+
+        # Try reading each input's live value directly off the modifier via
+        # bracket access keyed by identifier — the pattern GN-modifier code
+        # uses (both pre- and post-5.2) to reach actual input values, as
+        # opposed to just the socket metadata above.
+        readable = {}
+        for item in interface_items:
+            ident = item.get("identifier")
+            if not ident:
+                continue
+            try:
+                readable[ident] = mod[ident]
+            except Exception as exc:
+                readable[ident] = f"<unreadable via mod[{ident!r}]: {exc}>"
+        result.data["auto_smooth_gn_input_values_by_identifier"] = readable
+
+    finally:
+        bpy.context.view_layer.objects.active = prev_active
+        bpy.data.objects.remove(obj, do_unlink=True)
+        bpy.data.meshes.remove(mesh)
+
+
 def _probe_mesh_attributes(result: StageResult) -> None:
     """§6: sharp_face / custom_normal present/removable."""
     mesh = None
@@ -271,7 +378,8 @@ def run_probe() -> StageResult:
         if not _has_prop(remesh_type, "voxel_size"):
             result.error("RemeshModifier.voxel_size: MISSING")
 
-    # shade_auto_smooth — §4/§15: what it adds can only be confirmed live.
+    # shade_auto_smooth — §4/§15: what it adds, and how its GN inputs are
+    # actually reachable, can only be confirmed live.
     if _op_exists("object.shade_auto_smooth") is None:
         result.error("bpy.ops.object.shade_auto_smooth: MISSING")
     else:
@@ -280,6 +388,7 @@ def run_probe() -> StageResult:
             "bpy.ops.object.shade_auto_smooth is present; which modifier it adds and its "
             "index in the stack must be confirmed live (Tier C) before Bind (§8.7/V16) relies on it"
         )
+        _probe_auto_smooth_modifier(result)
 
     # nla.bake
     op = _op_exists("nla.bake")
