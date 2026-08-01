@@ -8,14 +8,14 @@ becomes 1.0 under Blender's own hard clamp, which pins every vertex to
 its goal and produces *zero* deformation — a failure that looks exactly
 like broken code, not a bad value.
 
-The numbers below are Crash Forge's best-known values, either taken
-verbatim from §6's "known ground truth" table (verified against the
-Blender Python API docs) or, where marked `verified=False`, a documented
-placeholder pending live confirmation. `bl/probe.py` reads the *real*
-hard_min/hard_max off bl_rna at runtime; `apply_probe_overrides()` lets it
-correct this table once Blender is actually available. Until then, an
-unverified entry's warning text says so explicitly rather than pretending
-certainty it doesn't have.
+All 11 SoftBodySettings entries below are now confirmed against a live
+Stage 0 probe (Blender 5.1.2, via crash_forge/tests/blender_probe_script.py)
+and match this table exactly, including the two that started as
+documented placeholders: bend=(0, 10) and push=(0, 0.999). `bl/probe.py`
+still reads the real hard_min/hard_max off bl_rna at every run and
+`apply_probe_overrides()` can still correct this table if a future
+Blender build ever disagrees — verified=True means "confirmed once", not
+"exempt from being probed again".
 """
 from dataclasses import dataclass
 from typing import Optional, Union
@@ -48,15 +48,14 @@ RANGE_TABLE: dict = {
     "plastic": RangeSpec(0, 100, int),
     "pull": RangeSpec(0.0, 0.999, float),
     "mass": RangeSpec(0.0, 50000.0, float),
-    # ASSUMPTION, UNVERIFIED — §6 says outright "probe it" for bend; §10.1's
-    # target value is 10, so this hard_max mirrors that as a placeholder,
-    # which is exactly what's needed to prove "bend=110 clamps and warns"
-    # (§13) before Blender is available to confirm the real bl_rna value.
-    # Treat as provisional until bl/probe.py overwrites it from a live build.
-    "bend": RangeSpec(0.0, 10.0, float, verified=False),
-    # ASSUMPTION, UNVERIFIED — not present in §6's ground truth table at all.
-    "push": RangeSpec(0.0, 0.999, float, verified=False),
-    "damping": RangeSpec(0.0, 1.0, float, verified=False),
+    # Confirmed live on Blender 5.1.2 (Stage 0 probe): (0, 10), matching the
+    # placeholder this started as. §6 said "probe it" precisely because this
+    # wasn't in the spec's own ground truth table; now it's been probed.
+    "bend": RangeSpec(0.0, 10.0, float),
+    # Confirmed live on Blender 5.1.2: (0, 0.999).
+    "push": RangeSpec(0.0, 0.999, float),
+    # Confirmed live on Blender 5.1.2: (0, 1).
+    "damping": RangeSpec(0.0, 1.0, float),
 }
 
 

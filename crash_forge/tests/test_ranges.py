@@ -10,6 +10,7 @@ safety-critical test in the add-on.
 import pytest
 
 from crash_forge.core import ranges
+from crash_forge.core.ranges import RANGE_TABLE
 
 
 def test_goal_default_8_clamps_to_1_and_warns():
@@ -60,9 +61,18 @@ def test_plastic_is_coerced_to_int():
     assert result.value == 42
 
 
-def test_unverified_ranges_say_so_in_the_warning():
-    result = ranges.clamped("bend", 110)
-    assert "UNVERIFIED" in result.warning
+def test_unverified_flag_still_surfaces_in_the_warning_when_used():
+    """Every real entry is now confirmed against a live Stage 0 probe
+    (Blender 5.1.2) — bend and push included, previously the only two
+    placeholders — so nothing in RANGE_TABLE exercises verified=False
+    anymore. The mechanism itself must still work for whatever future
+    entry needs it, so this drives it directly rather than through bend."""
+    RANGE_TABLE["_test_unverified_prop"] = ranges.RangeSpec(0.0, 1.0, float, verified=False)
+    try:
+        result = ranges.clamped("_test_unverified_prop", 5)
+        assert "UNVERIFIED" in result.warning
+    finally:
+        del RANGE_TABLE["_test_unverified_prop"]
 
 
 def test_all_baseline_preset_values_from_10_1_pass_clean():

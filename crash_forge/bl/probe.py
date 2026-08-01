@@ -132,6 +132,28 @@ def _probe_rigidbody_object_add_poll(result: StageResult) -> None:
     result.info(f"rigidbody.object_add poll by type: {poll_by_type}")
 
 
+def resolve_gn_input_identifier_by_name(interface_items, name, in_out="INPUT"):
+    """Resolve a Geometry Nodes modifier input's *identifier* by its
+    display name (e.g. "Angle" on the auto-smooth node group) instead of
+    ever hardcoding an identifier string. §4/§15: identifiers are
+    inconsistently named build to build and node-group to node-group
+    (Input_0, Input_1, Socket_1, ...) for the same logical input — the
+    identifier is only ever meaningful once resolved this way, at
+    runtime, against the actual node_group in front of you. Not
+    underscore-prefixed: this is meant for reuse by future bl/ stages
+    (CF_Prep, CF_Bind) that need to read or set this modifier's inputs.
+
+    `interface_items`: the list of dicts this module builds from either
+    node_group.interface.items_tree or the legacy node_group.inputs (see
+    _probe_auto_smooth_modifier). Returns the identifier, or None if no
+    INPUT item with that name exists.
+    """
+    for item in interface_items:
+        if item.get("name") == name and item.get("in_out") == in_out:
+            return item.get("identifier")
+    return None
+
+
 def _probe_auto_smooth_modifier(result: StageResult) -> None:
     """§4/§15: "Smooth by Angle" auto-smooth is a Geometry Nodes modifier
     (4.1+, so this part holds on 5.1 as well as 5.2), but §4 flags the
@@ -204,9 +226,15 @@ def _probe_auto_smooth_modifier(result: StageResult) -> None:
         elif hasattr(node_group, "inputs"):
             result.data["auto_smooth_gn_interface_api"] = "node_group.inputs (legacy, pre-4.x-interface-rework)"
             for item in node_group.inputs:
+                # Normalise to the same shape as the items_tree branch above
+                # (in_out is implicit — .inputs only ever holds inputs) so
+                # the name-resolution logic below works regardless of which
+                # API shape this build has.
                 interface_items.append({
                     "identifier": getattr(item, "identifier", None),
                     "name": getattr(item, "name", None),
+                    "in_out": "INPUT",
+                    "socket_type": getattr(item, "type", None),
                 })
         else:
             result.error(
@@ -218,20 +246,47 @@ def _probe_auto_smooth_modifier(result: StageResult) -> None:
 
         result.data["auto_smooth_gn_inputs"] = interface_items
 
-        # Try reading each input's live value directly off the modifier via
-        # bracket access keyed by identifier — the pattern GN-modifier code
-        # uses (both pre- and post-5.2) to reach actual input values, as
-        # opposed to just the socket metadata above.
+        # Data-holding INPUT sockets only. Geometry sockets (the node
+        # group's actual Geometry in/out) are structural, not values — on
+        # this build they are confirmed *not* readable via mod[identifier]
+        # at all, so don't even attempt them; a guaranteed failure isn't a
+        # discovery, it's just noise crowding out what's actually useful.
         readable = {}
         for item in interface_items:
             ident = item.get("identifier")
-            if not ident:
+            socket_type = item.get("socket_type") or ""
+            if not ident or item.get("in_out") != "INPUT" or "Geometry" in socket_type:
                 continue
             try:
                 readable[ident] = mod[ident]
             except Exception as exc:
                 readable[ident] = f"<unreadable via mod[{ident!r}]: {exc}>"
         result.data["auto_smooth_gn_input_values_by_identifier"] = readable
+
+        # Never hardcode a socket identifier (§4/§15): identifiers are
+        # inconsistently named build to build and even node-group to
+        # node-group (Input_0, Input_1, Socket_1, ...) for the exact same
+        # logical input. Resolve "Angle" by NAME through items_tree, then
+        # use whatever identifier that lookup actually returns — this is
+        # the pattern any future stage touching this modifier (CF_Prep,
+        # CF_Bind) must follow instead of assuming a literal string.
+        angle_identifier = resolve_gn_input_identifier_by_name(interface_items, "Angle")
+        if angle_identifier is None:
+            result.warn("auto-smooth modifier has no INPUT socket named 'Angle' on this build")
+        else:
+            result.data["auto_smooth_angle_identifier"] = angle_identifier
+            try:
+                angle_value = mod[angle_identifier]
+                result.data["auto_smooth_angle_value"] = angle_value
+                result.info(
+                    f"auto-smooth 'Angle' input resolved by name to identifier "
+                    f"{angle_identifier!r}, value={angle_value!r}"
+                )
+            except Exception as exc:
+                result.error(
+                    f"auto-smooth 'Angle' input (resolved by name to identifier "
+                    f"{angle_identifier!r}) is not readable via mod[identifier]: {exc}"
+                )
 
     finally:
         bpy.context.view_layer.objects.active = prev_active
@@ -288,8 +343,14 @@ def run_probe() -> StageResult:
         else:
             result.data["rigidbody_constraint_type_enum"] = sorted(enum_ids)
 
-        for prop_name in RIGIDBODY_CONSTRAINT_PROPS:
-            if not _has_prop(rbc_type, prop_name):
+        # Record every checked prop explicitly — a check that silently
+        # passes with no data entry is indistinguishable from a check that
+        # never ran (§3 rule 1: probe, never assume, applies to the probe's
+        # own report too).
+        constraint_props = {p: _has_prop(rbc_type, p) for p in RIGIDBODY_CONSTRAINT_PROPS}
+        result.data["rigidbody_constraint_props"] = constraint_props
+        for prop_name, present in constraint_props.items():
+            if not present:
                 result.error(f"RigidBodyConstraint.{prop_name}: MISSING")
 
         props = _rna_props(rbc_type) or {}
@@ -325,8 +386,10 @@ def run_probe() -> StageResult:
     if rbw_type is None:
         result.error("bpy.types.RigidBodyWorld: MISSING")
     else:
-        for prop_name in RIGIDBODY_WORLD_PROPS:
-            if not _has_prop(rbw_type, prop_name):
+        world_props = {p: _has_prop(rbw_type, p) for p in RIGIDBODY_WORLD_PROPS}
+        result.data["rigidbody_world_props"] = world_props
+        for prop_name, present in world_props.items():
+            if not present:
                 result.error(f"RigidBodyWorld.{prop_name}: MISSING")
 
     # SoftBodySettings — record every hard_min/hard_max per §6.
@@ -363,8 +426,10 @@ def run_probe() -> StageResult:
     if sdm_type is None:
         result.error("bpy.types.SurfaceDeformModifier: MISSING")
     else:
-        for prop_name in ("target", "is_bound"):
-            if not _has_prop(sdm_type, prop_name):
+        sdm_props = {p: _has_prop(sdm_type, p) for p in ("target", "is_bound")}
+        result.data["surfacedeform_modifier_props"] = sdm_props
+        for prop_name, present in sdm_props.items():
+            if not present:
                 result.error(f"SurfaceDeformModifier.{prop_name}: MISSING")
 
     # Remesh
@@ -373,9 +438,12 @@ def run_probe() -> StageResult:
         result.error("bpy.types.RemeshModifier: MISSING")
     else:
         enum_ids = _enum_ids(remesh_type, "mode") or set()
+        has_voxel_size = _has_prop(remesh_type, "voxel_size")
+        result.data["remesh_mode_enum"] = sorted(enum_ids)
+        result.data["remesh_has_voxel_size"] = has_voxel_size
         if "VOXEL" not in enum_ids:
             result.error(f"RemeshModifier.mode missing VOXEL, got {sorted(enum_ids)}")
-        if not _has_prop(remesh_type, "voxel_size"):
+        if not has_voxel_size:
             result.error("RemeshModifier.voxel_size: MISSING")
 
     # shade_auto_smooth — §4/§15: what it adds, and how its GN inputs are
