@@ -153,6 +153,17 @@ def detect_wheels(parts, lateral_axis: int, vertical_axis: int, whole_center,
     return top4, confidence
 
 
+def _is_wheel_hardware(part: PartDescriptor, wheel_parts) -> bool:
+    """Confirmed on a real car: brake calipers/rotors sit fully inside
+    their own wheel's bounding box. A part whose centroid falls within
+    any wheel's bbox is wheel hardware, never a body panel — exact bbox
+    containment, not a threshold, so this needs no tuning.py entry."""
+    for wheel in wheel_parts:
+        if all(wheel.bbox_min[i] <= part.centroid[i] <= wheel.bbox_max[i] for i in range(3)):
+            return True
+    return False
+
+
 def _assign_wheel_roles(wheel_parts, forward_axis: int, forward_sign: int, lateral_axis: int, whole_center):
     """FL/FR/RL/RR from geometry alone, relative to the whole car's
     centroid (not raw world position, which may be offset from origin).
@@ -193,17 +204,41 @@ def _assign_wheel_roles(wheel_parts, forward_axis: int, forward_sign: int, later
     return roles
 
 
-def _is_glass(part: PartDescriptor, whole_min, whole_max, vertical_axis: int):
+def _has_confirmed_glass_material(parts) -> bool:
+    """True if any part in the scene has a confirmed transmissive
+    material (§12.4 priority 1). When true, _is_glass()'s priority-3
+    planar/high-Z fallback is skipped entirely for every part.
+
+    Confirmed on a real car (Sketchfab Crown Victoria): the car's actual
+    glass ("windows glass_0") has max_transmission=0.9375 and correctly
+    matches priority 1 — but the planar/high-Z fallback *also* fired
+    independently on two roof-mounted, non-glass, opaque parts (a
+    light-bar housing and its lens covers, both max_transmission=0.0)
+    purely because they happen to sit high and thin, exactly like a
+    windshield does. The fallback exists for cars with no glass material
+    at all, so priority 3 can still say something; once a real glass
+    material is already known to exist somewhere in the scene,
+    geometry-only guessing for *other* parts is strictly worse than
+    trusting the material signal and letting the rest fall through
+    (most likely to UNKNOWN) rather than being guessed into GLASS."""
+    return any(p.max_transmission > 0.5 for p in parts)
+
+
+def _is_glass(part: PartDescriptor, whole_min, whole_max, vertical_axis: int, skip_fallback: bool = False):
     """§12.4, in priority order. Only `max_transmission` is available from
     PartDescriptor for the material signal — spec's priority-1 check also
     mentions blend-mode/alpha, which isn't part of this dataclass, so
     that half of priority 1 is out of scope until PartDescriptor grows
-    that field."""
+    that field.
+
+    `skip_fallback`: see _has_confirmed_glass_material() — set True to
+    disable priority 3 entirely once real glass is already confirmed
+    present elsewhere in the scene."""
     if part.max_transmission > 0.5:
         return True, 0.95
     if name_hint(part.name) == PartRole.GLASS:
         return True, 0.7
-    if part.is_planar:
+    if not skip_fallback and part.is_planar:
         norm_z = normalize_point(part.centroid, whole_min, whole_max)[vertical_axis]
         if norm_z > tuning.CLASSIFY_GLASS_FALLBACK_HIGH_Z:
             return True, 0.5
@@ -218,9 +253,10 @@ def detect_glass_names(parts, whole_min, whole_max, vertical_axis: int) -> list:
     (and report, §12.3 step 5) the forward sign *before* calling
     classify() at all, so this can't stay a private detail buried inside
     classify()'s own loop."""
+    skip_fallback = _has_confirmed_glass_material(parts)
     names = []
     for part in parts:
-        is_glass, _conf = _is_glass(part, whole_min, whole_max, vertical_axis)
+        is_glass, _conf = _is_glass(part, whole_min, whole_max, vertical_axis, skip_fallback=skip_fallback)
         if is_glass:
             names.append(part.name)
     return names
@@ -339,10 +375,24 @@ def classify(parts, forward_axis: int, forward_sign_override: Optional[int] = No
     for p in wheel_parts:
         del remaining[p.name]
 
+    # 1.5. Wheel hardware (brake calipers, rotors, ...) — confirmed on a
+    # real car: a part whose centroid sits inside a wheel's own bbox is
+    # never a body panel. Exact bbox containment, no threshold, so this
+    # runs unconditionally right after wheels are known, before anything
+    # downstream (glass, doors) gets a chance to misclassify it by
+    # coincidence the way the lateral-extreme/planar DOOR_L/R heuristic
+    # did with these same parts.
+    if wheel_parts:
+        for name, part in list(remaining.items()):
+            if _is_wheel_hardware(part, wheel_parts):
+                results[name] = Classification(PartRole.UNKNOWN, 0.9)
+                del remaining[name]
+
     # 2. Glass by material (or name/geometry fallback); remove next.
+    skip_glass_fallback = _has_confirmed_glass_material(parts)
     glass_names = []
     for name, part in list(remaining.items()):
-        is_glass, conf = _is_glass(part, whole_min, whole_max, vertical_axis)
+        is_glass, conf = _is_glass(part, whole_min, whole_max, vertical_axis, skip_fallback=skip_glass_fallback)
         if is_glass:
             results[name] = Classification(PartRole.GLASS, conf)
             glass_names.append(name)
