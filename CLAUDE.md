@@ -20,18 +20,22 @@ detection modules (geometry/classify/pairs/impact/density/naming), and
 CF_Prep (Stage 1). M5 (Stage 2 Rig + the V8 explosion test) has not
 started — stop and report after it per §14, don't cascade further.
 
-CF_Prep has now been run once against a real car (a Sketchfab "Crown
-Victoria police car" .glb — Blender 5.1.2, Windows) and found a real
-crash, since fixed (see "Real-car verification" below). Steps 6–12 of
-that verification pass (dump diff, cf_role sanity, frame_end/state,
-idempotency, V21, V1/V2, Reset) were never run — the pass stopped at the
-crash. Re-run the full pass against the same car before trusting any of
-those. `core/validate.py`'s V1/V2/V3/V5 and the added V21 are still
-Tier-A-tested against synthetic data only.
+CF_Prep has now been run **end to end** against a real car (a Sketchfab
+"Crown Victoria police car" .glb — Blender 5.1.2, Windows) and every
+mechanical piece of it — extraction, V1/V2/V3/V5/V21, snapshot, geometry
+cleanup, origin placement, the dump_car.py-schema JSON write, idempotency,
+and CF_Reset — is now confirmed correct on real geometry, not just
+synthetic fixtures (see "Real-car verification" below for the full
+step-by-step results). `core/validate.py`'s exact hard-stop messages for
+V1, V2, and V21 were seen verbatim in a real Blender console and match
+what the code produces. The one thing still wrong is **classification
+accuracy** — Prep runs cleanly and produces *a* role for every part, but
+several of those roles are flatly incorrect on this car (see below).
 `core/geometry`/`classify`'s thresholds were deliberately left untouched
 this session — no further tuning against synthetic fixtures, despite a
-real disagreement already surfacing (see below) — that's a deliberate
-scope decision for *this* session, not a claim the thresholds are fine.
+real disagreement now confirmed twice over (see below) — that's a
+deliberate scope decision for *this* session, not a claim the thresholds
+are fine.
 
 Test command:
 
@@ -44,7 +48,21 @@ Blender needed to run this at all.
 
 First-ever Blender run of CF_Prep, against a real downloaded car
 (Sketchfab Crown Victoria police car, glTF, 13 parts, single-rooted
-hierarchy — no manual regrouping needed). Findings:
+hierarchy — no manual regrouping needed). Ran in two passes: the first
+hit a crash at step 5 and stopped there; the fix landed, then the full
+pass (steps 4–12) re-ran clean start to finish. Full results:
+
+| Step | Result |
+|---|---|
+| 4 — `tools/dump_car.py` | PASS — wrote all 13 parts |
+| 5 — `CF_Prep` | PASS (after the fix below — crashed before it) |
+| 6 — diff `dump_car.py` vs Prep's own dump | PASS — 0 diffs across all 13 parts |
+| 7 — `cf_role` sanity | ran clean, but several roles are wrong (see below) |
+| 8 — `frame_end` / `original_state` | PASS — `frame_end=250`, valid JSON, 13 records |
+| 9 — idempotency | PASS — `cf_uid` unchanged across a second run |
+| 10 — V21 test | PASS — cancelled naming the offending object exactly, clean revert |
+| 11 — V1/V2 tests | PASS — both cancel with the exact spec messages, clean revert |
+| 12 — Reset | PASS — `FINISHED`, zero leftover `cf_*` props, `stage_completed` back to 0 |
 
 - **Crash, fixed:** `bl/apply.py`'s two `bpy.ops` wrappers
   (`apply_shade_auto_smooth`, `set_origin_to_center_of_mass`) relied on
@@ -61,21 +79,37 @@ hierarchy — no manual regrouping needed). Findings:
   return `False` instead of raising, and `ops/prep.py` turns a `False`
   into a clean, named `{'CANCELLED'}` instead of a crash. Covered by
   `tests/test_apply_context.py` — verified those tests fail against the
-  old code and pass against the fix, in both directions.
-- **Not yet addressed — real classification disagreement, flagged for a
-  future session, not fixed this pass (scope decision, not an oversight):**
-  on this car, all four wheels came back with front↔back *and*
-  left↔right swapped simultaneously (WHEEL_FL called WHEEL_RR, etc.) —
-  smells like a 180°-yaw sign issue in `classify.py`'s
-  `_detect_forward_sign` or `_assign_wheel_roles`, not random noise.
-  Separately, this car has no distinct door meshes at all (one joined
-  body shell) and its four brake-caliper meshes were misclassified as
-  `DOOR_L`/`DOOR_R` instead of falling through to `UNKNOWN` — the
-  lateral-extreme-and-planar heuristic in `_classify_remaining_part`
-  matched them by coincidence. Both are `core/classify.py` questions, not
-  `bl/` bugs — worth investigating before trusting classification on any
-  real car, but deliberately left for a separate, explicitly-scoped pass
-  rather than bundled into this crash fix.
+  old code and pass against the fix, in both directions. **Confirmed
+  fixed in the same real Blender session** — the re-run got past step 5
+  and all the way through Reset.
+- **Landmine, not a bug — worth knowing if you ever drive these operators
+  from a script:** `bpy.ops.crashforge.prep()` does not quietly return
+  `{'CANCELLED'}` on a hard stop. Blender's own `bpy.ops` wrapper raises a
+  `RuntimeError` (containing the reported message) whenever a script-invoked
+  operator reports at `ERROR` level, even though `execute()` itself returns
+  `{'CANCELLED'}` cleanly — this is standard Blender behavior for every
+  operator, not something specific to Crash Forge. Anything that drives
+  `crashforge.prep`/`crashforge.reset` from Python (a test harness,
+  `blender_suite.py` when it exists) needs to catch `RuntimeError`, not
+  branch on the return value, to detect a hard stop.
+- **Still open — real classification disagreement, deliberately not fixed
+  this pass (scope decision, confirmed across both verification runs, not
+  an oversight):** on this car, all four wheels came back with
+  front↔back *and* left↔right swapped simultaneously (WHEEL_FL called
+  WHEEL_RR, etc.) — smells like a 180°-yaw sign issue in `classify.py`'s
+  `_detect_forward_sign` or `_assign_wheel_roles`, not random noise. This
+  car has no distinct door meshes at all (one joined body shell) and its
+  four brake-caliper meshes were misclassified as `DOOR_L`/`DOOR_R`
+  instead of falling through to `UNKNOWN` — the lateral-extreme-and-planar
+  heuristic in `_classify_remaining_part` matched them by coincidence. The
+  roof light-bar housing was also misclassified as `GLASS` (it's opaque
+  plastic, not glass) — likely `_is_glass`'s priority-3 planar/high-Z
+  fallback firing on a part that happens to sit high and thin, with no
+  real transmission material to override it. All three are
+  `core/classify.py` questions, not `bl/` bugs — worth investigating
+  before trusting classification on any real car, but deliberately left
+  for a separate, explicitly-scoped pass rather than bundled into the
+  crash fix.
 
 Two fixes carried forward into this session, both landed before M4:
 
