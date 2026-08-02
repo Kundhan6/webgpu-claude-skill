@@ -1,7 +1,7 @@
 """ui/panel.py — View3D > Sidebar > Crash Forge (§16).
 
-Only the inputs, Reset, and Prep are wired up at this stage (M0–M4). The
-rest of §16's layout (CRASH IT, Tuning, remaining per-stage buttons,
+Only the inputs, Reset, Prep, and Rig are wired up at this stage (M0–M5).
+The rest of §16's layout (CRASH IT, Tuning, remaining per-stage buttons,
 Report) lands with the stages that back it — a button for a stage that
 doesn't exist yet would violate §3 rule 10 (never produce a half-built
 result).
@@ -27,6 +27,7 @@ class CF_PT_main(bpy.types.Panel):
 
         layout.separator()
         layout.operator("crashforge.prep", icon='MESH_DATA')
+        layout.operator("crashforge.rig", icon='PHYSICS')
         layout.operator("crashforge.reset", icon='LOOP_BACK')
 
         box = layout.box()

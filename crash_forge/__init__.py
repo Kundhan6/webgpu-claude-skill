@@ -30,9 +30,10 @@ def _submodules():
         from .bl import scene as bl_scene
         from .ops import prep as ops_prep
         from .ops import reset as ops_reset
+        from .ops import rig as ops_rig
         from .ui import panel as ui_panel
 
-        _SUBMODULES = (bl_scene, ops_reset, ops_prep, ui_panel)
+        _SUBMODULES = (bl_scene, ops_reset, ops_prep, ops_rig, ui_panel)
     return _SUBMODULES
 
 

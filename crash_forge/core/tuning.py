@@ -32,13 +32,20 @@ CLASSIFY_LATERAL_EXTREME = 0.75
 # car. §12.1 step 4 only says "rear half, high Z, broad and flat", which
 # a real Crown Victoria's roof-mounted light bar also satisfied purely by
 # geometric coincidence (high, planar, thin-vertical, and a bare 46.5% of
-# the way forward — comfortably inside "rear half"). Requiring the rear
-# quarter separates a real boot lid (this car's own glass/interior data
-# puts the cabin, let alone the boot behind it, well toward the rear) by
-# a wide margin, not a coin flip: every synthetic fixture's own Boot part
-# sits at fwd=0.2375 (verified numerically, not assumed), comfortably
-# inside 0.25; the light bar's fwd=0.465 is nowhere close.
-CLASSIFY_BOOT_REAR_EXTREME = 0.25
+# the way forward — comfortably inside "rear half").
+#
+# The known data points bracket a gap: every synthetic fixture's own Boot
+# part sits at fwd=0.2375, the light bar sits at fwd=0.465. That's one
+# data point on each side, not three-vs-one — sedan/suv/van/badly_named
+# all place Boot at the same fixed fraction of hl_body
+# (car_fixture_builder.py::make_car), so fwd=0.2375 is scale-invariant by
+# construction across all four fixtures, not four independent
+# confirmations. 0.25 (the first value tried) placed the line at the edge
+# of the true class — a 0.0125 margin above the Boot fixtures — instead of
+# the middle of the gap between the two known points. 0.35 sits at
+# roughly the midpoint of [0.2375, 0.465] instead, with comfortable margin
+# on both sides; verified numerically against both, not assumed.
+CLASSIFY_BOOT_REAR_EXTREME = 0.35
 
 # §12.2: score floor a wheel candidate must clear before being considered
 # plausible at all (roundness × bottom-third weighting).
@@ -80,6 +87,28 @@ IMPACT_MIN_MAX_SPEED = 1e-9
 # scales roughly with remeshed surface area ÷ voxel_size², not any exact
 # formula Blender documents. ~2 verts per voxel-sized surface patch.
 DENSITY_ASSUMED_VERTS_PER_VOXEL_AREA = 2.0
+
+# --- core/rig.py --------------------------------------------------------
+
+# §8.2 step 2: "derive from bounding volume x a per-role density
+# constant. Chassis dominates (~70% of total)." No exact density is
+# given anywhere in the spec. These are picked so a typical car's BODY
+# bbox volume — already the largest of any part by construction
+# (classify.py step 3 assigns BODY to the single largest-volume
+# remaining part) — naturally ends up carrying most of the total mass,
+# without a forced renormalization pass. Entirely unverified against a
+# real car's actual mass distribution; retune here the same as every
+# other constant in this file once real numbers exist to check against.
+RIG_DENSITY_BODY = 150.0
+RIG_DENSITY_PANEL = 80.0
+RIG_DENSITY_WHEEL = 40.0
+RIG_DENSITY_GLASS = 25.0  # explicitly "low mass" per §8.2 step 1 — a thin bbox already keeps this small
+
+# Floor under the per-part mass derivation above: an ACTIVE rigid body
+# with ~0 mass (a degenerate, near-zero-volume part) is undefined/
+# unstable behaviour in Bullet, not a real physics scenario worth
+# modelling.
+RIG_MIN_MASS = 0.1
 
 # --- core/pairs.py ------------------------------------------------------
 

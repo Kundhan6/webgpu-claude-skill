@@ -10,7 +10,7 @@ anything else is removed), so these tests pass the full part list with
 wheels added/removed/resized, not an isolated wheels-only list; a
 wheels-only list has no "car" to be in the bottom third of.
 """
-from crash_forge.core.classify import PartDescriptor, detect_wheels
+from crash_forge.core.classify import PartDescriptor, detect_wheels, find_wheel_hardware_parents
 from crash_forge.core.geometry import centroid as bbox_centroid
 from crash_forge.core.geometry import union_bbox
 
@@ -89,3 +89,41 @@ def test_asymmetric_sizes_lower_confidence_even_at_four_candidates():
     wheels, confidence = _detect(resized)
     assert {p.name for p in wheels} == {"Wheel_FL", "Wheel_FR", "Wheel_RL", "Wheel_RR"}
     assert confidence < 0.8
+
+
+# --- find_wheel_hardware_parents() (public since M5) ----------------------
+#
+# §_is_wheel_hardware's bbox-containment test, exposed as its own signal
+# instead of being folded into a blanket UNKNOWN role -- the "M5 rigging
+# requirement, noted not built" from the M4.5 session: Stage 2 Rig needs
+# to know *which* wheel a caliper/rotor belongs to, to parent it there
+# instead of welding it to the body chassis.
+
+
+def test_hardware_maps_to_the_wheel_that_contains_it():
+    car = load_fixture("sedan")
+    wheels, _confidence = _detect(car)
+    fl = next(w for w in wheels if w.name == "Wheel_FL")
+    rl = next(w for w in wheels if w.name == "Wheel_RL")
+
+    caliper_fl = PartDescriptor(name="Caliper_FL", bbox_min=fl.centroid, bbox_max=fl.centroid, centroid=fl.centroid, vert_count=27)
+    caliper_rl = PartDescriptor(name="Caliper_RL", bbox_min=rl.centroid, bbox_max=rl.centroid, centroid=rl.centroid, vert_count=27)
+
+    mapping = find_wheel_hardware_parents([caliper_fl, caliper_rl], wheels)
+
+    assert mapping == {"Caliper_FL": "Wheel_FL", "Caliper_RL": "Wheel_RL"}
+
+
+def test_part_outside_every_wheel_is_not_mapped():
+    car = load_fixture("sedan")
+    wheels, _confidence = _detect(car)
+    body = next(p for p in car if p.name == "Body")
+
+    mapping = find_wheel_hardware_parents([body], wheels)
+
+    assert mapping == {}
+
+
+def test_no_wheels_gives_no_mapping_not_a_crash():
+    caliper = PartDescriptor(name="Caliper", bbox_min=(0, 0, 0), bbox_max=(0, 0, 0), centroid=(0, 0, 0), vert_count=27)
+    assert find_wheel_hardware_parents([caliper], []) == {}

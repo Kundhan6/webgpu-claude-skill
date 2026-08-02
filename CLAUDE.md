@@ -15,17 +15,18 @@ this is pitfalls and rationale, not a tour.
 
 ## Status
 
-M0–M4 complete. **M4.5 (`core/classify.py` fixes) is done — classification
-is now clean on the real car, M5 is unblocked.** All 13/13 real-car parts
-classify correctly (the `Roof light bar_0` miss from the previous round
-is fixed — see "M4.5" below); `core/classify.py`'s only other confirmed
-uncoupled-`forward_sign` bug (`DOOR_L`/`DOOR_R`) is fixed too, pre-emptively,
-without waiting for a real car with doors to exist. **M5 (Stage 2 Rig +
-the V8 explosion test) has not started this session — stop and report
-after it per §14, don't cascade further**, but nothing is blocking it
-from starting next session. One M5-relevant rigging requirement was
-surfaced but deliberately not acted on — see "M5 rigging requirement,
-noted not built" below.
+M0–M5 complete. **M5 (Stage 2 Rig + the V8 3-frame explosion test) is
+done this session — stop and report per §14, don't start M6.** See
+"M5 — Stage 2 Rig" below for what was built, the scope decisions made
+(barrier handling, wheel-hardware parenting, motor target velocity), and
+the exact Blender steps to verify it.
+
+Also this session, before M5: `core/tuning.py::CLASSIFY_BOOT_REAR_EXTREME`
+moved from 0.25 to 0.35 — see "CLASSIFY_BOOT_REAR_EXTREME: 0.25 -> 0.35"
+below.
+
+M0–M4.5 status (classification, verified against a real car) is unchanged
+from last session — see "M4.5" below, kept as-is.
 
 CF_Prep has been run **end to end** against a real car (a Sketchfab
 "Crown Victoria police car" .glb — Blender 5.1.2, Windows) and every
@@ -43,11 +44,10 @@ Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-175/175 passing as of the last session — no xfails; the one from the
-previous round (`Roof light bar_0`) got fixed and its `strict=True`
-marker caught the fix working, forcing the marker to be removed rather
-than silently going green. Tier A + Tier B only — no Blender needed to
-run this at all.
+200/200 passing as of this session (175 carried forward + 25 new: M5's
+`tests/test_rig.py`, plus 3 for `core/classify.py::find_wheel_hardware_parents`
+in `test_wheels.py`) — no xfails. Tier A + Tier B only — no Blender needed
+to run this at all.
 
 ## M4.5 — classify.py real-car fixes (this session)
 
@@ -206,7 +206,7 @@ both be "plausible" wheel candidates; the wheels still win by score on
 this car (correctly, confirmed), but the margin is close enough to be
 worth knowing about if a future car's caliper shape tips the other way.
 
-## M5 rigging requirement, noted not built
+## M5 rigging requirement — flagged last session, built this session
 
 **Wheel hardware must follow its parent wheel, not the body, once M5
 rigs it.** `classify()` maps brake calipers/rotors to `UNKNOWN`, and
@@ -216,14 +216,144 @@ for wheel hardware) but **not** the same thing as correct *rig* behaviour.
 If a wheel detaches on impact (§9's breakable panel constraints) and its
 caliper is welded to the chassis instead of parented to that wheel, the
 caliper stays behind, floating in mid-air where the wheel used to be,
-while the wheel itself flies off without it. M5 needs to either give
-wheel-hardware parts their own rig treatment (rigidly attached to their
-*wheel*, not the body) or otherwise special-case them — `cf_role=UNKNOWN`
-alone doesn't carry enough information to do this automatically; M5 may
-need `_is_wheel_hardware()`'s bbox-containment result (or an equivalent
-check) surfaced as its own signal, not folded into `UNKNOWN` indistinguishably
-from every other catch-all part. Flagged now, per the reviewer's explicit
-instruction, rather than acted on — this is M5 scope, not M4.5's.
+while the wheel itself flies off without it. Flagged, not acted on, at
+the end of the M4.5 session — this was M5 scope, not M4.5's.
+
+**Built this session:** `core/classify.py::find_wheel_hardware_parents()`
+(new, public — a refactor of the existing `_is_wheel_hardware()` bbox
+containment test that now also reports *which* wheel each hardware part
+belongs to, not just that it's hardware). `core/rig.py::build_rig_plan()`
+uses it to route every hardware part to `wheel_hardware_parent[name] =
+<wheel name>`; `bl/rig.py::apply_rig_plan()` parents each one directly to
+its own wheel object. See "M5 — Stage 2 Rig" below for the rest.
+
+## CLASSIFY_BOOT_REAR_EXTREME: 0.25 -> 0.35 (this session, before M5)
+
+The reviewer's read: 0.25 sat at the edge of the true class (every
+synthetic fixture's own Boot part is at fwd=0.2375 — a 0.0125 margin)
+instead of the middle of the gap between the two known data points
+(Boot at 0.2375, the real light bar at 0.465). Moved to 0.35 — close to
+the true midpoint (≈0.351) — and confirmed both sides still hold:
+`tests/test_classify_structural.py`'s two BOOT tests and
+`tests/test_real_car.py`'s `Roof light bar_0`/`roof lights_0` cases all
+still pass at the new threshold. `core/tuning.py`'s comment was rewritten
+in the same pass to note explicitly that sedan/suv/van/badly_named all
+place Boot at the *same* fraction of `hl_body`
+(`car_fixture_builder.py::make_car`), so the fwd=0.2375 data point is one
+scale-invariant confirmation, not three or four independent ones — the
+previous comment's "verified against all three synthetic fixtures" read
+as more independent evidence than it actually was.
+
+## M5 — Stage 2 Rig (this session)
+
+Built `core/rig.py` (pure planning, no bpy — `build_rig_plan()` +
+`check_explosion()`), `bl/rig.py` (the bpy execution layer), and
+`ops/rig.py` (`crashforge.rig`), wired into `__init__.py` and the panel.
+25 new Tier A tests (`tests/test_rig.py`, plus 3 in `test_wheels.py` for
+`find_wheel_hardware_parents`) — 200/200 total, still Tier A + Tier B
+only. **Nothing here has run in Blender yet** — see "Blender verification
+steps for M5" at the end of this file for exactly what to run.
+
+**§9's constraint graph, built correctly from the start rather than
+fixed up after the fact:** every `ACTIVE` rigid body always gets
+`CONVEX_HULL` (V6 never needs to auto-fix anything Rig itself built);
+every overlapping rigid-part pair always gets a `CF_NoCol_` constraint
+(V7, via `core/pairs.py::generate_pairs()` — already spec-compliant,
+unchanged); 4 hinges (all wheels) + 2 motors (rear wheels only, §9.2's
+"two motors rather than four") per car; one breakable `FIXED` constraint
+per door/hood/boot/bumper, `breaking_threshold` from §12.6's formula
+using `scene.crash_forge.speed_kmh`/`panel_toughness` (already-known user
+inputs, available at Rig time — no need to wait for Drive).
+
+**Three scope decisions, made explicitly rather than guessed at:**
+
+1. **Wheel motor target velocity is left at 0.0.** §9.2's table and
+   §8.4 CF_Drive step 3 both describe setting it from `speed_kmh` and
+   wheel radius, but Drive is not built (M6+) and doesn't need to be for
+   M5's rest test — 0.0 is the physically correct value for a car at
+   rest, and it's Drive's job to overwrite it later.
+2. **`CF_Barrier` auto-creation is out of scope.** §8.2 step 1 lists a
+   barrier rigid body among what Rig sets up, but §8.4 CF_Drive step 2
+   is explicitly where `CF_Barrier` gets created if the user supplied no
+   `target_object`. Rig rigs a `target_object` if one already exists
+   (`PASSIVE`, `MESH`, + a Collision modifier per §9.5), but builds a
+   car-only rig if not — which is exactly what a rest test needs: nothing
+   is driving into anything.
+3. **Two kinds of part get parented, not rigid-bodied, to stay inside
+   "12–20 rigid parts, never more" (§3 rule 7) without literally joining
+   meshes** (Surface Deform in a later stage needs every original piece
+   separate, §2.2 step 6): wheel hardware parents to its own wheel;
+   every other `UNKNOWN`/uncategorised part parents to the chassis
+   ("welded to the body", §12.1 step 4). This is plain
+   `obj.parent = ...`, never a rigid body `FIXED` constraint — §8.2's
+   "No part welding" refers specifically to v1's broken FIXED-constraint
+   weld (§1.1/§1.2), a different mechanism entirely. One consequence
+   worth knowing: `CF_Reset` already restores every part's original
+   parent from `original_state` (CF_Prep's snapshot, unconditionally, on
+   every Reset run) — so undoing Rig's parenting needed **zero** changes
+   to `bl/scene.py` or `ops/reset.py`. Confirmed by reading the existing
+   Reset code path, not assumed.
+
+**Stage 0 probe: nothing new added.** Every bpy surface `core/rig.py`'s
+plan is executed against — `rigidbody.object_add`, `rigidbody.constraint_add`,
+`RigidBodyConstraint.type/props`, `motor_properties`,
+`RigidBodyObject.collision_shape`, `scene.rigidbody_world` — is already
+in `PROBE_ROWS` and confirmed (see "Facts already confirmed" in this
+session's task). Two things `bl/rig.py` relies on are genuinely
+unconfirmed and **not** added as new probe rows, on purpose — they're
+either out of §6's table's explicit scope or too basic/stable a
+property to be worth gating a whole stage on, the same status as
+`obj.scale`/`obj.parent`/`obj.matrix_world`, which Prep already uses
+unprobed:
+- `RigidBodyObject.type` (`ACTIVE`/`PASSIVE`) and `.mass` — not in §6's
+  RigidBodyObject row (only `collision_shape` is), and unchanged, stable
+  API since Blender 2.67.
+- `bpy.ops.rigidbody.constraint_add`'s poll-by-type — confirmed to
+  *exist* (already probed), but whether `EMPTY` specifically passes its
+  poll was never tested the way `object_add`'s MESH-only restriction
+  was. Standard Blender workflow uses Empties for constraints; if this
+  is wrong, expect a poll() RuntimeError on the very first hinge/motor/
+  break/no-collide constraint Krish's Tier C run tries to create — loud
+  and immediate, not silent.
+If Krish's Blender run below turns up a real gap here, add the probe row
+before touching `bl/rig.py` again, per §3's non-negotiable rules.
+
+**The 3-frame explosion test (§8.2 step 5 / V8), the actual point of
+this milestone:** `ops/rig.py` samples every rigid part's world position
+right after building the rig, steps the scene 3 frames with nothing
+driving it (`bl/rig.py::step_frames()`), samples again, restores the
+original frame, then calls `core/rig.py::check_explosion()` — pure,
+Tier-A-tested comparison logic. It measures each non-chassis part's
+displacement **relative to the chassis** (so a chassis settling slightly
+under gravity doesn't itself count against every other part) against
+5% of the car's own length (§8.2 step 5's literal number, scale-relative
+like `core/pairs.py`'s own margin). A failure names the single worst
+offending part, then `ops/rig.py` tears the whole rig back down — reusing
+`bl/scene.py`'s existing Reset helpers (`remove_cf_generated_objects` +
+`purge_orphaned_constraint_empties`) rather than a second cleanup path —
+before returning `{'CANCELLED'}`. Never a half-built rig left in the
+scene (§3 rule 10).
+
+**Known gap, flagged not fixed: idempotency (§3 rule 4).** Rig is the
+first stage that creates brand-new objects, and `ops/rig.py` does not
+yet clean up a *previous* Rig run's own artifacts before building a new
+one. Mitigated, not solved: `CF_OT_rig.poll()` requires
+`stage_completed == 1` exactly, so clicking Rig twice in a row is
+blocked (Reset is required in between). This does not close every path
+— Prep resets `stage_completed` to 1 on every successful run regardless
+of its previous value, and has no reason today to know Rig exists or to
+clean up after it, so Prep -> Rig -> Prep -> Rig without a Reset in
+between can still leave orphaned first-generation `CF_Hinge_*`/etc.
+objects sitting in the scene. The real fix likely belongs in
+`ops/prep.py` (invalidate/clean stage >= 2 artifacts on re-run, matching
+§7.2's own wording: "Re-running stage n... invalidates everything
+downstream"), not in Rig itself — noted for a future session, not acted
+on now.
+
+**Not verified in this session — genuinely can't be, no Blender here:**
+whether the rig actually holds together in real Blender at all. Every
+line above is code review and Tier A logic, not a real simulation run.
+See the Blender verification steps at the end of this file.
 
 ### Real-car verification (this session)
 
@@ -393,10 +523,15 @@ retune there — one file, not a hunt through four modules:
 
 - `CLASSIFY_LOW_Z`, `CLASSIFY_HIGH_Z`, `CLASSIFY_FORWARD_EXTREME`,
   `CLASSIFY_LATERAL_EXTREME`, `CLASSIFY_WHEEL_SCORE_FLOOR`,
-  `CLASSIFY_GLASS_FALLBACK_HIGH_Z`, `CLASSIFY_BOOT_REAR_EXTREME`
+  `CLASSIFY_GLASS_FALLBACK_HIGH_Z`, `CLASSIFY_BOOT_REAR_EXTREME` (0.35
+  as of this session — see "CLASSIFY_BOOT_REAR_EXTREME: 0.25 -> 0.35" above)
 - `IMPACT_SPIKE_FACTOR`, `IMPACT_EPSILON_FACTOR`, `IMPACT_MIN_MAX_SPEED`
 - `DENSITY_ASSUMED_VERTS_PER_VOXEL_AREA`
 - `PAIRS_DEFAULT_MARGIN_FRACTION`
+- `RIG_DENSITY_BODY`, `RIG_DENSITY_PANEL`, `RIG_DENSITY_WHEEL`,
+  `RIG_DENSITY_GLASS`, `RIG_MIN_MASS` (M5, this session — §8.2 step 2's
+  mass derivation; entirely unverified against a real car's actual mass
+  distribution, same status as everything else in this file)
 
 Constants that *are* spec-given (§12.2's 15% wheel-size tolerance, §11
 V11's 5-frame boundary, §12.5's ~200k-vert ceiling, §8.5's 0.5×max_speed
@@ -426,3 +561,66 @@ car (Scripting tab, select the hierarchy, Run Script). Dumps raw
 PartDescriptor JSON — bbox, centroid, extents, vert count, materials,
 transmission, planarity — and assigns zero part roles. Krish labels roles
 by hand from that JSON; don't do it for him.
+
+## Blender verification steps for M5 (Krish, from scratch)
+
+Nothing below has been run in Blender. Written assuming zero prior
+context of your car — every step names exactly what to look at and what
+"correct" looks like, not just "run it and see."
+
+0. Remove any previously installed Crash Forge extension from Blender
+   Preferences first (see "Landmines" above — a stale copy shadows the
+   new code via `sys.modules` and produces confusing failures that have
+   nothing to do with M5 itself). Install/reload this build, confirm the
+   Stage 0 probe printout in the console still looks like last session's
+   (no new errors — M5 added no new probe rows on purpose).
+1. Open your car (the same one CF_Prep has already been verified against
+   is fine, or a fresh one — CF_Prep must run clean first either way).
+   Set Car in the panel, click **Prep**. Confirm it finishes `{'FINISHED'}`
+   and the console/report line looks like last session's.
+2. Click **Rig** (new button, between Prep and Reset). Watch the report
+   line and the console:
+   - **If it reports success:** it will read something like `CF_Rig: N
+     rigid part(s), 4 hinge(s), 2 motor(s), M breakable panel(s), K
+     no-collide pair(s) — rest test passed (worst displacement X / Y
+     threshold)`. Open the Outliner: you should see new `CF_Hinge_*`,
+     `CF_Motor_*`, `CF_Break_*`, `CF_NoCol_*` empties, and each rigid
+     part (Body, 4 wheels, doors/hood/boot/bumpers, glass) should show a
+     Rigid Body entry in its Physics properties tab (chassis/wheels/
+     panels/glass = Active, `Convex Hull`; a target object if you set
+     one = Passive, `Mesh`). Any brake calipers/rotors should now be
+     parented (in the Outliner hierarchy) under their own wheel, not
+     under Body — expand a wheel object and confirm.
+   - **If it reports the 3-frame rest-test failure** (`"exploded on the
+     3-frame rest test — '<part>' moved ..."`): that is real, useful
+     information, not a bug report waiting to happen — paste the exact
+     message and console output back. Do **not** try to work around it
+     by hand; the whole point of this milestone is that this check
+     catches exactly the failure mode that killed v1.
+   - **If it raises a Python traceback instead of a clean report**
+     (`RuntimeError`, `AttributeError`, anything not a `self.report(...)`
+     line): this is the most likely real gap — paste the full traceback.
+     The two most likely places, per this session's report above: (a)
+     `bpy.ops.rigidbody.constraint_add`'s poll rejecting an Empty (never
+     independently probed — see "M5 — Stage 2 Rig" above), or (b) the
+     `RigidBodyObject.type`/`.mass` properties not existing/being named
+     differently than assumed.
+3. Whether step 2 passed or hit the rest-test failure, click **Reset**.
+   Confirm: `{'FINISHED'}`, no error lines, and every `CF_Hinge_*`/
+   `CF_Motor_*`/`CF_Break_*`/`CF_NoCol_*` empty gone from the Outliner.
+   This is the actual point of asking you to run this in particular —
+   it's the first time anything Crash Forge creates has gone through
+   `reset_self_check`'s identity-based (not name-based) leak check for
+   real. If anything `CF_`-named survives, or the report names a leaked
+   `cf_generated` object, that is the exact bug last session's fix was
+   supposed to close — paste the report.
+4. If step 2 passed cleanly, try clicking **Rig** a second time in a
+   row without Reset in between: it should now be greyed out
+   (`poll()` requires `stage_completed == 1` exactly, and a successful
+   Rig run leaves it at 2) — confirm that. This is a known partial gap,
+   not full idempotency (§3 rule 4): it blocks the double-click, but
+   Prep -> Rig -> Prep -> Rig with no Reset in between is *not* yet
+   guarded (Prep doesn't know Rig exists, so re-running Prep resets
+   `stage_completed` to 1 without cleaning up the first Rig run's
+   artifacts) — don't test that sequence expecting it to be safe yet;
+   it's flagged in "M5 — Stage 2 Rig" above for a future session.

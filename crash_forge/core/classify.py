@@ -153,15 +153,35 @@ def detect_wheels(parts, lateral_axis: int, vertical_axis: int, whole_center,
     return top4, confidence
 
 
+def find_wheel_hardware_parents(parts, wheel_parts) -> dict:
+    """part.name -> the wheel PartDescriptor's own name whose bbox
+    contains that part's centroid (the same containment test
+    `_is_wheel_hardware` uses, confirmed on a real car: brake
+    calipers/rotors sit fully inside their own wheel's bounding box).
+
+    Public and exposed as its own signal, distinct from classify()'s use
+    of the same test — which only folds the result into a blanket
+    UNKNOWN role and loses *which* wheel each hardware part belongs to.
+    Flagged, not built, at the end of the M4.5 session ("M5 rigging
+    requirement, noted not built"): a wheel that detaches on impact must
+    take its own caliper with it, so Stage 2 Rig needs to parent each
+    hardware part to its actual wheel, not weld it to the body chassis
+    like every other UNKNOWN part."""
+    mapping = {}
+    for part in parts:
+        for wheel in wheel_parts:
+            if all(wheel.bbox_min[i] <= part.centroid[i] <= wheel.bbox_max[i] for i in range(3)):
+                mapping[part.name] = wheel.name
+                break
+    return mapping
+
+
 def _is_wheel_hardware(part: PartDescriptor, wheel_parts) -> bool:
     """Confirmed on a real car: brake calipers/rotors sit fully inside
     their own wheel's bounding box. A part whose centroid falls within
     any wheel's bbox is wheel hardware, never a body panel — exact bbox
     containment, not a threshold, so this needs no tuning.py entry."""
-    for wheel in wheel_parts:
-        if all(wheel.bbox_min[i] <= part.centroid[i] <= wheel.bbox_max[i] for i in range(3)):
-            return True
-    return False
+    return bool(find_wheel_hardware_parents([part], wheel_parts))
 
 
 def _assign_wheel_roles(wheel_parts, forward_axis: int, forward_sign: int, lateral_axis: int, whole_center):
