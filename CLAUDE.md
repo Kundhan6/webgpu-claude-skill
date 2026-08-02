@@ -19,15 +19,18 @@ M0–M5 complete. **M5 (Stage 2 Rig + the V8 3-frame explosion test) is
 done this session — stop and report per §14, don't start M6.** See
 "M5 — Stage 2 Rig" below for what was built, the scope decisions made
 (barrier handling, wheel-hardware parenting, motor target velocity), and
-the exact Blender steps to verify it. Two mid-session corrections landed
-on top of the first draft, both from real gaps the reviewer caught, not
-hypothetical ones: "M5 correction: real 3-frame explosion test as a
-committed Blender script" (gravity/cache/frame-reset flaw in the rest
-test), and "M5 correction: structural connectivity + honest SIMULATED/
-PARENTED reporting" below (the rest test's blind spot to an entirely
+the exact Blender steps to verify it. Three corrections landed on top of
+the first draft this session, all from real gaps the reviewer/Krish
+caught, not hypothetical ones: "M5 correction: real 3-frame explosion
+test as a committed Blender script" (gravity/cache/frame-reset flaw in
+the rest test), "M5 correction: structural connectivity + honest
+SIMULATED/PARENTED reporting" (the rest test's blind spot to an entirely
 unattached part — which, while building it, also caught a real,
 previously-unnoticed bug: glass panels had a rigid body but no
-constraint attaching them to anything at all).
+constraint attaching them to anything at all), and "M5 — first real
+Blender run: two fixes" (the Stage 0 probe silently validating nothing
+at registration, and `sys.exit(1)` in the standalone script breaking
+under Krish's harness).
 
 Also this session, before M5: `core/tuning.py::CLASSIFY_BOOT_REAR_EXTREME`
 moved from 0.25 to 0.35 — see "CLASSIFY_BOOT_REAR_EXTREME: 0.25 -> 0.35"
@@ -52,12 +55,13 @@ Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-206/206 passing as of this session (175 carried forward from before this
+210/210 passing as of this session (175 carried forward from before this
 session's own baseline check + 28 in `tests/test_rig.py` + 3 in
-`test_wheels.py` for `find_wheel_hardware_parents`) — no xfails. Tier A +
-Tier B only — no Blender needed to run this at all. `tests/blender/`
-holds Tier C scripts (real bpy, real Blender only) and is excluded from
-this count by `pytest.ini`'s `norecursedirs = blender` on purpose.
+`test_wheels.py` for `find_wheel_hardware_parents` + 4 in
+`tests/test_probe_lazy.py`) — no xfails. Tier A + Tier B only — no
+Blender needed to run this at all. `tests/blender/` holds Tier C scripts
+(real bpy, real Blender only) and is excluded from this count by
+`pytest.ini`'s `norecursedirs = blender` on purpose.
 
 ## M4.5 — classify.py real-car fixes (this session)
 
@@ -259,11 +263,19 @@ as more independent evidence than it actually was.
 Built `core/rig.py` (pure planning, no bpy — `build_rig_plan()`,
 `check_connectivity()`, `check_explosion()`), `bl/rig.py` (the bpy
 execution layer), and `ops/rig.py` (`crashforge.rig`), wired into
-`__init__.py` and the panel. 206/206 total, still Tier A + Tier B only
+`__init__.py` and the panel. 210/210 total, still Tier A + Tier B only
 (counts and section numbers below are from the *final* state of this
-session, after both corrections — see "M5 correction" sections). **Nothing
-here has run in Blender yet** — see "Blender verification steps for M5" at
-the end of this file for exactly what to run.
+session, after all three corrections — see the "M5 correction" sections
+and "M5 — first real Blender run" below). **Krish's first real Blender
+run against this build surfaced two real bugs, both fixed — see "M5 —
+first real Blender run: two fixes" below.** Krish also hit a separate
+V2 hard-stop on that same run (non-uniform/unapplied scale on the real
+car) — expected §11 behaviour, not a bug, nothing to fix here — which
+means CF_Prep did not reach completion on that run either, so the
+actual rig-building logic (rigid bodies, constraints, the rest test
+itself) still has not been exercised end to end in real Blender. See
+"Blender verification steps for M5" at the end of this file for exactly
+what to run next.
 
 **§9's constraint graph, built correctly from the start rather than
 fixed up after the fact:** every `ACTIVE` rigid body always gets
@@ -580,6 +592,71 @@ Two fixes carried forward into this session, both landed before M4:
   generated object renamed after creation would've passed that check as
   "clean" while still orphaned, silently breaking V20. Fixed to match by
   identity; see `tests/test_reset_identity.py`.
+
+## M5 — first real Blender run: two fixes, unrelated to the V8 blocker
+
+Krish's first actual Blender run against M5 surfaced two real bugs,
+both fixed this session, both confirmed by tracing the actual failure
+rather than guessed at:
+
+**1. The Stage 0 probe silently validated nothing at registration.**
+`register()` printed `'_RestrictContext' object has no attribute
+'scene'` to the console and still reported success. Root cause,
+confirmed against the real traceback: `bpy.context` is Blender's
+restricted proxy object during `register()` — accessing `.scene` on it
+*raises* `AttributeError` rather than returning `None`, and the old
+`_run_stage0_probe()` wrapped the whole probe call in a bare
+`try/except Exception: print(...); return`. That caught the exception,
+printed it, and moved on — registration "succeeded" while the probe,
+the single source of every "fact, not guess" this project depends on
+(§3 rule 1), had validated *nothing at all*, silently.
+
+Fixed by moving the probe off registration entirely — `register()` no
+longer calls it, full stop. `bl/probe.py::ensure_probed()` (new) runs
+it lazily instead, the first time any stage operator's `execute()`
+calls it, where real, unrestricted context is guaranteed. It caches
+(module-level, cleared on `unregister()` via the new
+`reset_probe_cache()`) so it only actually runs once per session, and
+it **never swallows anything** — an exception from `run_probe()`
+propagates straight through `ensure_probed()` unchanged. Each of
+`ops/prep.py`, `ops/rig.py`, and `ops/reset.py` now calls it as the
+very first thing in `execute()`: a raised exception becomes a clean,
+named `self.report({'ERROR'}, ...)` + `{'CANCELLED'}` (never a raw
+traceback, never silent); a structurally-failed probe
+(`probe_result.ok == False`) refuses to run at all, naming every
+failed check, rather than proceeding on unverified API assumptions.
+All three stages go through the identical gate — including Reset,
+deliberately: if this Blender build's rigidbody/constraint API doesn't
+match what the probe expects, Reset's own `bpy.ops.rigidbody.
+object_remove()` calls are exactly as unverified as Rig's, and letting
+Reset through on an unverified build just to avoid the user feeling
+"stuck" would be quietly reintroducing the same silent-assumption
+failure this fix exists to close.
+
+`tests/test_probe_lazy.py` (new, 4 Tier B tests) locks this in:
+`register()` genuinely never calls `run_probe()` (checked by call
+count, not by whether a raised exception escapes — a raising fake
+can't distinguish old from new here, since the old code caught
+exceptions too; that was the bug), `ensure_probed()` propagates a
+raised exception rather than swallowing it, and the cache both persists
+across calls and can be forced to re-run via `reset_probe_cache()`.
+
+**2. `tests/blender/test_rig_at_rest.py` called `sys.exit(1)` on
+failure.** Works fine under a plain `blender --background --python
+script.py` invocation, but Krish's local harness intercepts `sys.exit`
+from LLM-run code and raises a `RuntimeError` instead — an unnamed,
+generic exception instead of a real signal of what failed. Fixed:
+`main()` never calls `sys.exit()` anywhere now. On any failure it
+raises `RestTestFailed` (new, a plain named `RuntimeError` subclass);
+on success it returns a `RestTestReport` (new, a small dataclass —
+worst displacement + part name for both the 3-frame assert and the
+30-frame drift window, the threshold, and the simulated/parented
+counts) instead of returning nothing. Every internal early-exit path
+(`_fail()`, called for a missing `car_object`, a failed Reset/Prep/Rig,
+or no chassis found) raises the same way. `if __name__ == "__main__":
+main()` at the bottom is unchanged in shape — it was never wrapping
+anything in a `try/except SystemExit`, so nothing there needed to
+change to stop relying on `sys.exit`.
 
 ## Blender version
 

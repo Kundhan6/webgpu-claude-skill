@@ -15,6 +15,7 @@ import bpy
 
 from ..bl import apply as bl_apply
 from ..bl import extract as bl_extract
+from ..bl import probe as bl_probe
 from ..bl import scene as bl_scene
 from ..core import validate as core_validate
 from ..core.classify import PartRole, classify, detect_forward_axis, resolve_forward_sign
@@ -112,6 +113,27 @@ class CF_OT_prep(bpy.types.Operator):
         scene = context.scene
         cf = scene.crash_forge
         car_object = cf.car_object
+
+        # Stage 0 probe, run lazily here (not at registration — see
+        # bl/probe.py's module docstring for why) and never swallowed:
+        # an unexpected exception is a genuine failure, reported and
+        # cancelled, not printed-and-continued; a structured failure
+        # (probe_result.ok == False) refuses to run at all rather than
+        # proceeding on unverified API assumptions (§3 rule 1).
+        try:
+            probe_result = bl_probe.ensure_probed()
+        except Exception as exc:
+            self.report({'ERROR'}, f"CF_Prep: Stage 0 probe failed unexpectedly: {exc}")
+            return {'CANCELLED'}
+        bl_probe.write_probe_report(scene, probe_result)
+        if not probe_result.ok:
+            for notice in probe_result.errors:
+                self.report({'ERROR'}, str(notice))
+            self.report(
+                {'ERROR'},
+                "CF_Prep: Stage 0 probe reported failures — refusing to run on unverified API assumptions",
+            )
+            return {'CANCELLED'}
 
         parts = bl_extract.collect_car_parts(car_object)
         if not parts:

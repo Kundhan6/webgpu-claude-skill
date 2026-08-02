@@ -1,5 +1,23 @@
-"""bl/probe.py — Stage 0 API probe (§6). Runs at add-on registration and
-again at the start of the one-button pipeline (once that exists).
+"""bl/probe.py — Stage 0 API probe (§6). Runs lazily, on first use by any
+stage operator — NOT at add-on registration.
+
+**Why not registration, despite §6 saying "runs at registration":**
+confirmed on a real Blender run — during `register()`, `bpy.context` is
+Blender's restricted proxy (`_RestrictContext`), and accessing
+`.scene` on it *raises* `AttributeError: '_RestrictContext' object has
+no attribute 'scene'` rather than returning `None`. The old call site
+(`__init__.py::register()`) wrapped the whole probe in a bare
+`try/except Exception: print(...); return`, so that exception was
+caught, printed, and swallowed — registration "succeeded" while the
+probe had validated *nothing at all*. Every "fact, not guess" this
+project depends on comes from this probe (§3 rule 1); a swallowed
+failure here means every stage could be running on unverified
+assumptions with no visible sign of it. `ensure_probed()` below is the
+fix: called from each stage operator's `execute()`, where real,
+unrestricted context is guaranteed, cached so it only actually runs
+once per session, and it never swallows a failure — an unexpected
+exception propagates to the caller, and a structured `result.ok=False`
+is the caller's job to refuse on, not this module's to hide.
 
 Every entry in §6's table gets checked here against the *running* build's
 bl_rna, never assumed. Any failed entry should let the affected stage
@@ -582,3 +600,56 @@ def format_report(result: StageResult) -> str:
         for key, value in result.data.items():
             lines.append(f"{key}: {value}")
     return "\n".join(lines)
+
+
+_PROBE_CACHE = None
+
+
+def ensure_probed() -> StageResult:
+    """Run the Stage 0 probe exactly once per session (module-level
+    cache), lazily — see the module docstring for why this moved off
+    registration. Prints the report to console on the run that actually
+    executes it (not on cached hits, so the console isn't spammed once
+    per operator click).
+
+    Never swallows anything: if `run_probe()` itself raises, that
+    exception propagates unchanged — this function does not catch it.
+    Each stage operator calling this is responsible for turning a raised
+    exception, or a returned `result.ok == False`, into a clean, loudly
+    reported operator failure (§3 rule 10) rather than silently
+    continuing either way.
+    """
+    global _PROBE_CACHE
+    if _PROBE_CACHE is None:
+        result = run_probe()
+        print(format_report(result))
+        _PROBE_CACHE = result
+    return _PROBE_CACHE
+
+
+def reset_probe_cache() -> None:
+    """Force the next ensure_probed() call to actually re-run instead of
+    returning a cached result. Called on unregister() so a disable/
+    re-enable cycle re-probes fresh rather than trusting a result from a
+    session that, in principle, could have ended between the two."""
+    global _PROBE_CACHE
+    _PROBE_CACHE = None
+
+
+def write_probe_report(scene, result: StageResult) -> None:
+    """Mirror `result` into `scene.crash_forge.probe_report` (§7.2) as
+    JSON, same shape the old registration-time call wrote, so the panel's
+    existing "see console for full Stage 0 probe output" box keeps
+    working unchanged. No-op if `scene` is None or has no `crash_forge`
+    property group (e.g. under Tier B, or a scene from before the add-on
+    registered)."""
+    if scene is None or not hasattr(scene, "crash_forge"):
+        return
+    import json
+
+    scene.crash_forge.probe_report = json.dumps({
+        "ok": result.ok,
+        "errors": [str(e) for e in result.errors],
+        "warnings": [str(w) for w in result.warnings],
+        "data": {k: str(v) for k, v in result.data.items()},
+    })

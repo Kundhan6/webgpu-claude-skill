@@ -17,6 +17,7 @@ that whenever this operator's own pass/fail needs a second look.
 import bpy
 
 from ..bl import extract as bl_extract
+from ..bl import probe as bl_probe
 from ..bl import rig as bl_rig
 from ..bl import scene as bl_scene
 from ..core import rig as core_rig
@@ -65,6 +66,29 @@ class CF_OT_rig(bpy.types.Operator):
         scene = context.scene
         cf = scene.crash_forge
         car_object = cf.car_object
+
+        # Stage 0 probe, run lazily here (not at registration — see
+        # bl/probe.py's module docstring for why) and never swallowed:
+        # an unexpected exception is a genuine failure, reported and
+        # cancelled, not printed-and-continued; a structured failure
+        # (probe_result.ok == False) refuses to run at all rather than
+        # proceeding on unverified API assumptions (§3 rule 1) -- and
+        # Rig in particular depends on the rigidbody/constraint/motor
+        # surface this probe exists to confirm.
+        try:
+            probe_result = bl_probe.ensure_probed()
+        except Exception as exc:
+            self.report({'ERROR'}, f"CF_Rig: Stage 0 probe failed unexpectedly: {exc}")
+            return {'CANCELLED'}
+        bl_probe.write_probe_report(scene, probe_result)
+        if not probe_result.ok:
+            for notice in probe_result.errors:
+                self.report({'ERROR'}, str(notice))
+            self.report(
+                {'ERROR'},
+                "CF_Rig: Stage 0 probe reported failures — refusing to run on unverified API assumptions",
+            )
+            return {'CANCELLED'}
 
         parts = bl_extract.collect_car_parts(car_object)
         if not parts:

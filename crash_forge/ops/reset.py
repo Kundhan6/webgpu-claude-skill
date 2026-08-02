@@ -4,6 +4,7 @@ the way it was in v1.
 """
 import bpy
 
+from ..bl import probe as bl_probe
 from ..bl import scene as bl_scene
 
 _BLENDER_REPORT_LEVELS = {'INFO', 'WARNING', 'ERROR'}
@@ -26,6 +27,27 @@ class CF_OT_reset(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+
+        # Stage 0 probe, run lazily here (not at registration — see
+        # bl/probe.py's module docstring for why) and never swallowed:
+        # an unexpected exception is a genuine failure, reported and
+        # cancelled, not printed-and-continued; a structured failure
+        # (probe_result.ok == False) refuses to run at all rather than
+        # proceeding on unverified API assumptions (§3 rule 1).
+        try:
+            probe_result = bl_probe.ensure_probed()
+        except Exception as exc:
+            self.report({'ERROR'}, f"CF_Reset: Stage 0 probe failed unexpectedly: {exc}")
+            return {'CANCELLED'}
+        bl_probe.write_probe_report(scene, probe_result)
+        if not probe_result.ok:
+            for notice in probe_result.errors:
+                self.report({'ERROR'}, str(notice))
+            self.report(
+                {'ERROR'},
+                "CF_Reset: Stage 0 probe reported failures — refusing to run on unverified API assumptions",
+            )
+            return {'CANCELLED'}
 
         # 1. Free all point caches.
         if not bl_scene.free_all_point_caches(context):

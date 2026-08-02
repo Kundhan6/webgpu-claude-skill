@@ -78,9 +78,17 @@ are comparable run to run):
 or headless, against an already-saved .blend with Car already set:
 
     blender.exe --background your_car.blend --python tests/blender/test_rig_at_rest.py
+
+`main()` never calls `sys.exit()` — some environments that run this
+script (not just Blender's own `--python` invocation) intercept or
+block `sys.exit` from called code, turning a clean process exit into an
+opaque, unnamed failure instead. On any failure `main()` raises
+`RestTestFailed` (a plain, named exception); on success it returns a
+`RestTestReport`. Both work identically everywhere.
 """
 import os
 import sys
+from dataclasses import dataclass
 
 try:
     import bpy
@@ -133,10 +141,32 @@ DRIFT_REPORT_FRAMES = 30
 _AXIS_NAMES = ("X", "Y", "Z")
 
 
+class RestTestFailed(RuntimeError):
+    """Raised by main() on any failure — Reset/Prep/Rig not completing,
+    no chassis found after Rig, or the 3-frame rest test itself failing.
+    Replaces this script's old sys.exit(1) calls: a raised, named
+    exception is catchable and inspectable the same way in every
+    environment that can run this script, unlike a process-exit signal,
+    which some of them intercept or block outright."""
+
+
+@dataclass
+class RestTestReport:
+    """Returned by main() on success (never on failure -- that path
+    raises RestTestFailed instead)."""
+    worst_assert_displacement: float
+    worst_assert_part: str
+    worst_drift_displacement: float
+    worst_drift_part: str
+    threshold: float
+    simulated_count: int
+    parented_count: int
+
+
 def _fail(message: str) -> None:
     print(f"test_rig_at_rest.py: {message}", flush=True)
     print("\ntest_rig_at_rest.py: RESULT = FAIL", flush=True)
-    sys.exit(1)
+    raise RestTestFailed(message)
 
 
 def _ensure_registered() -> None:
@@ -378,7 +408,20 @@ def main():
         flush=True,
     )
     if not passed:
-        sys.exit(1)
+        raise RestTestFailed(
+            f"{ASSERT_FRAMES}-frame rest test failed: {worst_name_3!r} moved {worst_mag_3:.4f} "
+            f"relative to the chassis, threshold {threshold:.4f}"
+        )
+
+    return RestTestReport(
+        worst_assert_displacement=worst_mag_3,
+        worst_assert_part=worst_name_3,
+        worst_drift_displacement=worst_mag_30,
+        worst_drift_part=worst_name_30,
+        threshold=threshold,
+        simulated_count=simulated_tested,
+        parented_count=len(parented),
+    )
 
 
 if __name__ == "__main__":

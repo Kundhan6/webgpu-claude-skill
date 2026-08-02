@@ -37,40 +37,24 @@ def _submodules():
     return _SUBMODULES
 
 
-def _run_stage0_probe():
-    """§6: probe runs at registration and again at the pipeline's start."""
-    import json
-
-    import bpy
-
-    from .bl import probe as bl_probe
-
-    try:
-        result = bl_probe.run_probe()
-    except Exception as exc:  # a probe must never take the add-on down with it
-        print(f"[Crash Forge] Stage 0 probe raised unexpectedly: {exc}")
-        return
-
-    print(bl_probe.format_report(result))
-
-    scene = bpy.context.scene
-    if scene is not None and hasattr(scene, "crash_forge"):
-        scene.crash_forge.probe_report = json.dumps(
-            {
-                "ok": result.ok,
-                "errors": [str(e) for e in result.errors],
-                "warnings": [str(w) for w in result.warnings],
-                "data": {k: str(v) for k, v in result.data.items()},
-            }
-        )
-
-
 def register():
+    """Deliberately does NOT run the Stage 0 probe. Confirmed on a real
+    Blender run: `bpy.context` is a restricted proxy during registration
+    (`_RestrictContext`), and `.scene` on it raises `AttributeError`
+    rather than returning `None` — the probe used to run here, wrapped
+    in a bare try/except that caught exactly that exception and just
+    printed it, so registration "succeeded" while the probe had
+    validated nothing at all. See `bl/probe.py::ensure_probed()`'s
+    docstring — the probe now runs lazily, from each stage operator's
+    own `execute()`, where real context is guaranteed, and it never
+    swallows a failure."""
     for module in _submodules():
         module.register()
-    _run_stage0_probe()
 
 
 def unregister():
+    from .bl import probe as bl_probe
+
     for module in reversed(_submodules()):
         module.unregister()
+    bl_probe.reset_probe_cache()
