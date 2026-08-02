@@ -130,14 +130,40 @@ class CF_OT_prep(bpy.types.Operator):
 
         # Step 6: clean geometry (V4), then re-apply auto-smooth — order
         # matters, the stale attributes must be gone before auto-smooth
-        # regenerates shading from scratch.
+        # regenerates shading from scratch. apply_shade_auto_smooth can
+        # fail (confirmed on a real car: shade_auto_smooth.poll() rejects
+        # an unexpected context) — never a silent partial result (§3
+        # rule 10), so a failure here stops Prep and names every
+        # offending part rather than leaving some parts cleaned and
+        # others not with no indication which.
+        auto_smooth_failures = []
         for obj in parts:
             bl_apply.clean_mesh_shading_attributes(obj)
-            bl_apply.apply_shade_auto_smooth(context, obj)
+            if not bl_apply.apply_shade_auto_smooth(context, obj):
+                auto_smooth_failures.append(obj.name)
 
-        # Step 7: origin to each part's own centre of mass.
+        if auto_smooth_failures:
+            self.report(
+                {'ERROR'},
+                f"CF_Prep: shade-auto-smooth failed on {len(auto_smooth_failures)} "
+                f"part(s), stopping: {auto_smooth_failures}",
+            )
+            return {'CANCELLED'}
+
+        # Step 7: origin to each part's own centre of mass. Same
+        # fail-loud treatment as step 6, for the same reason.
+        origin_failures = []
         for obj in parts:
-            bl_apply.set_origin_to_center_of_mass(context, obj)
+            if not bl_apply.set_origin_to_center_of_mass(context, obj):
+                origin_failures.append(obj.name)
+
+        if origin_failures:
+            self.report(
+                {'ERROR'},
+                f"CF_Prep: origin-to-center-of-mass failed on {len(origin_failures)} "
+                f"part(s), stopping: {origin_failures}",
+            )
+            return {'CANCELLED'}
 
         # Step 3 (write-out) + step 8 (one-line report).
         dump_path = _write_descriptor_dump(descriptors)

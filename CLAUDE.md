@@ -20,18 +20,62 @@ detection modules (geometry/classify/pairs/impact/density/naming), and
 CF_Prep (Stage 1). M5 (Stage 2 Rig + the V8 explosion test) has not
 started — stop and report after it per §14, don't cascade further.
 
-CF_Prep is unverified against a real car — nobody has run it in Blender
-yet. `core/validate.py`'s V1/V2/V3/V5 and the added V21 (ambiguous "__"
-part names) are Tier-A-tested against synthetic data only.
+CF_Prep has now been run once against a real car (a Sketchfab "Crown
+Victoria police car" .glb — Blender 5.1.2, Windows) and found a real
+crash, since fixed (see "Real-car verification" below). Steps 6–12 of
+that verification pass (dump diff, cf_role sanity, frame_end/state,
+idempotency, V21, V1/V2, Reset) were never run — the pass stopped at the
+crash. Re-run the full pass against the same car before trusting any of
+those. `core/validate.py`'s V1/V2/V3/V5 and the added V21 are still
+Tier-A-tested against synthetic data only.
 `core/geometry`/`classify`'s thresholds were deliberately left untouched
-this session — no further tuning against synthetic fixtures.
+this session — no further tuning against synthetic fixtures, despite a
+real disagreement already surfacing (see below) — that's a deliberate
+scope decision for *this* session, not a claim the thresholds are fine.
 
 Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-133/133 passing as of the last session. Tier A + Tier B only — no
+138/138 passing as of the last session. Tier A + Tier B only — no
 Blender needed to run this at all.
+
+### Real-car verification (this session)
+
+First-ever Blender run of CF_Prep, against a real downloaded car
+(Sketchfab Crown Victoria police car, glTF, 13 parts, single-rooted
+hierarchy — no manual regrouping needed). Findings:
+
+- **Crash, fixed:** `bl/apply.py`'s two `bpy.ops` wrappers
+  (`apply_shade_auto_smooth`, `set_origin_to_center_of_mass`) relied on
+  `context.temp_override(...)` alone to make `obj` the operator's target.
+  `shade_auto_smooth.poll()` checks the *real* `view_layer` active object
+  underneath — the override doesn't change that — so whenever the real
+  active object was a non-mesh (the car's root Empty, exactly what's
+  selected after a normal "set car_object, click Prep" run), the operator
+  raised `RuntimeError: poll() failed, context is incorrect` as an
+  *unhandled* exception straight out of `CF_Prep.execute()`. Fixed by
+  actually mutating real selection/active state before the call (matching
+  the pattern `bl/probe.py`'s own auto-smooth probe already used) and
+  restoring it afterward; both wrappers now catch `RuntimeError` and
+  return `False` instead of raising, and `ops/prep.py` turns a `False`
+  into a clean, named `{'CANCELLED'}` instead of a crash. Covered by
+  `tests/test_apply_context.py` — verified those tests fail against the
+  old code and pass against the fix, in both directions.
+- **Not yet addressed — real classification disagreement, flagged for a
+  future session, not fixed this pass (scope decision, not an oversight):**
+  on this car, all four wheels came back with front↔back *and*
+  left↔right swapped simultaneously (WHEEL_FL called WHEEL_RR, etc.) —
+  smells like a 180°-yaw sign issue in `classify.py`'s
+  `_detect_forward_sign` or `_assign_wheel_roles`, not random noise.
+  Separately, this car has no distinct door meshes at all (one joined
+  body shell) and its four brake-caliper meshes were misclassified as
+  `DOOR_L`/`DOOR_R` instead of falling through to `UNKNOWN` — the
+  lateral-extreme-and-planar heuristic in `_classify_remaining_part`
+  matched them by coincidence. Both are `core/classify.py` questions, not
+  `bl/` bugs — worth investigating before trusting classification on any
+  real car, but deliberately left for a separate, explicitly-scoped pass
+  rather than bundled into this crash fix.
 
 Two fixes carried forward into this session, both landed before M4:
 
