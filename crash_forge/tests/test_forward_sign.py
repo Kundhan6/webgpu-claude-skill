@@ -193,3 +193,47 @@ def test_classify_forward_sign_override_changes_wheel_roles():
     assert overridden_result["Wheel_FR"].role == PartRole.WHEEL_RL
     assert overridden_result["Wheel_RL"].role == PartRole.WHEEL_FR
     assert overridden_result["Wheel_RR"].role == PartRole.WHEEL_FL
+
+
+# --- DOOR_L/DOOR_R: the identical uncoupled-convention bug, fixed on the
+# same pass rather than left for a real car with doors to happen to exist
+
+
+def test_assign_doors_sides_swap_together_under_a_forced_sign_not_independently():
+    """_classify_remaining_part()'s DOOR_L/DOOR_R split had the exact same
+    shape as the original wheel bug: `lat` was the raw normalised lateral
+    coordinate with no forward_sign coupling at all. Mechanically identical
+    fix, same reasoning — right only means anything relative to which way
+    the car faces. A real car with doors was never available to catch this
+    (M4.5's Crown Victoria has one joined body shell, no separate door
+    meshes), but the bug doesn't need a real car to exist: the sedan
+    fixture already has doors, and forcing forward_sign=-1 on it exercises
+    the identical code path a real car with a wrong-signed forward guess
+    would hit. If the sides swapped independently of each other (one
+    stays, one flips) that would be the bug; a clean, self-consistent full
+    swap of both together is the correct, already-established behaviour
+    (matching the wheel fix)."""
+    parts = load_fixture("sedan")
+    forward_axis = detect_forward_axis(parts)
+
+    auto_result = classify(parts, forward_axis)
+    overridden_result = classify(parts, forward_axis, forward_sign_override=-1)
+
+    assert auto_result["Door_L"].role == PartRole.DOOR_L
+    assert auto_result["Door_R"].role == PartRole.DOOR_R
+    # Both sides flip together under the forced sign — not one, not neither.
+    assert overridden_result["Door_L"].role == PartRole.DOOR_R
+    assert overridden_result["Door_R"].role == PartRole.DOOR_L
+
+
+def test_assign_doors_unchanged_at_forward_sign_positive_one():
+    """The fix must be a no-op for forward_sign=+1 — every existing
+    synthetic fixture (including every one of test_classify.py's door
+    assertions) depends on this being true."""
+    parts = load_fixture("sedan")
+    forward_axis = detect_forward_axis(parts)
+
+    result = classify(parts, forward_axis, forward_sign_override=1)
+
+    assert result["Door_L"].role == PartRole.DOOR_L
+    assert result["Door_R"].role == PartRole.DOOR_R

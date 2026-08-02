@@ -27,6 +27,19 @@ CLASSIFY_HIGH_Z = 0.6
 CLASSIFY_FORWARD_EXTREME = 0.8
 CLASSIFY_LATERAL_EXTREME = 0.75
 
+# Not "half the car", the rear *extremity* — a boot lid is a shape fact
+# (it sits close to the very back of the car), not a curve fitted to one
+# car. §12.1 step 4 only says "rear half, high Z, broad and flat", which
+# a real Crown Victoria's roof-mounted light bar also satisfied purely by
+# geometric coincidence (high, planar, thin-vertical, and a bare 46.5% of
+# the way forward — comfortably inside "rear half"). Requiring the rear
+# quarter separates a real boot lid (this car's own glass/interior data
+# puts the cabin, let alone the boot behind it, well toward the rear) by
+# a wide margin, not a coin flip: every synthetic fixture's own Boot part
+# sits at fwd=0.2375 (verified numerically, not assumed), comfortably
+# inside 0.25; the light bar's fwd=0.465 is nowhere close.
+CLASSIFY_BOOT_REAR_EXTREME = 0.25
+
 # §12.2: score floor a wheel candidate must clear before being considered
 # plausible at all (roundness × bottom-third weighting).
 CLASSIFY_WHEEL_SCORE_FLOOR = 0.5

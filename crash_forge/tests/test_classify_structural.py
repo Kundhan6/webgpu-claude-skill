@@ -180,3 +180,47 @@ def test_degenerate_zero_extent_part_does_not_crash_geometry_helpers():
     assert roundness(zero_extent, thin_axis_index=0) == pytest.approx(0.39 / 0.4)
     assert sizes_agree(0.0, 0.0) is True  # both-zero radii must not raise either
     assert roundness((0.0, 0.0, 0.0), thin_axis_index=0) == 0.0  # every extent zero: no crash
+
+
+# --- BOOT: rear extremity, not just "rear half" -----------------------
+
+
+def _sedan_with_extra_part(extra: PartDescriptor):
+    return load_fixture("sedan") + [extra]
+
+
+def test_a_high_planar_part_near_the_middle_of_the_car_is_not_boot():
+    """The exact shape of the real bug: a roof-mounted accessory (high Z,
+    planar, thin along the vertical axis — indistinguishable from a boot
+    lid on those three tests alone) sitting at fwd=0.46 (comfortably
+    inside the old "rear half" test, nowhere near a real boot lid's rear
+    extremity) must not be classified as BOOT."""
+    parts = load_fixture("sedan")
+    body = next(p for p in parts if p.name == "Body")
+    bx0, bx1 = body.bbox_min[0], body.bbox_max[0]
+    fwd_046_x = bx0 + 0.46 * (bx1 - bx0)  # 46% of the way from rear to nose along X
+
+    light_bar_like = PartDescriptor(
+        name="Roof_Accessory", bbox_min=(fwd_046_x - 0.3, -0.1, 1.9), bbox_max=(fwd_046_x + 0.3, 0.1, 2.0),
+        centroid=(fwd_046_x, 0.0, 1.95), vert_count=500, is_planar=True,
+    )
+    car = _sedan_with_extra_part(light_bar_like)
+    forward_axis = detect_forward_axis(car)
+
+    result = classify(car, forward_axis)
+
+    assert result["Roof_Accessory"].role != PartRole.BOOT
+
+
+def test_a_high_planar_part_at_the_true_rear_extremity_is_still_boot():
+    """The other half of the same fix: a part shaped exactly like the
+    sedan fixture's own real Boot (rear-quarter, high, planar, thin
+    vertical) must still classify as BOOT — the tightened threshold
+    excludes the middle-of-the-car false positive without also excluding
+    a genuine boot lid."""
+    parts = load_fixture("sedan")
+    boot = next(p for p in parts if p.name == "Boot")
+    assert classify(parts, detect_forward_axis(parts))["Boot"].role == PartRole.BOOT
+    # Sanity: this only means something because Boot is actually
+    # positioned near the rear extremity in this fixture, not by luck.
+    assert boot.centroid[0] < 0

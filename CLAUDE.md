@@ -15,14 +15,17 @@ this is pitfalls and rationale, not a tour.
 
 ## Status
 
-M0–M4 complete. **M4.5 (`core/classify.py` fixes, not M5) is done** —
-real geometry (`tests/fixtures/real_car.json`) plus Krish's hand-confirmed
-ground truth arrived and the re-triage ran. 12 of 13 real-car parts now
-classify correctly; one (`Roof light bar_0`) is a confirmed, still-open,
-`xfail`-tracked miss — see "M4.5" below. M5 (Stage 2 Rig + the V8
-explosion test) has not started — stop and report after it per §14,
-don't cascade further. Rig stays blocked until Krish signs off on
-classification accuracy being good enough to build on.
+M0–M4 complete. **M4.5 (`core/classify.py` fixes) is done — classification
+is now clean on the real car, M5 is unblocked.** All 13/13 real-car parts
+classify correctly (the `Roof light bar_0` miss from the previous round
+is fixed — see "M4.5" below); `core/classify.py`'s only other confirmed
+uncoupled-`forward_sign` bug (`DOOR_L`/`DOOR_R`) is fixed too, pre-emptively,
+without waiting for a real car with doors to exist. **M5 (Stage 2 Rig +
+the V8 explosion test) has not started this session — stop and report
+after it per §14, don't cascade further**, but nothing is blocking it
+from starting next session. One M5-relevant rigging requirement was
+surfaced but deliberately not acted on — see "M5 rigging requirement,
+noted not built" below.
 
 CF_Prep has been run **end to end** against a real car (a Sketchfab
 "Crown Victoria police car" .glb — Blender 5.1.2, Windows) and every
@@ -34,16 +37,17 @@ results). `core/validate.py`'s exact hard-stop messages for V1, V2, and
 V21 were seen verbatim in a real Blender console and match what the code
 produces. Classification accuracy on that same run started out poor
 (wheels swapped, calipers read as doors, light-bar read as glass) — all
-of that is now fixed except the one `xfail` (see "M4.5" below).
+of that is now fixed (see "M4.5" below).
 
 Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-170 passing + 1 xfailed as of the last session (the xfail is
-deliberate and `strict=True` — see M4.5 finding 2's residual issue
-below; it must stay red-if-fixed-without-updating-the-marker). Tier A +
-Tier B only — no Blender needed to run this at all.
+175/175 passing as of the last session — no xfails; the one from the
+previous round (`Roof light bar_0`) got fixed and its `strict=True`
+marker caught the fix working, forcing the marker to be removed rather
+than silently going green. Tier A + Tier B only — no Blender needed to
+run this at all.
 
 ## M4.5 — classify.py real-car fixes (this session)
 
@@ -156,22 +160,44 @@ where the cabin is behind the engine bay, so +Y is rear and the nose is
   fix stops the calipers from being the thing that *used* to produce
   doors on this car.
 
-**Still open — one confirmed miss, tracked not hidden.** `Roof light
-bar_0` is no longer GLASS, but it isn't UNKNOWN either: once it falls
-through to `_classify_remaining_part()`, it happens to satisfy BOOT's
-structural test (high Z, planar, thin along the vertical axis, and in
-the rear half) by geometric coincidence — a roof-mounted light bar is,
-by shape, thin and flat like a boot lid. `roof lights_0` narrowly avoids
-the same fate: its thinnest axis is Y (forward), not Z, by a 0.078m vs
-0.082m margin in this data — not a robust distinction, just how this
-part happens to be modelled. Marked
-`tests/test_real_car.py::test_real_car_roof_light_bar_still_misclassified_as_boot_not_yet_fixed`
-— `xfail(strict=True)`, so the suite stays green but this can never
-silently start passing without someone updating the marker. Deliberately
-**not** fixed with a new invented threshold this pass — no structural
-rule was given for it the way "centroid inside a wheel's bbox" was given
-for calipers, and inventing one would be exactly the "threshold tuned at
-n=1" trap the reviewer warned against.
+**5. Round 3 — the two remaining fixes, both landed, M5 unblocked.**
+
+- **`Roof light bar_0` fixed — BOOT tightened to the rear** *extremity*,
+  **not just the rear half.** §12.1 step 4 only ever said "rear half,
+  high Z, broad and flat" — wide enough that a roof-mounted light bar
+  sitting at fwd=0.465 (barely past dead centre) satisfied it purely by
+  coincidence (high, planar, thin along the vertical axis — indistinguishable
+  from a boot lid on those three tests alone). A real boot lid sits close
+  to the car's rear extremity, not merely "somewhere in the rear half" —
+  a shape fact, not a curve fitted to this one car.
+  `core/tuning.py::CLASSIFY_BOOT_REAR_EXTREME = 0.25` ("rear quarter")
+  replaces the old `fwd <= 0.5` cutoff for `BOOT` only (`HOOD` untouched —
+  never had the problem, no data suggested it does). Verified numerically
+  against all three synthetic fixtures before trusting it: every one's own
+  `Boot` part sits at `fwd=0.2375`, comfortably inside 0.25, while the real
+  light bar's `fwd=0.465` is nowhere close — confirmed by reverting the
+  fix and watching the new structural test fail, then restoring it.
+  `tests/test_real_car.py`'s `xfail(strict=True)` marker did exactly its
+  job here: the fix made it XPASS, `strict=True` turned that into a
+  failure, forcing the marker to be removed rather than silently drifting
+  green. All 13/13 real-car parts now classify correctly — no residual
+  miss.
+- **`DOOR_L`/`DOOR_R` fixed pre-emptively — the identical uncoupled-`forward_sign`
+  bug the wheel fix had, in a different function, fixed without waiting
+  for a real car with doors to exist.** `_classify_remaining_part()`'s
+  `lat` was the raw normalised lateral coordinate, never multiplied by
+  `forward_sign` the way `fwd` already was — mechanically identical to
+  the wheel bug, and root-caused the same way (right only means anything
+  relative to which way the car faces). This car has no separate door
+  meshes to catch it on, so it's tested synthetically instead: the sedan
+  fixture already has doors; forcing `forward_sign_override=-1` on it
+  exercises the exact code path a real car with a wrong-signed forward
+  guess would hit. Confirmed both a no-op at `forward_sign=+1` (every
+  existing fixture, unchanged) and a clean, self-consistent swap of both
+  sides together at `forward_sign=-1` (not one side flipping independently
+  of the other, which would be the bug) — verified by reverting the fix
+  and watching that exact test fail. Matters for M5: doors get hinges:
+  a left/right swap would put the hinge on the wrong edge.
 
 **Secondary, not acted on:** `detect_wheels()`'s roundness scoring gives
 the real wheels ~1.0 and the (nearly-square-cross-section) brake
@@ -180,17 +206,24 @@ both be "plausible" wheel candidates; the wheels still win by score on
 this car (correctly, confirmed), but the margin is close enough to be
 worth knowing about if a future car's caliper shape tips the other way.
 
-**Also found, still not fixed — same class of bug, different function:**
-`_classify_remaining_part()`'s `DOOR_L`/`DOOR_R` split
-(`PartRole.DOOR_R if lat >= 0.5 else PartRole.DOOR_L`) uses the raw
-normalised lateral coordinate with no `forward_sign` coupling at all —
-the identical uncoupled-convention shape the wheel bug had. Never
-symptomatic on this car specifically (the wheel-hardware fix already
-routes the calipers to UNKNOWN before this branch ever sees them, and
-this car has no real door meshes to test against anyway) — genuinely
-untested at forward_sign=-1. Left alone this pass; worth a synthetic
-regression test (mirroring `test_forward_sign.py`'s wheel coverage) the
-next time `core/classify.py` is touched.
+## M5 rigging requirement, noted not built
+
+**Wheel hardware must follow its parent wheel, not the body, once M5
+rigs it.** `classify()` maps brake calipers/rotors to `UNKNOWN`, and
+`UNKNOWN`'s documented treatment is "kept rigid and welded to the body"
+(§12.1 step 4) — correct for classification (there's no dedicated role
+for wheel hardware) but **not** the same thing as correct *rig* behaviour.
+If a wheel detaches on impact (§9's breakable panel constraints) and its
+caliper is welded to the chassis instead of parented to that wheel, the
+caliper stays behind, floating in mid-air where the wheel used to be,
+while the wheel itself flies off without it. M5 needs to either give
+wheel-hardware parts their own rig treatment (rigidly attached to their
+*wheel*, not the body) or otherwise special-case them — `cf_role=UNKNOWN`
+alone doesn't carry enough information to do this automatically; M5 may
+need `_is_wheel_hardware()`'s bbox-containment result (or an equivalent
+check) surfaced as its own signal, not folded into `UNKNOWN` indistinguishably
+from every other catch-all part. Flagged now, per the reviewer's explicit
+instruction, rather than acted on — this is M5 scope, not M4.5's.
 
 ### Real-car verification (this session)
 
@@ -360,7 +393,7 @@ retune there — one file, not a hunt through four modules:
 
 - `CLASSIFY_LOW_Z`, `CLASSIFY_HIGH_Z`, `CLASSIFY_FORWARD_EXTREME`,
   `CLASSIFY_LATERAL_EXTREME`, `CLASSIFY_WHEEL_SCORE_FLOOR`,
-  `CLASSIFY_GLASS_FALLBACK_HIGH_Z`
+  `CLASSIFY_GLASS_FALLBACK_HIGH_Z`, `CLASSIFY_BOOT_REAR_EXTREME`
 - `IMPACT_SPIKE_FACTOR`, `IMPACT_EPSILON_FACTOR`, `IMPACT_MIN_MAX_SPEED`
 - `DENSITY_ASSUMED_VERTS_PER_VOXEL_AREA`
 - `PAIRS_DEFAULT_MARGIN_FRACTION`

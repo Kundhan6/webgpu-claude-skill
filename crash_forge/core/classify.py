@@ -323,7 +323,14 @@ def detect_forward_axis(parts) -> int:
 def _classify_remaining_part(part, body_min, body_max, forward_axis, forward_sign, lateral_axis, vertical_axis):
     norm = normalize_point(part.centroid, body_min, body_max)
     fwd = norm[forward_axis] if forward_sign == 1 else 1.0 - norm[forward_axis]
-    lat = norm[lateral_axis]
+    # Same coupling as fwd, and for the identical reason: "right" is only
+    # meaningful relative to which way the car faces. This branch had the
+    # exact uncoupled-convention shape the wheel bug had (raw norm, no
+    # forward_sign) until a real car's forward_sign was confirmed -1 and
+    # this was audited alongside it — never actually exercised by a real
+    # car with doors yet, but mechanically identical, so fixed on the
+    # same pass rather than left for one to happen to exist.
+    lat = norm[lateral_axis] if forward_sign == 1 else 1.0 - norm[lateral_axis]
     vert = norm[vertical_axis]
 
     ext = extents(part.bbox_min, part.bbox_max)
@@ -335,7 +342,16 @@ def _classify_remaining_part(part, body_min, body_max, forward_axis, forward_sig
         return PartRole.BUMPER_R, 0.7
     if vert >= tuning.CLASSIFY_HIGH_Z and fwd > 0.5 and part.is_planar and t_axis == vertical_axis:
         return PartRole.HOOD, 0.7
-    if vert >= tuning.CLASSIFY_HIGH_Z and fwd <= 0.5 and part.is_planar and t_axis == vertical_axis:
+    # BOOT: a boot lid sits at the car's rear *extremity*, not just
+    # somewhere in the rear half — confirmed on the real Crown Victoria,
+    # where "rear half" (fwd<=0.5) was wide enough to also catch a
+    # roof-mounted light bar sitting near dead centre (fwd=0.465) purely
+    # because it was also high/planar/thin-vertical. Requiring the rear
+    # quarter is a shape fact about what a boot lid physically is (close
+    # to the very back of the car), not a threshold fitted to this one
+    # car — verified it still holds for every synthetic fixture's own
+    # Boot part (tests/test_classify.py) before trusting it.
+    if vert >= tuning.CLASSIFY_HIGH_Z and fwd <= tuning.CLASSIFY_BOOT_REAR_EXTREME and part.is_planar and t_axis == vertical_axis:
         return PartRole.BOOT, 0.7
     if (lat <= (1 - tuning.CLASSIFY_LATERAL_EXTREME) or lat >= tuning.CLASSIFY_LATERAL_EXTREME) and part.is_planar and t_axis == lateral_axis:
         return (PartRole.DOOR_R if lat >= 0.5 else PartRole.DOOR_L), 0.7

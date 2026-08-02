@@ -11,7 +11,11 @@ Every role below is either self-evident (BODY is the one huge part;
 WHEEL_* from the artist's own Bk/Ft.L/R naming, cross-checked against
 actual centroid positions once the forward-sign bug was understood) or
 explained where it isn't (see the four "not obviously any existing role"
-parts below classify() should now correctly reach for.
+parts below). All 13 of 13 parts now classify correctly — the BOOT
+rear-quarter fix (core/tuning.py::CLASSIFY_BOOT_REAR_EXTREME) closed the
+one remaining miss ("Roof light bar_0", previously tracked here as a
+strict xfail; that marker's own strict=True caught the fix working and
+forced this file to be updated rather than silently going green).
 """
 import pytest
 
@@ -43,6 +47,13 @@ REAL_CAR_EXPECTED_ROLES = {
     "interior_0": PartRole.UNKNOWN,
     # Confirmed not glass by material (max_transmission=0.0) — an opaque
     # accessory housing, not a body panel. No dedicated role exists.
+    # "Roof light bar_0" sits at fwd=0.465 (46.5% of the way from nose to
+    # tail) — comfortably inside the old "rear half" BOOT test, which is
+    # exactly why it used to be misclassified as BOOT; CLASSIFY_BOOT_REAR_EXTREME
+    # (0.25, "rear quarter") now correctly excludes it. "roof lights_0"
+    # never had this problem — its thinnest axis is Y (forward), not Z,
+    # so it never matched BOOT's t_axis==vertical_axis requirement either
+    # way, at any threshold.
     "Roof light bar_0": PartRole.UNKNOWN,
     "roof lights_0": PartRole.UNKNOWN,
     # Wheel hardware (brake calipers) — confirmed by construction: each
@@ -57,22 +68,6 @@ REAL_CAR_EXPECTED_ROLES = {
     "CrownVic.WheelBrake.Ft.L_0": PartRole.UNKNOWN,
     "CrownVic.WheelBrake.Ft.R_0": PartRole.UNKNOWN,
 }
-
-# Still open, reported per the reviewer's step-4 ordering rather than
-# silently patched with an unrequested new threshold: with the glass-
-# fallback skip and the wheel-hardware rule both applied, "Roof light
-# bar_0" no longer reads as GLASS -- but it still isn't UNKNOWN either.
-# It falls through to _classify_remaining_part() and happens to satisfy
-# BOOT's structural test (high Z, planar, thin along the vertical axis,
-# and — after the sign fix — correctly in the rear half) purely by
-# geometric coincidence: a roof-mounted light bar is, by shape, thin and
-# flat like a boot lid. "roof lights_0" narrowly avoids the same fate —
-# its thinnest axis is Y (forward), not Z — a difference of 0.078m vs
-# 0.082m in this data, not a robust distinction. xfail(strict=True) so
-# this stays visible (not silently green) and so it starts failing loudly
-# the moment someone fixes it without updating this marker.
-_KNOWN_STILL_WRONG = {"Roof light bar_0"}
-
 
 def _classify_real_car():
     parts = load_fixture("real_car")
@@ -93,24 +88,12 @@ def test_real_car_every_part_has_a_ground_truth_entry():
     assert {p.name for p in parts} == set(REAL_CAR_EXPECTED_ROLES.keys())
 
 
-@pytest.mark.parametrize("part_name", sorted(set(REAL_CAR_EXPECTED_ROLES) - _KNOWN_STILL_WRONG))
+@pytest.mark.parametrize("part_name", sorted(REAL_CAR_EXPECTED_ROLES))
 def test_real_car_part_classifies_correctly(part_name):
     _parts, result = _classify_real_car()
     expected = REAL_CAR_EXPECTED_ROLES[part_name]
     actual = result[part_name].role
     assert actual == expected, f"{part_name}: expected {expected}, got {actual}"
-
-
-@pytest.mark.xfail(strict=True, reason=(
-    "Roof light bar_0 is confirmed not-glass (fixed) but now hits BOOT's "
-    "structural test by geometric coincidence (high, planar, thin-along-"
-    "vertical, and in the rear half) — not yet fixed, reported per the "
-    "reviewer's step-4 ordering rather than patched with an unrequested "
-    "new threshold."
-))
-def test_real_car_roof_light_bar_still_misclassified_as_boot_not_yet_fixed():
-    _parts, result = _classify_real_car()
-    assert result["Roof light bar_0"].role == PartRole.UNKNOWN
 
 
 def test_real_car_no_part_classifies_as_a_door():
