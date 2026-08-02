@@ -8,6 +8,7 @@ import math
 
 import bpy
 
+from . import scene as bl_scene
 from ..core.naming import CF_GENERATED_KEY, CF_STAGE_KEY, CF_UID_KEY, RBW_COLLECTION_NAME, RBWC_COLLECTION_NAME, new_cf_uid
 
 RIG_STAGE = 2  # §7.1: obj["cf_stage"] = <int> — Rig is stage 2
@@ -203,6 +204,37 @@ def apply_rig_plan(context, plan, objects_by_name) -> list:
         parent_to(objects_by_name[name], objects_by_name[wheel_name])
 
     return created
+
+
+def zero_gravity(scene) -> tuple:
+    """§8.2 step 5, tightened per reviewer correction: Stage 2 has no
+    ground plane yet, so with real gravity on, the whole (ungrounded)
+    car free-falls during the rest test and contaminates the signal the
+    check exists to isolate — constraint/collision behaviour, not "did
+    the car fall". Returns the previous `scene.gravity` so the caller
+    can restore it afterward."""
+    prev = tuple(scene.gravity)
+    scene.gravity = (0.0, 0.0, 0.0)
+    return prev
+
+
+def prepare_for_rest_test(context) -> tuple:
+    """Zero gravity, free any stale point cache, and reset to
+    frame_start — all three, every time, before a rest test steps a
+    single frame. A stale bake (this scene's own earlier Rig attempt, or
+    a leftover cache from outside Crash Forge entirely) would replay old
+    keyframed motion instead of actually re-simulating anything, giving
+    a false pass regardless of what the constraint graph does. Returns
+    the previous gravity vector for restore_after_rest_test()."""
+    scene = context.scene
+    prev_gravity = zero_gravity(scene)
+    bl_scene.free_all_point_caches(context)
+    scene.frame_set(scene.frame_start)
+    return prev_gravity
+
+
+def restore_after_rest_test(scene, prev_gravity) -> None:
+    scene.gravity = prev_gravity
 
 
 def gather_positions(objects_by_name: dict) -> dict:

@@ -4,6 +4,15 @@ explosion test (§8.2 step 5 / V8) before declaring success — a rig that
 explodes at rest is exactly v1's failure #2 (§1.2: "the constraint solver
 and the collision solver fought on frame 1 and the car detonated"), and
 this is the automated check that would have caught it.
+
+This embedded check is a cheap, best-effort pipeline gate — it uses
+`bl_rig.prepare_for_rest_test()` (zero gravity, free the point cache,
+reset to frame_start) so it isn't fooled by Stage 2's missing ground
+plane or a stale bake, but it prints no table and only asserts at 3
+frames. `tests/blender/test_rig_at_rest.py` is the deliberate, more
+rigorous, committed re-check for a manual Blender run: the same 3-frame
+assert plus a 30-frame drift report, with a full per-part table. Run
+that whenever this operator's own pass/fail needs a second look.
 """
 import bpy
 
@@ -99,16 +108,24 @@ class CF_OT_rig(bpy.types.Operator):
 
         # §8.2 step 5 / V8: step 3 frames with nothing driving the car,
         # measure the worst rigid part's displacement relative to the
-        # chassis. Frame position is restored afterward either way — this
-        # check must not leave the user's timeline scrubbed.
+        # chassis. Zero gravity first -- Stage 2 has no ground plane yet,
+        # so real gravity free-falls the whole car and contaminates this
+        # check with an unrelated, expected effect (reviewer correction:
+        # this embedded gate had the exact same flaw the standalone
+        # tests/blender/test_rig_at_rest.py script was written to avoid).
+        # Frame position and gravity are both restored afterward either
+        # way -- this check must not leave the user's timeline or scene
+        # gravity mutated as a side effect.
         rigid_objects_by_name = {name: objects_by_name[name] for name in plan.rigid_part_names}
-        before = bl_rig.gather_positions(rigid_objects_by_name)
         original_frame = scene.frame_current
+        prev_gravity = bl_rig.prepare_for_rest_test(context)
         try:
+            before = bl_rig.gather_positions(rigid_objects_by_name)
             bl_rig.step_frames(context, _EXPLOSION_STEP_FRAMES)
             after = bl_rig.gather_positions(rigid_objects_by_name)
         finally:
             scene.frame_set(original_frame)
+            bl_rig.restore_after_rest_test(scene, prev_gravity)
 
         check = core_rig.check_explosion(before, after, plan.chassis, plan.car_length)
         if not check.ok:

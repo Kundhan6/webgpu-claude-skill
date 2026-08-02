@@ -327,12 +327,80 @@ Tier-A-tested comparison logic. It measures each non-chassis part's
 displacement **relative to the chassis** (so a chassis settling slightly
 under gravity doesn't itself count against every other part) against
 5% of the car's own length (§8.2 step 5's literal number, scale-relative
-like `core/pairs.py`'s own margin). A failure names the single worst
-offending part, then `ops/rig.py` tears the whole rig back down — reusing
+like `core/pairs.py`'s own margin, named `core/rig.py::EXPLOSION_THRESHOLD_FRACTION`
+rather than a magic number). A failure names the single worst offending
+part, then `ops/rig.py` tears the whole rig back down — reusing
 `bl/scene.py`'s existing Reset helpers (`remove_cf_generated_objects` +
 `purge_orphaned_constraint_empties`) rather than a second cleanup path —
 before returning `{'CANCELLED'}`. Never a half-built rig left in the
 scene (§3 rule 10).
+
+**Mid-session correction, both parts acted on:** the first draft above
+asserted with whatever `scene.gravity` and point-cache state happened to
+be live at that moment. Two real problems with that, caught before any
+Blender run: (1) Stage 2 has no ground plane yet (that's Stage 3
+CF_Drive's job) — with real gravity on, the whole ungrounded car
+free-falls from frame 1, an expected effect with nothing to do with
+whether the rig itself is sound, and it would either false-fail a good
+rig or mask a real explosion underneath an unrelated drop; (2) a stale
+point cache (this scene's own earlier Rig attempt, or a leftover bake
+from outside Crash Forge entirely) would replay old keyframed motion
+instead of re-simulating anything — a false pass. Fixed in both places
+that step frames: `bl/rig.py::prepare_for_rest_test()` (new — zeroes
+`scene.gravity`, calls the existing `bl_scene.free_all_point_caches()`,
+resets to `frame_start`, all restored afterward) is now called both by
+`ops/rig.py`'s embedded check above and by the new standalone script
+below.
+
+**`tests/blender/test_rig_at_rest.py` (new) is the actual, authoritative
+version of this test** — real physics can only be validated in real
+Blender, which this build session never has, so writing this as a
+pytest that mocks bpy positions would prove nothing and would read as
+proof where there is none. Committed, not improvised, so Krish runs the
+exact same script every time and results are comparable run to run and
+car to car. It runs Reset -> Prep -> Rig itself, fresh, every run, then:
+zeroes gravity, frees the cache, resets to `frame_start`; steps 3 frames
+and **asserts** against `EXPLOSION_THRESHOLD_FRACTION * car_length`
+(imported from `core/rig.py`, never re-typed); steps to 30 frames total
+and **reports only** the worst displacement, not asserted — 3 frames
+catches a sudden explosion, 30 catches slow drift a 3-frame window is
+too short to see. Prints a full per-part displacement table (both
+windows) and one `RESULT = PASS`/`RESULT = FAIL` line at the end.
+`pytest.ini` gained `norecursedirs = blender` so this file (named
+`test_*.py` on purpose, for consistency at the call site — "run
+`test_rig_at_rest.py`") never gets collected by the Tier A/B suite,
+which would otherwise crash immediately on its unconditional `import
+bpy`.
+
+No hardcoded axis or assumed world origin anywhere in the script:
+forward axis/sign come from `core.classify.detect_forward_axis()`/
+`resolve_forward_sign()` run fresh against the live car's real geometry,
+and "the car's centre" (printed once, for reference only — every
+displacement is relative to the chassis, never to this) is
+`core.geometry.union_bbox()`'s centroid, never `(0, 0, 0)`. This matters
+concretely, not just in principle: the real car this build has already
+been verified against has forward = -Y and a union-bbox centre at
+x = -0.44 — a script that assumed forward = +X or centre = world origin
+would mislabel every column in its own printed table on exactly this
+car.
+
+**Degenerate wheel-hardware colliders — confirmed by code inspection,
+not assumed:** this car's 4 brake discs are `extents[0] == 0.0` exactly,
+27 verts each. A `CONVEX_HULL` of a zero-thickness disc is a degenerate,
+near-zero-volume hull — a bad rigid body, unstable in Bullet. They get
+**no collider and no rigid body at all.** `classify.py` step 1.5 already
+routes any part whose centroid falls inside a wheel's bbox to `UNKNOWN`
+(this is exactly what a brake disc/caliper is); `build_rig_plan()`'s
+`unknown_names` computation only ever adds `chassis`/wheels/breakable
+panels/glass to `rigid_names` — a disc is none of those, so it never
+gets a `RigidBodySpec`, and `apply_rig_plan()`'s rigid-body loop never
+touches it. Instead it's in `plan.wheel_hardware_parent`, and
+`bl/rig.py::parent_to()` makes it a plain child object of its own
+wheel — no `bpy.ops.rigidbody.object_add()` call, no collision shape,
+no participation in the Bullet simulation at all. It moves purely by
+inheriting its parent's transform every frame, the same as any other
+Blender parent/child relationship. Traced through the actual code path
+end to end this session, not inferred from the design description.
 
 **Known gap, flagged not fixed: idempotency (§3 rule 4).** Rig is the
 first stage that creates brand-new objects, and `ops/rig.py` does not
@@ -353,7 +421,10 @@ on now.
 **Not verified in this session — genuinely can't be, no Blender here:**
 whether the rig actually holds together in real Blender at all. Every
 line above is code review and Tier A logic, not a real simulation run.
-See the Blender verification steps at the end of this file.
+`tests/blender/test_rig_at_rest.py` is written to answer this, but
+written blind — it has never actually executed. See the Blender
+verification steps at the end of this file, which now lead with running
+that script.
 
 ### Real-car verification (this session)
 
@@ -605,7 +676,30 @@ context of your car — every step names exactly what to look at and what
      independently probed — see "M5 — Stage 2 Rig" above), or (b) the
      `RigidBodyObject.type`/`.mass` properties not existing/being named
      differently than assumed.
-3. Whether step 2 passed or hit the rest-test failure, click **Reset**.
+3. **Run the standalone rest test — this is the authoritative check, and
+   the one to paste back.** Scripting tab -> Open ->
+   `crash_forge/tests/blender/test_rig_at_rest.py` -> Run Script (it
+   drives Reset -> Prep -> Rig itself, fresh, so it's fine to run right
+   after step 2 regardless of whether step 2 passed or failed — you
+   don't need to redo steps 1-2 by hand first). Read the console output
+   top to bottom:
+   - The very first two lines confirm the resolved `crash_forge` package
+     path (catches a stale install shadowing this repo — see
+     "Landmines") and the detected `forward = ±X/Y/Z (...)` direction —
+     confirm that direction actually matches your car in the viewport,
+     since a wrong sign here would silently mislabel every column below.
+   - Two tables print: a 3-frame one (the actual pass/fail gate) and a
+     30-frame one (drift only, not asserted) — each row is one rigid
+     part, its displacement decomposed into forward/lateral/vertical
+     relative to the chassis, and an `OK`/`OVER` status against the
+     printed threshold.
+   - A line lists every part that got parented instead of a rigid body —
+     if your car has brake discs/calipers like the one this session's
+     report describes, they should be named here, not in either table.
+   - The last line is `RESULT = PASS` or `RESULT = FAIL`. Paste the
+     **whole console output**, not just this line — the tables are the
+     part that's actually diagnostic.
+4. Whether step 2/3 passed or hit the rest-test failure, click **Reset**.
    Confirm: `{'FINISHED'}`, no error lines, and every `CF_Hinge_*`/
    `CF_Motor_*`/`CF_Break_*`/`CF_NoCol_*` empty gone from the Outliner.
    This is the actual point of asking you to run this in particular —
@@ -614,7 +708,7 @@ context of your car — every step names exactly what to look at and what
    real. If anything `CF_`-named survives, or the report names a leaked
    `cf_generated` object, that is the exact bug last session's fix was
    supposed to close — paste the report.
-4. If step 2 passed cleanly, try clicking **Rig** a second time in a
+5. If step 2 passed cleanly, try clicking **Rig** a second time in a
    row without Reset in between: it should now be greyed out
    (`poll()` requires `stage_completed == 1` exactly, and a successful
    Rig run leaves it at 2) — confirm that. This is a known partial gap,
