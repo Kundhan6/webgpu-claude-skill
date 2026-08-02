@@ -19,7 +19,15 @@ M0–M5 complete. **M5 (Stage 2 Rig + the V8 3-frame explosion test) is
 done this session — stop and report per §14, don't start M6.** See
 "M5 — Stage 2 Rig" below for what was built, the scope decisions made
 (barrier handling, wheel-hardware parenting, motor target velocity), and
-the exact Blender steps to verify it.
+the exact Blender steps to verify it. Two mid-session corrections landed
+on top of the first draft, both from real gaps the reviewer caught, not
+hypothetical ones: "M5 correction: real 3-frame explosion test as a
+committed Blender script" (gravity/cache/frame-reset flaw in the rest
+test), and "M5 correction: structural connectivity + honest SIMULATED/
+PARENTED reporting" below (the rest test's blind spot to an entirely
+unattached part — which, while building it, also caught a real,
+previously-unnoticed bug: glass panels had a rigid body but no
+constraint attaching them to anything at all).
 
 Also this session, before M5: `core/tuning.py::CLASSIFY_BOOT_REAR_EXTREME`
 moved from 0.25 to 0.35 — see "CLASSIFY_BOOT_REAR_EXTREME: 0.25 -> 0.35"
@@ -44,10 +52,12 @@ Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-200/200 passing as of this session (175 carried forward + 25 new: M5's
-`tests/test_rig.py`, plus 3 for `core/classify.py::find_wheel_hardware_parents`
-in `test_wheels.py`) — no xfails. Tier A + Tier B only — no Blender needed
-to run this at all.
+206/206 passing as of this session (175 carried forward from before this
+session's own baseline check + 28 in `tests/test_rig.py` + 3 in
+`test_wheels.py` for `find_wheel_hardware_parents`) — no xfails. Tier A +
+Tier B only — no Blender needed to run this at all. `tests/blender/`
+holds Tier C scripts (real bpy, real Blender only) and is excluded from
+this count by `pytest.ini`'s `norecursedirs = blender` on purpose.
 
 ## M4.5 — classify.py real-car fixes (this session)
 
@@ -246,13 +256,14 @@ as more independent evidence than it actually was.
 
 ## M5 — Stage 2 Rig (this session)
 
-Built `core/rig.py` (pure planning, no bpy — `build_rig_plan()` +
-`check_explosion()`), `bl/rig.py` (the bpy execution layer), and
-`ops/rig.py` (`crashforge.rig`), wired into `__init__.py` and the panel.
-25 new Tier A tests (`tests/test_rig.py`, plus 3 in `test_wheels.py` for
-`find_wheel_hardware_parents`) — 200/200 total, still Tier A + Tier B
-only. **Nothing here has run in Blender yet** — see "Blender verification
-steps for M5" at the end of this file for exactly what to run.
+Built `core/rig.py` (pure planning, no bpy — `build_rig_plan()`,
+`check_connectivity()`, `check_explosion()`), `bl/rig.py` (the bpy
+execution layer), and `ops/rig.py` (`crashforge.rig`), wired into
+`__init__.py` and the panel. 206/206 total, still Tier A + Tier B only
+(counts and section numbers below are from the *final* state of this
+session, after both corrections — see "M5 correction" sections). **Nothing
+here has run in Blender yet** — see "Blender verification steps for M5" at
+the end of this file for exactly what to run.
 
 **§9's constraint graph, built correctly from the start rather than
 fixed up after the fact:** every `ACTIVE` rigid body always gets
@@ -401,6 +412,69 @@ no participation in the Bullet simulation at all. It moves purely by
 inheriting its parent's transform every frame, the same as any other
 Blender parent/child relationship. Traced through the actual code path
 end to end this session, not inferred from the design description.
+
+**M5 correction, second round, this session: structural connectivity +
+honest SIMULATED/PARENTED reporting.** The rest test (gravity=0, nothing
+driving) has a real blind spot: it can only catch a part the solver
+actively shoves. A wheel with no hinge to the chassis sits perfectly
+still in zero gravity and passes cleanly — a PASS there means "nothing
+shoves parts apart," not "the car is one car." Fixed with a separate,
+pure-data check, not a physics one:
+
+- `core/rig.py::check_connectivity()` (new) builds a graph — nodes are
+  every part CF_Prep classified, edges are every hinge/motor/break
+  constraint plus every parent link Rig creates (`weld_to_chassis`,
+  `wheel_hardware_parent`) — and asserts a single connected component.
+  `core/rig.py::build_connectivity_edges()` deliberately excludes
+  no-collide (`plan.nocols`) constraints: §9.4 is explicit that one
+  "must hold nothing" (`enabled=False`), so counting it as structural
+  would reopen the exact blind spot this check exists to close.
+  `build_rig_plan()` calls this itself and raises `RigPlanError`,
+  naming every isolated part, before Rig ever touches a single bpy
+  object — the check runs identically in Tier A (`tests/test_rig.py`,
+  8 new tests, both directions: drop a hinge and watch the right test
+  fail, restore it and watch it pass) and inside the real Blender
+  script, since it's the same pure function either way.
+- **Caught a real bug while building this, not a hypothetical one:**
+  glass panels get a rigid body (§8.2 step 1) but §9's table names no
+  constraint that attaches them to anything at all — every glass panel
+  was its own disconnected island. Fixed: `core/rig.py::BreakSpec`
+  gained a `breakable: bool` field; glass now gets the same FIXED
+  chassis<->panel attachment every breakable panel gets
+  (`core/rig.py::build_rig_plan()`), just with `breakable=False` —
+  `bl/rig.py::add_break()` only sets `use_breaking`/`breaking_threshold`
+  when `spec.breakable` is true, so glass is held in place but never
+  detaches as a whole panel through this mechanism (it shatters later,
+  via §8.8 CF_Glass_Sim's separate mesh-level Quick Explode, not built
+  yet). `tests/test_rig.py::test_glass_gets_its_own_rigid_body_and_a_non_breakable_attachment`
+  locks this in; the real 13-part car (`tests/fixtures/real_car.json`)
+  confirmed via direct code run this session: its one GLASS part
+  (`windows glass_0`) gets exactly this treatment, and the whole car
+  passes `check_connectivity()` end to end.
+- The barrier is the one legitimate exception — named and explained,
+  not excused by loosening the assert (per the reviewer's explicit
+  instruction not to). It's excluded from `check_connectivity()`'s node
+  set because it was never one of the car's own classified parts to
+  begin with (`roles.keys()` never includes it) — it's the external
+  wall the car collides with, meant to be disconnected from the car.
+  `tests/test_rig.py::test_barrier_is_excluded_from_connectivity_not_required_to_connect`
+  checks both halves: `build_rig_plan()` doesn't raise even though
+  nothing attaches the barrier to anything, and the barrier never
+  appears in `isolated_parts`.
+- **`tests/blender/test_rig_at_rest.py`'s table now marks every row
+  SIMULATED or PARENTED**, and its `RESULT` line reports both counts.
+  A PARENTED part (no rigid body — wheel hardware, or any other
+  UNKNOWN part welded to the chassis) inherits its parent's transform
+  exactly and cannot independently fail no matter what the sim does;
+  before this fix, this car's 4 degenerate brake discs would report a
+  clean `0.000` in the same table as the 9 genuinely-simulated parts,
+  reading as "13/13 verified" when only 9 parts were actually
+  exercised. Only SIMULATED rows can show `OVER` or contribute to the
+  worst-displacement tracking used for pass/fail; PARENTED rows print
+  `n/a` and are informational only. `ops/rig.py`'s own success report
+  line got the same split (`N rigid part(s) SIMULATED, M part(s)
+  PARENTED`) for the same reason, plus a `connectivity: 1 component`
+  line, at negligible cost, for consistency.
 
 **Known gap, flagged not fixed: idempotency (§3 rule 4).** Rig is the
 first stage that creates brand-new objects, and `ops/rig.py` does not
@@ -688,17 +762,28 @@ context of your car — every step names exactly what to look at and what
      "Landmines") and the detected `forward = ±X/Y/Z (...)` direction —
      confirm that direction actually matches your car in the viewport,
      since a wrong sign here would silently mislabel every column below.
+   - If `CF_Rig` refused outright with "the rig is not a single
+     connected car" (a real, structural failure, not the rest test) —
+     that's `core/rig.py::check_connectivity()` catching a part with no
+     constraint or parent link to anything, before a single frame ever
+     stepped. It names every isolated part. This is a different, and in
+     some ways more fundamental, failure than the rest test below —
+     paste it back as-is.
    - Two tables print: a 3-frame one (the actual pass/fail gate) and a
-     30-frame one (drift only, not asserted) — each row is one rigid
-     part, its displacement decomposed into forward/lateral/vertical
-     relative to the chassis, and an `OK`/`OVER` status against the
-     printed threshold.
-   - A line lists every part that got parented instead of a rigid body —
-     if your car has brake discs/calipers like the one this session's
-     report describes, they should be named here, not in either table.
-   - The last line is `RESULT = PASS` or `RESULT = FAIL`. Paste the
-     **whole console output**, not just this line — the tables are the
-     part that's actually diagnostic.
+     30-frame one (drift only, not asserted) — each row is one *car*
+     part (not just rigid ones), marked `SIMULATED` (has its own rigid
+     body — genuinely exercised by the sim) or `PARENTED` (no rigid
+     body, just inherits its parent's transform — cannot independently
+     fail no matter what happens; e.g. your car's brake discs/calipers
+     if it has them). Only `SIMULATED` rows get an `OK`/`OVER` status
+     against the printed threshold; `PARENTED` rows print `n/a`.
+   - The last line is `RESULT = PASS` or `RESULT = FAIL`, followed by
+     the SIMULATED/PARENTED counts — check that the SIMULATED count
+     looks like what you'd actually expect to be under test (chassis +
+     4 wheels + however many breakable panels/glass your car has), not
+     inflated by parts that were never really at risk of failing. Paste
+     the **whole console output**, not just this line — the tables are
+     the part that's actually diagnostic.
 4. Whether step 2/3 passed or hit the rest-test failure, click **Reset**.
    Confirm: `{'FINISHED'}`, no error lines, and every `CF_Hinge_*`/
    `CF_Motor_*`/`CF_Break_*`/`CF_NoCol_*` empty gone from the Outliner.

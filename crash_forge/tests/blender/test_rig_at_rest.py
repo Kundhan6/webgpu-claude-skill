@@ -42,6 +42,22 @@ What it checks, and why, in order:
    can judge it, without hard-failing the run over a number nobody set a
    real threshold for yet.
 
+This test has a structural blind spot the numbers above cannot see, and
+does not try to cover it: a part with *no* constraint or parent link to
+the rest of the car sits perfectly still in zero gravity and reports a
+clean 0.000, indistinguishable from one correctly held in place. That
+gap is closed separately, structurally, not by this script:
+`core.rig.build_rig_plan()` now builds a connectivity graph (every
+hinge/motor/break/parent link) and refuses to build the rig at all if
+any part isn't reachable from every other part — before Rig ever
+touches a single frame. If `crashforge.rig` failed below, that refusal
+(named in its own error message) is a more likely cause than anything
+this script's tables would show. Every SIMULATED row below (a part with
+its own rigid body) is genuinely exercised by the sim; every PARENTED
+row (no rigid body, just inherits a parent's transform) moves *only*
+because something else did and cannot independently fail — marked as
+such so a passing table can't be read as testing more than it did.
+
 No hardcoded axis, no assumed world origin, anywhere in this script.
 Forward axis/sign are resolved fresh from *this* car's real geometry via
 `core.classify.detect_forward_axis()`/`resolve_forward_sign()` — never
@@ -159,16 +175,31 @@ def _resolve_forward(descriptors):
 
 
 def _print_displacement_table(before: dict, after: dict, chassis_name: str, roles: dict,
-                               forward_axis: int, lateral_axis: int, threshold: float, header: str):
+                               simulated_names: set, forward_axis: int, lateral_axis: int,
+                               threshold: float, header: str):
     """Per-part displacement relative to the chassis, decomposed along
     the *detected* forward/lateral/vertical axes (never a hardcoded X/Y/Z
-    guess). Returns (worst_part_name, worst_magnitude)."""
+    guess). Every car part gets a row, marked SIMULATED (has its own
+    rigid body -- the sim can actually move it independently) or
+    PARENTED (no rigid body at all, just inherits its parent's transform
+    every frame, so it moves *only* because something else did and
+    cannot fail on its own no matter what the sim does).
+
+    Reviewer correction, this session: a table that doesn't say this out
+    loud overstates how much it actually tested -- 4 wheel-hardware
+    "passengers" reporting a clean 0.000 look identical to 4 genuinely
+    verified parts. Only SIMULATED rows are eligible for OK/OVER status
+    and the worst-part tracking used for pass/fail; PARENTED rows are
+    informational only.
+
+    Returns (worst_simulated_name, worst_simulated_magnitude).
+    """
     print(f"\n{header}", flush=True)
     col_fwd = f"fwd({_AXIS_NAMES[forward_axis]})"
     col_lat = f"lat({_AXIS_NAMES[lateral_axis]})"
     col_vert = f"vert({_AXIS_NAMES[VERTICAL_AXIS]})"
     print(
-        f"{'part':30s} {'role':10s} {col_fwd:>10s} {col_lat:>10s} {col_vert:>10s} "
+        f"{'part':30s} {'role':10s} {'kind':10s} {col_fwd:>10s} {col_lat:>10s} {col_vert:>10s} "
         f"{'|delta|':>10s} {'status':>8s}",
         flush=True,
     )
@@ -181,12 +212,17 @@ def _print_displacement_table(before: dict, after: dict, chassis_name: str, role
         part_delta = tuple(after[name][i] - before[name][i] for i in range(3))
         rel = tuple(part_delta[i] - chassis_delta[i] for i in range(3))
         mag = sum(c * c for c in rel) ** 0.5
-        status = "OK" if mag <= threshold else "OVER"
-        if mag > worst_mag:
-            worst_mag, worst_name = mag, name
+        is_simulated = name in simulated_names
+        kind = "SIMULATED" if is_simulated else "PARENTED"
+        if is_simulated:
+            status = "OK" if mag <= threshold else "OVER"
+            if mag > worst_mag:
+                worst_mag, worst_name = mag, name
+        else:
+            status = "n/a"
         role = roles.get(name, PartRole.UNKNOWN).value
         print(
-            f"{name:30s} {role:10s} {rel[forward_axis]:10.4f} {rel[lateral_axis]:10.4f} "
+            f"{name:30s} {role:10s} {kind:10s} {rel[forward_axis]:10.4f} {rel[lateral_axis]:10.4f} "
             f"{rel[VERTICAL_AXIS]:10.4f} {mag:10.4f} {status:>8s}",
             flush=True,
         )
@@ -249,7 +285,7 @@ def main():
 
     by_name = {obj.name: obj for obj in parts}
     rigid_names = [name for name, obj in by_name.items() if getattr(obj, "rigid_body", None) is not None]
-    rigid_objects_by_name = {name: by_name[name] for name in rigid_names}
+    simulated_names = set(rigid_names)
 
     # Everything else got parented instead of a rigid body -- confirm it
     # live, from real bpy state, not just from core.rig's plan. This is
@@ -258,13 +294,29 @@ def main():
     # CONVEX_HULL collider would be a degenerate, unstable rigid body, so
     # the design gives wheel hardware no collider and no rigid body at
     # all -- it just rides its own wheel's transform as a parented child.
+    #
+    # Both kinds are tracked below (not just the rigid ones) so the
+    # table can show every part, not just the ones that can pass:
+    # reviewer correction, this session -- a PARENTED part inherits its
+    # parent's transform exactly, so it can never independently fail no
+    # matter what the sim does, and a table that only ever shows
+    # SIMULATED rows next to a "13/13" count would silently be counting
+    # parts that were never actually exercised.
     parented = sorted(name for name in by_name if name not in rigid_names and name != chassis_name)
+    tracked_names = rigid_names + parented
+    tracked_objects_by_name = {name: by_name[name] for name in tracked_names}
     if parented:
         print(
-            f"test_rig_at_rest.py: {len(parented)} part(s) parented, not rigid-bodied "
-            f"(no collider at all -- they move with their parent's transform only): {parented}",
+            f"test_rig_at_rest.py: {len(parented)} part(s) PARENTED, not rigid-bodied "
+            f"(no collider at all -- they move with their parent's transform only, cannot "
+            f"independently fail this test): {parented}",
             flush=True,
         )
+    print(
+        f"test_rig_at_rest.py: {len(rigid_names)} part(s) SIMULATED (have their own rigid body, "
+        f"chassis included) -- only these are eligible to fail the rest test below.",
+        flush=True,
+    )
 
     print(
         f"test_rig_at_rest.py: zeroing scene.gravity for the rest test (was {tuple(scene.gravity)}) "
@@ -282,27 +334,33 @@ def main():
     )
 
     try:
-        before = bl_rig.gather_positions(rigid_objects_by_name)
+        before = bl_rig.gather_positions(tracked_objects_by_name)
 
         bl_rig.step_frames(bpy.context, ASSERT_FRAMES)
-        after_assert = bl_rig.gather_positions(rigid_objects_by_name)
+        after_assert = bl_rig.gather_positions(tracked_objects_by_name)
         worst_name_3, worst_mag_3 = _print_displacement_table(
-            before, after_assert, chassis_name, roles, forward_axis, lateral_axis, threshold,
+            before, after_assert, chassis_name, roles, simulated_names, forward_axis, lateral_axis, threshold,
             header=f"--- {ASSERT_FRAMES}-frame rest test (gravity=0, ASSERTED against threshold) ---",
         )
         passed = worst_mag_3 <= threshold
 
         remaining = DRIFT_REPORT_FRAMES - ASSERT_FRAMES
         bl_rig.step_frames(bpy.context, remaining)
-        after_drift = bl_rig.gather_positions(rigid_objects_by_name)
+        after_drift = bl_rig.gather_positions(tracked_objects_by_name)
         worst_name_30, worst_mag_30 = _print_displacement_table(
-            before, after_drift, chassis_name, roles, forward_axis, lateral_axis, threshold,
+            before, after_drift, chassis_name, roles, simulated_names, forward_axis, lateral_axis, threshold,
             header=f"--- {DRIFT_REPORT_FRAMES}-frame drift report (gravity=0, NOT asserted) ---",
         )
     finally:
         scene.frame_set(scene.frame_start)
         bl_rig.restore_after_rest_test(scene, prev_gravity)
 
+    # SIMULATED count here does NOT include the chassis (it's the
+    # reference every displacement is measured against, never a row that
+    # could itself pass/fail) -- reported separately for an honest count
+    # of how many parts this run actually exercised, not "13/13" when 4
+    # of those 13 were passengers that cannot fail no matter what.
+    simulated_tested = len(rigid_names) - 1
     print(
         f"\ntest_rig_at_rest.py: {ASSERT_FRAMES}-frame worst displacement = {worst_mag_3:.4f} "
         f"({worst_name_3}), threshold = {threshold:.4f}",
@@ -313,7 +371,12 @@ def main():
         f"{worst_mag_30:.4f} ({worst_name_30})",
         flush=True,
     )
-    print(f"\ntest_rig_at_rest.py: RESULT = {'PASS' if passed else 'FAIL'}", flush=True)
+    print(
+        f"\ntest_rig_at_rest.py: RESULT = {'PASS' if passed else 'FAIL'} "
+        f"({simulated_tested} SIMULATED part(s) exercised, {len(parented)} PARENTED part(s) "
+        f"along for the ride, not tested)",
+        flush=True,
+    )
     if not passed:
         sys.exit(1)
 

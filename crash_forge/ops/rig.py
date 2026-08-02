@@ -140,11 +140,15 @@ class CF_OT_rig(bpy.types.Operator):
             return {'CANCELLED'}
 
         cf.stage_completed = 2
+        breakable_count = sum(1 for b in plan.breaks if b.breakable)
+        glass_attach_count = len(plan.breaks) - breakable_count
+        parented_count = len(plan.weld_to_chassis) + len(plan.wheel_hardware_parent)
         self.report(
             {'INFO'},
-            f"CF_Rig: {len(plan.rigid_bodies)} rigid part(s), {len(plan.hinges)} hinge(s), "
-            f"{len(plan.motors)} motor(s), {len(plan.breaks)} breakable panel(s), "
-            f"{len(plan.nocols)} no-collide pair(s) — rest test passed "
+            f"CF_Rig: {len(plan.rigid_bodies)} rigid part(s) SIMULATED, {parented_count} part(s) "
+            f"PARENTED (not simulated), {len(plan.hinges)} hinge(s), {len(plan.motors)} motor(s), "
+            f"{breakable_count} breakable panel(s), {glass_attach_count} glass attachment(s), "
+            f"{len(plan.nocols)} no-collide pair(s), connectivity: 1 component — rest test passed "
             f"(worst displacement {check.max_displacement:.4f} / {check.threshold:.4f} threshold)",
         )
         return {'FINISHED'}

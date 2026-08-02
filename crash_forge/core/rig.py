@@ -110,11 +110,22 @@ class MotorSpec:
 
 @dataclass(frozen=True)
 class BreakSpec:
-    """§9.3 / §12.6: one per breakable panel."""
+    """§9.3 / §12.6: one per breakable panel, PLUS one per glass panel
+    with `breakable=False`. Glass gets a rigid body (§8.2 step 1) but
+    §9 never names any constraint that actually attaches it to
+    anything — a gap the connectivity check below caught: without this,
+    every glass panel was a rigid body floating unconstrained, its own
+    disconnected island. Glass must stay structurally attached at Stage
+    2 (it doesn't detach as a whole panel the way a door does — it
+    shatters later, via §8.8 CF_Glass_Sim's separate mesh-level Quick
+    Explode mechanism), so it gets the same FIXED chassis<->panel
+    attachment every breakable panel gets, just never allowed to break
+    through this constraint."""
     name: str
     chassis: str
     panel: str
-    breaking_threshold: float
+    breakable: bool
+    breaking_threshold: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -233,7 +244,9 @@ def build_rig_plan(
         mass = _mass_for(by_name[pname], roles[pname])
         base = mass * impact_speed_ms
         threshold = base * (0.15 + (1.2 - 0.15) * panel_toughness)  # §12.6: lerp(0.15, 1.2, panel_toughness)
-        breaks.append(BreakSpec(break_name(pname), chassis, pname, threshold))
+        breaks.append(BreakSpec(break_name(pname), chassis, pname, breakable=True, breaking_threshold=threshold))
+    for pname in glass_names:
+        breaks.append(BreakSpec(break_name(pname), chassis, pname, breakable=False))
 
     physics_parts = [by_name[n] for n in rigid_names]
     nocols = []
@@ -244,7 +257,7 @@ def build_rig_plan(
     except AmbiguousNoColNameError as exc:
         raise RigPlanError(str(exc)) from exc
 
-    return RigPlan(
+    plan = RigPlan(
         chassis=chassis,
         car_length=car_length,
         rigid_bodies=tuple(rigid_bodies),
@@ -255,6 +268,122 @@ def build_rig_plan(
         weld_to_chassis=weld_to_chassis,
         wheel_hardware_parent=hardware_parent,
     )
+
+    # Structural connectivity, added per reviewer correction: the
+    # 3-frame rest test (zero gravity, nothing driving) can only catch a
+    # part the solver actively shoves apart -- it cannot catch a part
+    # that was never attached to anything at all, since an unattached
+    # part sitting still in zero gravity looks identical to one
+    # correctly held in place. A PASS there means "nothing shoves parts
+    # apart", not "the car is one car". Checked against every part
+    # CF_Prep classified (roles.keys()), never plan.rigid_part_names --
+    # the barrier, if any, is a separate object outside the car's own
+    # hierarchy and is deliberately excluded, not excused (see
+    # check_connectivity's docstring).
+    connectivity = check_connectivity(plan, roles.keys())
+    if not connectivity.ok:
+        raise RigPlanError(
+            f"the rig is not a single connected car: {connectivity.component_count} separate "
+            f"component(s), {len(connectivity.isolated_parts)} part(s) isolated from the main "
+            f"body: {list(connectivity.isolated_parts)}"
+        )
+
+    return plan
+
+
+# --- structural connectivity (reviewer correction, this session) -----
+
+
+def build_connectivity_edges(plan: RigPlan) -> list:
+    """Every edge that actually attaches one part to another at Stage 2:
+    hinges, motors, and FIXED break constraints (breakable or not --
+    even a *breakable* constraint holds the panel in place until it
+    breaks, so it counts here same as glass's non-breaking one), plus
+    every parent link Rig itself creates (weld-to-chassis,
+    wheel-hardware-to-wheel).
+
+    Deliberately excludes no-collide (`plan.nocols`) constraints: §9.4
+    is explicit that a no-collide constraint "must hold nothing" --
+    `enabled=False`, its only job is `disable_collisions`. Counting it
+    as a structural edge would let two parts that are merely *near* each
+    other (and would otherwise collide) satisfy connectivity without
+    ever actually being attached -- exactly the blind spot this check
+    exists to close, reintroduced through the back door.
+    """
+    edges = []
+    for h in plan.hinges:
+        edges.append((h.chassis, h.wheel))
+    for m in plan.motors:
+        edges.append((m.chassis, m.wheel))
+    for b in plan.breaks:
+        edges.append((b.chassis, b.panel))
+    for name in plan.weld_to_chassis:
+        edges.append((name, plan.chassis))
+    for name, wheel_name in plan.wheel_hardware_parent.items():
+        edges.append((name, wheel_name))
+    return edges
+
+
+@dataclass(frozen=True)
+class ConnectivityResult:
+    ok: bool
+    component_count: int
+    isolated_parts: tuple  # every part not in the single largest component, sorted
+
+
+def check_connectivity(plan: RigPlan, car_part_names) -> ConnectivityResult:
+    """Assert every part CF_Prep classified is reachable from every
+    other part through the constraint graph plus Rig's own parenting.
+
+    Why this exists: the 3-frame rest test (zero gravity, nothing
+    driving) can only catch a part the solver actively shoves. A wheel
+    with no hinge to the chassis sits perfectly still in zero gravity
+    and passes that check cleanly -- a PASS there means "nothing shoves
+    parts apart", not "the car is one car". This check is pure data (a
+    graph built from `plan`'s own constraint/parenting lists), needs no
+    simulation, and runs identically in Tier A and inside real Blender.
+
+    `car_part_names`: every part CF_Prep classified (a build_rig_plan()
+    caller's `roles.keys()`) -- deliberately NOT `plan.rigid_part_names`,
+    which would also include a user-supplied target/barrier object. The
+    barrier is excluded here on purpose, not as a loosened assert: it
+    was never one of the car's own parts to begin with (it comes from
+    `scene.crash_forge.target_object`, a wholly separate object outside
+    the car's mesh hierarchy) -- it is *meant* to be its own island,
+    because it's the external wall the car collides with, not part of
+    the car itself.
+    """
+    car_part_names = list(car_part_names)
+    adjacency = {name: set() for name in car_part_names}
+    for a, b in build_connectivity_edges(plan):
+        if a in adjacency and b in adjacency:
+            adjacency[a].add(b)
+            adjacency[b].add(a)
+
+    seen = set()
+    components = []
+    for start in car_part_names:
+        if start in seen:
+            continue
+        stack = [start]
+        component = set()
+        while stack:
+            node = stack.pop()
+            if node in component:
+                continue
+            component.add(node)
+            stack.extend(adjacency[node] - component)
+        seen |= component
+        components.append(component)
+
+    if not components:
+        return ConnectivityResult(ok=True, component_count=0, isolated_parts=())
+
+    largest = max(components, key=len)
+    isolated = tuple(sorted(
+        name for comp in components if comp is not largest for name in comp
+    ))
+    return ConnectivityResult(ok=len(components) == 1, component_count=len(components), isolated_parts=isolated)
 
 
 # --- §8.2 step 5 / V8: the 3-frame explosion test ---------------------

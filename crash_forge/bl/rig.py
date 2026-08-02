@@ -116,12 +116,19 @@ def add_motor(context, spec, objects_by_name):
 
 
 def add_break(context, spec, objects_by_name):
-    """§9.3."""
+    """§9.3, plus glass's non-breaking variant (core/rig.py::BreakSpec's
+    docstring — glass needs the same FIXED chassis<->panel attachment to
+    stay structurally connected, just never allowed to break through it).
+    `use_breaking` stays at its RNA default (False) whenever
+    `spec.breakable` is False -- never set True and then left with a
+    meaningless `breaking_threshold=0.0`, which would make glass panels
+    detach on the very first frame of any nonzero impulse."""
     location = tuple(objects_by_name[spec.panel].matrix_world.translation)
     empty = _create_constraint_empty(context, spec.name, location, 2)
     rbc = _add_constraint(context, empty, 'FIXED', objects_by_name[spec.chassis], objects_by_name[spec.panel], True)
-    rbc.use_breaking = True
-    rbc.breaking_threshold = spec.breaking_threshold
+    if spec.breakable:
+        rbc.use_breaking = True
+        rbc.breaking_threshold = spec.breaking_threshold
     return empty
 
 

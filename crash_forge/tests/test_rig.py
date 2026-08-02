@@ -6,13 +6,17 @@ bl/rig.py and ops/rig.py themselves are Tier C only (real bpy calls, real
 frame stepping) — see CLAUDE.md's M5 report for the Blender verification
 steps; nothing here can substitute for that.
 """
+import dataclasses
+
 import pytest
 
 from crash_forge.core.classify import PartDescriptor, PartRole, classify, detect_forward_axis
 from crash_forge.core.rig import (
     MAX_RIGID_PARTS,
     RigPlanError,
+    build_connectivity_edges,
     build_rig_plan,
+    check_connectivity,
     check_explosion,
 )
 from tests.car_fixture_builder import load_fixture
@@ -72,18 +76,29 @@ def test_hinge_and_motor_axis_is_the_wheel_thin_axis():
 
 def test_breakable_panels_are_doors_hood_boot_bumpers():
     _, _, plan = _build_sedan_plan()
-    break_panels = {b.panel for b in plan.breaks}
-    assert break_panels == {"Door_L", "Door_R", "Hood", "Boot", "Bumper_F", "Bumper_R"}
+    breakable_panels = {b.panel for b in plan.breaks if b.breakable}
+    assert breakable_panels == {"Door_L", "Door_R", "Hood", "Boot", "Bumper_F", "Bumper_R"}
     assert all(b.chassis == "Body" for b in plan.breaks)
 
 
-def test_glass_gets_its_own_rigid_body_not_a_break_constraint():
+def test_glass_gets_its_own_rigid_body_and_a_non_breakable_attachment():
+    """Glass gets a rigid body (§8.2 step 1) but §9 names no constraint
+    that attaches it to anything -- a real gap the connectivity check
+    caught: without an attachment, every glass panel was its own
+    disconnected island. It gets the same FIXED chassis<->panel
+    constraint every breakable panel gets, just with breakable=False --
+    it must never detach as a whole panel through this mechanism (it
+    shatters later, via a completely different one, §8.8)."""
     _, _, plan = _build_sedan_plan()
     glass_names = {"Glass_Windshield", "Glass_Rear"}
     rigid_names = set(plan.rigid_part_names)
     assert glass_names <= rigid_names
-    break_panels = {b.panel for b in plan.breaks}
-    assert not (glass_names & break_panels)
+
+    glass_breaks = {b.panel: b for b in plan.breaks if b.panel in glass_names}
+    assert set(glass_breaks) == glass_names
+    for b in glass_breaks.values():
+        assert b.breakable is False
+        assert b.chassis == "Body"
 
 
 def test_no_active_rigid_body_ever_uses_mesh_shape():
@@ -175,6 +190,127 @@ def test_more_than_max_rigid_parts_raises():
         roles[name] = PartRole.HOOD
     with pytest.raises(RigPlanError, match="rigid part"):
         build_rig_plan(parts, roles, speed_kmh=_SPEED_KMH, panel_toughness=_PANEL_TOUGHNESS)
+
+
+# --- structural connectivity (reviewer correction) ------------------------
+#
+# The 3-frame rest test (zero gravity, nothing driving) can only catch a
+# part the solver actively shoves apart -- it cannot catch a part that
+# was never attached to anything at all. A wheel with no hinge to the
+# chassis sits perfectly still in zero gravity and passes that check
+# cleanly. This is a separate, pure-data check: build a graph from every
+# constraint plus every parent link, assert one connected component.
+
+
+def test_a_normally_built_sedan_is_one_connected_component():
+    """build_rig_plan() calls check_connectivity() itself and raises if
+    disconnected -- a successful call on the sedan fixture is already
+    proof, but assert it directly too, not just by absence of an
+    exception."""
+    parts, roles, plan = _build_sedan_plan()
+    result = check_connectivity(plan, roles.keys())
+    assert result.ok
+    assert result.component_count == 1
+    assert result.isolated_parts == ()
+
+
+def test_dropping_one_hinge_isolates_that_wheel_and_fails():
+    """Verify direction 1: remove one edge, the graph must actually
+    notice. A wheel with its hinge dropped has *no* other edge to
+    anything (wheels don't weld to the body and aren't wheel hardware
+    themselves), so it becomes its own single-part island."""
+    parts, roles, plan = _build_sedan_plan()
+    dropped_wheel = plan.hinges[0].wheel
+    broken_plan = dataclasses.replace(plan, hinges=tuple(plan.hinges[1:]))
+
+    result = check_connectivity(broken_plan, roles.keys())
+
+    assert not result.ok
+    assert result.component_count == 2
+    assert result.isolated_parts == (dropped_wheel,)
+
+
+def test_restoring_the_dropped_hinge_fixes_connectivity():
+    """Verify direction 2: putting the same edge back must actually fix
+    it, not just happen to still report ok from a stale assumption."""
+    parts, roles, plan = _build_sedan_plan()
+    dropped_wheel = plan.hinges[0].wheel
+    broken_plan = dataclasses.replace(plan, hinges=tuple(plan.hinges[1:]))
+    assert not check_connectivity(broken_plan, roles.keys()).ok  # sanity: it really was broken
+
+    restored_plan = dataclasses.replace(broken_plan, hinges=plan.hinges)
+    result = check_connectivity(restored_plan, roles.keys())
+
+    assert result.ok
+    assert result.isolated_parts == ()
+    assert dropped_wheel in restored_plan.rigid_part_names  # still a rigid part, still connected
+
+
+def test_a_second_body_labeled_part_is_orphaned_and_refused():
+    """A genuine, currently-reachable gap, not a contrived one:
+    build_rig_plan() only ever uses the *first* BODY-role part it finds
+    as the chassis (`next(...)`). A second part also labeled BODY (a
+    plausible classify() mistake) is excluded from every other bucket
+    too -- `role != PartRole.BODY` is carved out of the UNKNOWN
+    catch-all on purpose -- so it never gets a rigid body, never gets
+    parented, and never gets any edge at all. It becomes a true,
+    single-node island: exactly what this check exists to catch instead
+    of silently building a rig with a part missing from it entirely."""
+    parts, roles = _classify_sedan()
+    extra_body = PartDescriptor(
+        name="Body_Extra", bbox_min=(200, 200, 0), bbox_max=(201, 201, 1),
+        centroid=(200.5, 200.5, 0.5), vert_count=50,
+    )
+    parts = list(parts) + [extra_body]
+    roles = dict(roles)
+    roles["Body_Extra"] = PartRole.BODY
+
+    with pytest.raises(RigPlanError, match="connected"):
+        build_rig_plan(parts, roles, speed_kmh=_SPEED_KMH, panel_toughness=_PANEL_TOUGHNESS)
+
+
+def test_connectivity_edges_never_derived_from_nocols():
+    """§9.4 no-collide constraints explicitly hold nothing
+    (`enabled=False`) -- build_connectivity_edges() must source edges
+    only from hinges/motors/breaks/parenting, never `plan.nocols`,
+    regardless of how many no-collide pairs happen to exist between
+    parts that are *also* structurally connected some other way (the
+    sedan's Boot, for instance, legitimately has both: a break
+    constraint holding it AND a no-collide pair stopping its overlapping
+    convex hull from fighting the chassis' -- both true at once, neither
+    proves the other). Checked directly: strip every real structural
+    source out of a plan that still has no-collide pairs, and confirm
+    zero edges come out."""
+    _, _, plan = _build_sedan_plan()
+    assert len(plan.nocols) > 0, "the sedan fixture must actually produce no-collide pairs for this test to mean anything"
+    stripped = dataclasses.replace(
+        plan, hinges=(), motors=(), breaks=(), weld_to_chassis=(), wheel_hardware_parent={},
+    )
+    assert build_connectivity_edges(stripped) == []
+
+
+def test_barrier_is_excluded_from_connectivity_not_required_to_connect():
+    """The barrier is meant to be its own island -- it's the external
+    wall the car collides with, never attached to the car. Confirmed two
+    ways: build_rig_plan() doesn't raise even though nothing attaches
+    the barrier to anything, and the barrier never appears in
+    isolated_parts (because it's outside car_part_names entirely, not
+    because the assert was loosened to allow it)."""
+    parts, roles = _classify_sedan()
+    barrier = PartDescriptor(
+        name="Target_Wall", bbox_min=(50, -5, 0), bbox_max=(51, 5, 3),
+        centroid=(50.5, 0, 1.5), vert_count=8,
+    )
+    parts = list(parts) + [barrier]
+
+    plan = build_rig_plan(
+        parts, roles, speed_kmh=_SPEED_KMH, panel_toughness=_PANEL_TOUGHNESS, barrier_name="Target_Wall",
+    )
+
+    assert "Target_Wall" in plan.rigid_part_names
+    result = check_connectivity(plan, roles.keys())  # roles never included the barrier
+    assert result.ok
+    assert "Target_Wall" not in result.isolated_parts
 
 
 # --- wheel hardware parenting --------------------------------------------
