@@ -17,7 +17,7 @@ from ..bl import apply as bl_apply
 from ..bl import extract as bl_extract
 from ..bl import scene as bl_scene
 from ..core import validate as core_validate
-from ..core.classify import PartRole, classify, detect_forward_axis
+from ..core.classify import PartRole, classify, detect_forward_axis, resolve_forward_sign
 from ..core.descriptor_io import dump_part_descriptors
 
 _BLENDER_REPORT_LEVELS = {'INFO', 'WARNING', 'ERROR'}
@@ -70,6 +70,22 @@ def _classification_summary(classification: dict) -> str:
     return "Found " + (", ".join(pieces) if pieces else "no recognisable parts")
 
 
+_AXIS_LETTERS = ("X", "Y")
+
+# scene.crash_forge.forward_sign_override's enum values -> resolve_forward_sign()'s override arg.
+_FORWARD_OVERRIDE_VALUES = {'AUTO': None, 'POSITIVE': 1, 'NEGATIVE': -1}
+
+
+def _forward_direction_line(forward_axis: int, sign: int, source: str) -> str:
+    """§12.3 step 5: "print the resolved direction in the CF_Prep summary
+    line, e.g. 'forward = -Y (auto)'". A bounding box can only ever give
+    the axis, never which end is the nose — detect_forward_sign()'s guess
+    must never be silently trusted, so it's always named here, whether it
+    came from the heuristic or a user override."""
+    sign_str = "+" if sign >= 0 else "-"
+    return f"forward = {sign_str}{_AXIS_LETTERS[forward_axis]} ({source})"
+
+
 def _write_descriptor_dump(descriptors) -> str:
     """§8.1 step 3 write-out: the same schema tools/dump_car.py uses
     (core/descriptor_io.py), so Krish can diff CF_Prep's own extraction
@@ -119,9 +135,26 @@ class CF_OT_prep(bpy.types.Operator):
         snapshot = bl_scene.snapshot_car_parts(parts)
         cf.original_state = json.dumps(snapshot)
 
-        # Step 4/5: forward axis + classification (M3's core, untouched here).
+        # Step 4/5: forward axis + direction, resolved *before*
+        # classification so the direction actually used and the direction
+        # reported below can never diverge (§12.3 step 5).
         forward_axis = detect_forward_axis(descriptors)
-        classification = classify(descriptors, forward_axis)
+        override_key = getattr(cf, "forward_sign_override", 'AUTO')
+        forward_override = _FORWARD_OVERRIDE_VALUES.get(override_key)
+        forward_sign, _forward_conf, forward_source = resolve_forward_sign(
+            descriptors, forward_axis, override=forward_override,
+        )
+        forward_direction_line = _forward_direction_line(forward_axis, forward_sign, forward_source)
+        if forward_source == "auto":
+            self.report(
+                {'WARNING'},
+                f"CF_Prep: {forward_direction_line} — auto-detected from glass position, which "
+                f"a bounding box alone can never make reliable (it gives the axis, never which "
+                f"end is the nose). Verify against the viewport; if wrong, set Car > Forward "
+                f"Direction and re-run Prep.",
+            )
+
+        classification = classify(descriptors, forward_axis, forward_sign_override=forward_sign)
         by_name = {obj.name: obj for obj in parts}
         for name, result_c in classification.items():
             obj = by_name.get(name)
@@ -172,7 +205,10 @@ class CF_OT_prep(bpy.types.Operator):
             name for name, c in classification.items() if c.confidence < CONFIDENCE_CONFIRM_THRESHOLD
         )
 
-        self.report({'INFO'}, f"CF_Prep: {summary}. Descriptor dump written to {dump_path}")
+        self.report(
+            {'INFO'},
+            f"CF_Prep: {summary} ({forward_direction_line}). Descriptor dump written to {dump_path}",
+        )
         if low_confidence:
             self.report(
                 {'WARNING'},

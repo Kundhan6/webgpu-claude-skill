@@ -40,6 +40,21 @@ class CF_PG_scene_state(bpy.types.PropertyGroup):
 
     car_object: bpy.props.PointerProperty(type=bpy.types.Object, name="Car")
     target_object: bpy.props.PointerProperty(type=bpy.types.Object, name="Target")
+    # §12.3 step 5: a bounding box gives the forward *axis*, never which
+    # end is the nose — detect_forward_sign()'s glass heuristic is a
+    # best-effort guess (confirmed degenerate whenever a car has glass at
+    # both ends, i.e. almost always — see tests/test_forward_sign.py), so
+    # a wrong guess must be correctable, not just silently trusted.
+    forward_sign_override: bpy.props.EnumProperty(
+        name="Forward Direction",
+        description="Override CF_Prep's auto-detected forward direction if it guessed wrong",
+        items=[
+            ('AUTO', "Auto-detect", "Guess from glass position (unreliable — verify against the CF_Prep report)"),
+            ('POSITIVE', "+ (positive axis)", "Force forward to the positive end of the detected axis"),
+            ('NEGATIVE', "- (negative axis)", "Force forward to the negative end of the detected axis"),
+        ],
+        default='AUTO',
+    )
     speed_kmh: bpy.props.FloatProperty(name="Speed (km/h)", default=60.0, min=0.0)
     crumple_detail: bpy.props.IntProperty(name="Crumple Detail", default=5, min=1, max=10)
     panel_toughness: bpy.props.FloatProperty(name="Panel Toughness", default=0.5, min=0.0, max=1.0)

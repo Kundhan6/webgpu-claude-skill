@@ -156,13 +156,30 @@ def detect_wheels(parts, lateral_axis: int, vertical_axis: int, whole_center,
 def _assign_wheel_roles(wheel_parts, forward_axis: int, forward_sign: int, lateral_axis: int, whole_center):
     """FL/FR/RL/RR from geometry alone, relative to the whole car's
     centroid (not raw world position, which may be offset from origin).
-    Right = positive lateral coordinate; an arbitrary but consistently
-    applied convention, documented since "left"/"right" mean nothing
-    without one."""
+
+    "Right" is not a fixed direction — it's only meaningful relative to
+    which way the car is facing (physically: right = forward x up; flip
+    forward and right flips with it). Earlier this multiplied only
+    rel_forward by forward_sign and left rel_lateral's sign as a fixed
+    "positive = right" convention, uncoupled from forward_sign entirely.
+    That's fine exactly when forward_sign happens to be +1 (right no-ops
+    against the fixed convention), which is why every synthetic fixture
+    — all built nose-first along positive forward — never caught it. On
+    a real car whose forward sign resolves to -1, that fixed convention
+    is backwards, and because it's backwards for *every* wheel at once,
+    it silently produces the wheel's diagonally-opposite corner (front
+    <-> rear from the forward-sign error already present, *and*
+    left <-> right from this uncoupled convention on top of it) rather
+    than a single-axis error that would be easier to notice. Multiplying
+    rel_lateral by forward_sign too — the same treatment rel_forward
+    already gets — keeps the existing "positive lateral = right"
+    convention exactly where forward_sign is +1 (every current fixture,
+    unchanged) and now flips it correctly alongside front/rear wherever
+    forward_sign is -1."""
     roles = {}
     for part in wheel_parts:
         rel_forward = (part.centroid[forward_axis] - whole_center[forward_axis]) * forward_sign
-        rel_lateral = part.centroid[lateral_axis] - whole_center[lateral_axis]
+        rel_lateral = (part.centroid[lateral_axis] - whole_center[lateral_axis]) * forward_sign
         is_front = rel_forward >= 0
         is_right = rel_lateral >= 0
         if is_front and is_right:
@@ -193,18 +210,69 @@ def _is_glass(part: PartDescriptor, whole_min, whole_max, vertical_axis: int):
     return False, 0.0
 
 
-def _detect_forward_sign(parts, forward_axis: int, glass_names, whole_center):
+def detect_glass_names(parts, whole_min, whole_max, vertical_axis: int) -> list:
+    """The glass-detection half of classify()'s step 2, pulled out on its
+    own. Forward-sign resolution needs to know which parts are glass
+    before classification itself can run (§12.3's disambiguation signal
+    is glass position) — and callers like ops/prep.py need to resolve
+    (and report, §12.3 step 5) the forward sign *before* calling
+    classify() at all, so this can't stay a private detail buried inside
+    classify()'s own loop."""
+    names = []
+    for part in parts:
+        is_glass, _conf = _is_glass(part, whole_min, whole_max, vertical_axis)
+        if is_glass:
+            names.append(part.name)
+    return names
+
+
+def detect_forward_sign(parts, forward_axis: int, glass_names, whole_center):
     """§12.3 front/rear disambiguation, simplified to its glass signal:
     "the presence of glass in the upper-forward region". Without glass to
     go on, defaults to +1 with low confidence rather than guessing
-    harder — this is exactly what should surface in the one-line
-    confirmation (§12.1 step 6) rather than being silently trusted."""
+    harder.
+
+    A bounding box gives the *axis* (the longer of X/Y), never *which
+    end* is the nose — this heuristic is a best-effort guess, not
+    something that can be made reliably correct from geometry alone.
+    That's exactly why it must never be silently trusted: the caller is
+    responsible for surfacing the resolved direction (§12.1 step 6,
+    §12.3 step 5) and for offering resolve_forward_sign()'s
+    `override` as an escape hatch, not for making this heuristic
+    smarter. Public (not `_`-prefixed) so callers can resolve/report it
+    ahead of classify() — see resolve_forward_sign()."""
     glass_parts = [p for p in parts if p.name in glass_names]
     if not glass_parts:
         return 1, 0.3
     avg_glass_forward = sum(p.centroid[forward_axis] for p in glass_parts) / len(glass_parts)
     sign = 1 if avg_glass_forward >= whole_center[forward_axis] else -1
     return sign, 0.8
+
+
+def resolve_forward_sign(parts, forward_axis: int, override: Optional[int] = None):
+    """Single source of truth for what "forward" means for this car —
+    callable standalone, before classify(), so a caller can report the
+    resolved direction and let a user override a wrong guess (§12.3 step
+    5: "a wrong guess must be visible, never silent") instead of only
+    finding out after classify() has already silently used it.
+
+    `override`: +1 or -1 to force the sign (bypassing the glass
+    heuristic entirely); None to auto-detect.
+
+    Returns (sign, confidence, source) — source is "override" or "auto".
+    classify()'s own forward_sign_override parameter should be passed
+    the `sign` this returns, so the value a caller reports is
+    *guaranteed* to be the value classify() actually used, not a second,
+    possibly-diverging computation.
+    """
+    if override is not None:
+        return override, 1.0, "override"
+    boxes = [(p.bbox_min, p.bbox_max) for p in parts]
+    whole_min, whole_max = union_bbox(boxes)
+    whole_center = bbox_centroid(whole_min, whole_max)
+    glass_names = detect_glass_names(parts, whole_min, whole_max, VERTICAL_AXIS)
+    sign, confidence = detect_forward_sign(parts, forward_axis, glass_names, whole_center)
+    return sign, confidence, "auto"
 
 
 def detect_forward_axis(parts) -> int:
@@ -238,11 +306,20 @@ def _classify_remaining_part(part, body_min, body_max, forward_axis, forward_sig
     return PartRole.UNKNOWN, 0.3
 
 
-def classify(parts, forward_axis: int) -> dict:
+def classify(parts, forward_axis: int, forward_sign_override: Optional[int] = None) -> dict:
     """§12.1's full dispatcher. Returns {part_name: Classification}, every
     input part named exactly once. `forward_axis` is resolved by the
     caller (detect_forward_axis(), or a user override) — this function
     only consumes it, matching the spec's example signature.
+
+    `forward_sign_override`: +1 or -1 to force the forward direction
+    instead of auto-detecting it via detect_forward_sign()'s glass
+    heuristic — the same escape hatch resolve_forward_sign() exposes
+    standalone. A caller that already resolved the sign via
+    resolve_forward_sign() (e.g. to report or override it before this
+    runs, §12.3 step 5) should pass that exact value here, so the
+    reported direction and the one classify() actually uses can never
+    diverge.
     """
     parts = list(parts)
     remaining = {p.name: p for p in parts}
@@ -282,8 +359,12 @@ def classify(parts, forward_axis: int) -> dict:
 
     # Forward direction needs to know where glass ended up — hence this
     # runs after step 2, and wheel-role assignment (needing the same
-    # direction) runs after this.
-    forward_sign, forward_conf = _detect_forward_sign(parts, forward_axis, glass_names, whole_center)
+    # direction) runs after this. A caller-supplied override always wins
+    # over the glass heuristic (§12.3 step 5).
+    if forward_sign_override is not None:
+        forward_sign, forward_conf = forward_sign_override, 1.0
+    else:
+        forward_sign, forward_conf = detect_forward_sign(parts, forward_axis, glass_names, whole_center)
 
     if wheel_parts:
         wheel_roles = _assign_wheel_roles(wheel_parts, forward_axis, forward_sign, lateral_axis, whole_center)

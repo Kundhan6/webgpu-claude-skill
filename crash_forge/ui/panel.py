@@ -21,6 +21,7 @@ class CF_PT_main(bpy.types.Panel):
         cf = context.scene.crash_forge
 
         layout.prop(cf, "car_object")
+        layout.prop(cf, "forward_sign_override")
         layout.prop(cf, "target_object")
         layout.prop(cf, "speed_kmh")
 

@@ -15,34 +15,119 @@ this is pitfalls and rationale, not a tour.
 
 ## Status
 
-M0–M4 complete: package skeleton, Stage 0 probe, CF_Reset, core/
-detection modules (geometry/classify/pairs/impact/density/naming), and
-CF_Prep (Stage 1). M5 (Stage 2 Rig + the V8 explosion test) has not
-started — stop and report after it per §14, don't cascade further.
+M0–M4 complete. M4.5 (this session — `core/classify.py` fixes, not M5)
+is **partially done**: the diagonal wheel-swap bug is fixed and the
+forward-direction visibility/override landed. **The real-car re-triage
+(§ "M4.5" step 4 below) has not run** — it needs `tests/fixtures/real_car.json`
+(real geometry + Krish's hand-labelled ground truth), which had not
+arrived as of this session ending. M5 (Stage 2 Rig + the V8 explosion
+test) has not started — stop and report after it per §14, don't cascade
+further.
 
-CF_Prep has now been run **end to end** against a real car (a Sketchfab
+CF_Prep has been run **end to end** against a real car (a Sketchfab
 "Crown Victoria police car" .glb — Blender 5.1.2, Windows) and every
 mechanical piece of it — extraction, V1/V2/V3/V5/V21, snapshot, geometry
 cleanup, origin placement, the dump_car.py-schema JSON write, idempotency,
-and CF_Reset — is now confirmed correct on real geometry, not just
-synthetic fixtures (see "Real-car verification" below for the full
-step-by-step results). `core/validate.py`'s exact hard-stop messages for
-V1, V2, and V21 were seen verbatim in a real Blender console and match
-what the code produces. The one thing still wrong is **classification
-accuracy** — Prep runs cleanly and produces *a* role for every part, but
-several of those roles are flatly incorrect on this car (see below).
-`core/geometry`/`classify`'s thresholds were deliberately left untouched
-this session — no further tuning against synthetic fixtures, despite a
-real disagreement now confirmed twice over (see below) — that's a
-deliberate scope decision for *this* session, not a claim the thresholds
-are fine.
+and CF_Reset — is confirmed correct on real geometry, not just synthetic
+fixtures (see "Real-car verification" below for the full step-by-step
+results). `core/validate.py`'s exact hard-stop messages for V1, V2, and
+V21 were seen verbatim in a real Blender console and match what the code
+produces. Classification accuracy on that same run was poor (wheels
+swapped, calipers read as doors, light-bar read as glass) — the wheel-
+swap root cause is now fixed (see "M4.5" below); the rest is unverified
+against real geometry until the dump arrives.
 
 Test command:
 
     cd crash_forge && python3 -m pytest tests/ -v
 
-138/138 passing as of the last session. Tier A + Tier B only — no
+147/147 passing as of the last session. Tier A + Tier B only — no
 Blender needed to run this at all.
+
+## M4.5 — classify.py forward-direction fix (this session)
+
+Scoped explicitly as "not M5" — Rig stays blocked on role accuracy, but
+this pass is about `core/classify.py`, not Stage 2. Two things landed;
+one (real-car re-triage) is blocked on data.
+
+**1. Fixed — the diagonal wheel-swap, root cause confirmed by hand-trace,
+not guessed.** `_assign_wheel_roles()` multiplied `rel_forward` by
+`forward_sign` but left `rel_lateral`'s sign as a fixed,
+`forward_sign`-independent "positive = right" convention. Physically,
+"right" only means anything relative to which way the car is facing
+(right = forward × up; negate forward and right negates with it) — the
+uncoupled convention is only correct when `forward_sign` happens to be
++1, which every synthetic fixture in this project is by construction, so
+nothing here ever exercised the negative-sign path before. On a real car
+whose resolved sign is -1, front/back *and* left/right both flip at
+once — the diagonal swap. Fix: multiply `rel_lateral` by `forward_sign`
+too, the same treatment `rel_forward` already got. Provably a no-op for
+every forward_sign=+1 fixture (×1 changes nothing); confirmed by
+reverting the one-line fix and watching `tests/test_forward_sign.py` fail
+in both directions.
+
+**Scope note, found while building the regression test, not predicted by
+the fix itself:** this coupling uses the *same baseline* "positive
+lateral = right" convention the code already had for forward_sign=+1 —
+it does **not** derive "right" from a literal `forward × up` cross
+product for both possible forward axes (X or Y). Doing that would flip
+the meaning of "right" for every existing X-forward fixture (verified by
+hand — it's not a hunch), which is forbidden. A rotated version of the
+X-forward sedan fixture (same physical car, described with Y as forward)
+is therefore *not* guaranteed to reproduce the same left/right labels
+under this fix — that case isn't asserted anywhere. Only two things are
+guaranteed and tested: every forward_sign=+1 fixture is untouched, and a
+car whose forward_sign is correctly known to be -1 (via override or a
+non-degenerate auto-detect) classifies self-consistently, no diagonal
+swap.
+
+**2. Found while building the fix — the glass-based sign heuristic is
+structurally degenerate, not just occasionally wrong.**
+`detect_forward_sign()` averages every glass part's forward position.
+Almost any real car (and every synthetic fixture here) has glass at
+*both* ends — windshield and rear window — roughly symmetric about the
+car's centre. The average is a near-exact tie against `whole_center`,
+and `sign` only resolves via the `>=` comparison's tie-break defaulting
+to +1 — not because the signal said anything. Every synthetic fixture
+happens to be built nose-first along +forward, so the tie-break has
+always silently agreed with the truth; it would agree just as often with
+a car facing the other way. Locked in as
+`tests/test_forward_sign.py::test_glass_at_both_ends_gives_a_mathematically_tied_forward_sign_signal`.
+This is exactly why the spec's "print it, add an override" instruction
+(not "tune the heuristic harder") was the right call — confirmed, not
+just followed on faith.
+
+**3. Landed — visibility + override (§12.3 step 5).** `classify()` takes
+an optional `forward_sign_override`; `core/classify.py` exposes
+`resolve_forward_sign(parts, forward_axis, override=None)` as the single
+source of truth callable *before* `classify()` runs, so a caller can
+report the resolved direction and never diverge from what `classify()`
+actually used. `ops/prep.py` now: resolves the direction before
+classifying, reports `"CF_Prep: ... (forward = -Y (auto))"` in the
+summary line (exact format), adds a separate WARNING when the direction
+was auto-detected (not overridden) pointing at the new override, and
+reads `scene.crash_forge.forward_sign_override` (AUTO/POSITIVE/NEGATIVE,
+wired into the panel as "Forward Direction" under Car settings).
+
+**4. Blocked — real-car re-triage.** Needs `tests/fixtures/real_car.json`
+(real geometry from `crash_forge_car_dump.json` + Krish's hand-labelled
+ground truth — never fabricate this, ask for it). Once it arrives: re-run
+classification, report per-part role diffs before/after this fix, and
+only then triage what's still wrong (the brake-caliper-as-door and
+light-bar-as-glass misclassifications are suspected downstream of the
+wheel-position confusion, not yet confirmed).
+
+**Also found, not fixed — same class of bug, different function:**
+`_classify_remaining_part()`'s `DOOR_L`/`DOOR_R` split
+(`PartRole.DOOR_R if lat >= 0.5 else PartRole.DOOR_L`) uses the raw
+normalised lateral coordinate with no `forward_sign` coupling at all —
+the identical uncoupled-convention shape as the wheel bug, just never
+symptomatic yet because it's also only ever been exercised at
+forward_sign=+1. Not touched this pass (step 4's "report what's still
+wrong before fixing anything else" — this needs the real-car re-triage
+first, since the door misclassification on the real car looks more like
+"calipers hitting the DOOR fallback by coincidence" than a sign issue,
+per the earlier verification report).
 
 ### Real-car verification (this session)
 
