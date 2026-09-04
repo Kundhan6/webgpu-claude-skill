@@ -1,0 +1,16 @@
+{
+  "name": "Light Rain",
+  "time_of_day": 15.0,
+  "overcast": 0.7,
+  "fog_density": 0.15,
+  "fog_height": 2.5,
+  "precipitation_type": "RAIN",
+  "precipitation_amount": 0.35,
+  "wind_speed": 4.0,
+  "wind_direction": 1.2,
+  "wetness": 0.5,
+  "snow_cover": 0.0,
+  "storm_intensity": 0.0,
+  "turbulence": 0.2,
+  "latitude": 45.0
+}

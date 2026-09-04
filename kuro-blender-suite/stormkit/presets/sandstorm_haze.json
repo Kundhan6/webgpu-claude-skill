@@ -1,0 +1,16 @@
+{
+  "name": "Sandstorm Haze",
+  "time_of_day": 13.0,
+  "overcast": 0.4,
+  "fog_density": 0.5,
+  "fog_height": 6.0,
+  "precipitation_type": "NONE",
+  "precipitation_amount": 0.0,
+  "wind_speed": 18.0,
+  "wind_direction": 1.0,
+  "wetness": 0.0,
+  "snow_cover": 0.0,
+  "storm_intensity": 0.0,
+  "turbulence": 0.9,
+  "latitude": 25.0
+}

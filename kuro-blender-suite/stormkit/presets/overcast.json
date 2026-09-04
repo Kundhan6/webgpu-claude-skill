@@ -1,0 +1,16 @@
+{
+  "name": "Overcast",
+  "time_of_day": 14.0,
+  "overcast": 0.85,
+  "fog_density": 0.1,
+  "fog_height": 3.0,
+  "precipitation_type": "NONE",
+  "precipitation_amount": 0.0,
+  "wind_speed": 3.0,
+  "wind_direction": 0.8,
+  "wetness": 0.1,
+  "snow_cover": 0.0,
+  "storm_intensity": 0.0,
+  "turbulence": 0.15,
+  "latitude": 45.0
+}

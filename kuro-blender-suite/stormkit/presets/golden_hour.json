@@ -1,0 +1,16 @@
+{
+  "name": "Golden Hour",
+  "time_of_day": 18.2,
+  "overcast": 0.1,
+  "fog_density": 0.05,
+  "fog_height": 1.5,
+  "precipitation_type": "NONE",
+  "precipitation_amount": 0.0,
+  "wind_speed": 1.0,
+  "wind_direction": 0.3,
+  "wetness": 0.0,
+  "snow_cover": 0.0,
+  "storm_intensity": 0.0,
+  "turbulence": 0.05,
+  "latitude": 45.0
+}

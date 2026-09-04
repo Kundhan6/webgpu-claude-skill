@@ -1,0 +1,16 @@
+{
+  "name": "Blizzard",
+  "time_of_day": 13.0,
+  "overcast": 0.9,
+  "fog_density": 0.3,
+  "fog_height": 3.0,
+  "precipitation_type": "SNOW",
+  "precipitation_amount": 0.9,
+  "wind_speed": 15.0,
+  "wind_direction": 3.0,
+  "wetness": 0.0,
+  "snow_cover": 0.8,
+  "storm_intensity": 0.1,
+  "turbulence": 0.8,
+  "latitude": 60.0
+}

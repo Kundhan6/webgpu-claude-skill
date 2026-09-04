@@ -1,0 +1,22 @@
+schema_version = "1.0.0"
+
+id = "stormkit"
+version = "0.1.0"
+name = "StormKit"
+tagline = "Procedural weather engine: sky, fog, rain, snow, wetness, lightning"
+maintainer = "KURO <noreply@kuro.dev>"
+type = "add-on"
+
+tags = ["Scene", "Lighting", "Physics"]
+
+blender_version_min = "4.5.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2026 KURO"]
+
+website = ""
+
+# NOTE: this manifest was written without a live Blender 5.1.2 to validate
+# the extension schema/tag list against (no `blender` binary in this dev
+# container — see DECISIONS.md). Run `blender --command extension validate
+# stormkit` (or install the built zip) before shipping, per ground rule #2.
