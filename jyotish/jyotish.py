@@ -2,6 +2,8 @@
 """Krish's Vedic chart: compute it, check it, and time it.
 
     python jyotish.py chart      -> chart.json     (Stage 1)
+    python jyotish.py verify     -> adds "verification" to chart.json (Stage 2)
+    python jyotish.py timeline   -> timeline.json  (Stage 3)
 
 Sidereal zodiac, Lahiri ayanamsa, whole-sign houses.
 Ephemeris: Swiss Ephemeris built-in Moshier (no .se1 files needed).
@@ -534,6 +536,517 @@ def owned(p, lord_of):
     return "/".join(str(h) for h in sorted(h for h, l in lord_of.items() if l == p))
 
 
+# ---------------------------------------------------------------- Stage 2: verify
+
+def jd_meeus(y, m, d):
+    """Julian Day from a Gregorian date, d may carry a day fraction (Meeus ch. 7)."""
+    if m <= 2:
+        y, m = y - 1, m + 12
+    a = y // 100
+    b = 2 - a + a // 4
+    return int(365.25 * (y + 4716)) + int(30.6001 * (m + 1)) + d + b - 1524.5
+
+
+def delta_t_seconds(year):
+    """TT - UT for 2000-2005 (Espenak & Meeus polynomial)."""
+    t = year - 2000
+    return (63.86 + 0.3345 * t - 0.060374 * t ** 2 + 0.0017275 * t ** 3
+            + 0.000651814 * t ** 4 + 0.00002373599 * t ** 5)
+
+
+def lahiri_own(jde):
+    """Lahiri ayanamsa from its definition, without Swiss Ephemeris.
+
+    Indian Astronomical Ephemeris: 23°15'00.658" on 1956-03-21 0h; that value
+    includes nutation, so subtract the nutation of that date (Meeus ch. 22) to
+    get the mean value, then add IAU 2006 general precession in longitude.
+    Returns (mean, true) in degrees; true = mean + nutation of the date.
+    """
+    from pymeeus.Coordinates import nutation_longitude
+    from pymeeus.Epoch import Epoch
+
+    def p_a(T):  # arcseconds, Capitaine et al. 2003 / IAU 2006
+        return (5028.796195 * T + 1.1054348 * T ** 2 + 0.00007964 * T ** 3
+                - 0.000023857 * T ** 4 - 0.0000000383 * T ** 5)
+    jd0 = 2435553.5
+    mean0 = 23.25018278 - float(nutation_longitude(Epoch(jd0)))
+    T0, T = (jd0 - 2451545.0) / 36525, (jde - 2451545.0) / 36525
+    mean = mean0 + (p_a(T) - p_a(T0)) / 3600
+    return mean, mean + float(nutation_longitude(Epoch(jde)))
+
+
+def lagna_own(jd_ut, jde, lat, lon):
+    """Sidereal ascendant from Meeus sidereal time + obliquity, own ayanamsa."""
+    import math
+    from pymeeus.Coordinates import nutation_longitude, true_obliquity
+    from pymeeus.Epoch import Epoch
+    T = (jd_ut - 2451545.0) / 36525
+    gmst = (280.46061837 + 360.98564736629 * (jd_ut - 2451545.0)
+            + 0.000387933 * T ** 2 - T ** 3 / 38710000)          # Meeus 12.4
+    eps = float(true_obliquity(Epoch(jde)))
+    dpsi = float(nutation_longitude(Epoch(jde)))
+    ramc = math.radians((gmst + dpsi * math.cos(math.radians(eps)) + lon) % 360)
+    e, phi = math.radians(eps), math.radians(lat)
+    asc = math.degrees(math.atan2(math.cos(ramc),
+                                  -(math.sin(ramc) * math.cos(e) + math.tan(phi) * math.sin(e))))
+    return (asc - lahiri_own(jde)[1]) % 360
+
+
+def second_method(local):
+    """Moon, Sun, ayanamsa, Lagna without Swiss Ephemeris: own JD, Delta-T and
+    Lahiri; Moon and Sun from Meeus (pymeeus: ELP-2000/82 ch. 47, VSOP87)."""
+    from pymeeus.Epoch import Epoch
+    from pymeeus.Moon import Moon
+    from pymeeus.Sun import Sun
+    dt = datetime.strptime(local, "%Y-%m-%d %H:%M") - timedelta(hours=BIRTH["tz_hours"])
+    jd_ut = jd_meeus(dt.year, dt.month, dt.day + (dt.hour + dt.minute / 60) / 24)
+    jde = jd_ut + delta_t_seconds(dt.year + (dt.timetuple().tm_yday - 0.5) / 365.25) / 86400
+    ay_mean, ay_true = lahiri_own(jde)
+    moon_mean_eq = float(Moon.geocentric_ecliptical_pos(Epoch(jde))[0])   # mean equinox of date
+    sun_app = float(Sun.apparent_geocentric_position(Epoch(jde))[0])      # true equinox, aberration
+    return {"jd_ut": jd_ut, "jde": jde, "ayanamsa_mean": ay_mean, "ayanamsa_true": ay_true,
+            "moon": (moon_mean_eq - ay_mean) % 360, "sun": (sun_app - ay_true) % 360,
+            "lagna": lagna_own(jd_ut, jde, BIRTH["lat"], BIRTH["lon"])}
+
+
+def third_method_moon(jd_ut, ay_mean):
+    """PyEphem (libastro) Moon, mean equinox of date, minus own mean Lahiri."""
+    import ephem
+    d = ephem.Date(jd_ut - 2415020.0)  # ephem dates count from 1899-12-31 12:00 UT
+    lon = float(ephem.Ecliptic(ephem.Moon(d), epoch=d).lon)
+    import math
+    return (math.degrees(lon) - ay_mean) % 360
+
+
+def full_moon_jan_2004():
+    """Full moon time by Swiss Ephemeris (bisection on Sun-Moon angle) and by
+    Meeus ch. 49 (pymeeus), both in UT."""
+    from pymeeus.Epoch import Epoch
+    from pymeeus.Moon import Moon
+
+    def elong(jd):
+        m = swe.calc_ut(jd, swe.MOON, swe.FLG_MOSEPH)[0][0]
+        s = swe.calc_ut(jd, swe.SUN, swe.FLG_MOSEPH)[0][0]
+        return (m - s) % 360
+    lo, hi = swe.julday(2004, 1, 6, 0), swe.julday(2004, 1, 9, 0)
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if elong(mid) < 180 else (lo, mid)
+    swe_jd = lo
+    # pymeeus rounds k = (year - 2000) * 12.3685 to the nearest new moon and adds
+    # 0.5, so seed in mid-December 2003 to land on k = 49.5 (the January full moon).
+    jde = float(Moon.moon_phase(Epoch(2003, 12, 20.0), target="full"))
+    meeus_jd = jde - delta_t_seconds(2004.02) / 86400
+    return swe_jd, meeus_jd
+
+
+def angdiff(a, b):
+    """Signed a-b in arcseconds, wrapped to +-180°."""
+    return ((a - b + 180) % 360 - 180) * 3600
+
+
+def window(fn, local=BIRTH["local"]):
+    """IST window around birth over which fn(lagna longitude) stays the same."""
+    jd = local_to_jd(local)
+    v0 = fn(lagna_longitude(jd))
+    out = {}
+    for direction, key in ((-1, "from"), (1, "to")):
+        a = jd
+        while fn(lagna_longitude(a + direction / 1440)) == v0:
+            a += direction / 1440
+        out[key] = jd_to_ist(a).strftime("%H:%M")
+    return v0, out
+
+
+def verify():
+    report = {}
+    local = BIRTH["local"]
+    c = build_chart(local)
+    m1 = {"ayanamsa": c["settings"]["ayanamsa_value"], "moon": c["grahas"]["Moon"]["longitude"],
+          "sun": c["grahas"]["Sun"]["longitude"], "lagna": c["lagna"]["longitude"]}
+    m2 = second_method(local)
+    m3_moon = third_method_moon(m2["jd_ut"], m2["ayanamsa_mean"])
+    swe_jd = local_to_jd(local)
+
+    print("== (a) second method: no Swiss Ephemeris ==")
+    print(f"JD (UT): swe {swe_jd:.6f}  own Meeus {m2['jd_ut']:.6f}")
+    rows = [("Lahiri ayanamsa (mean)", m1["ayanamsa"], m2["ayanamsa_mean"]),
+            ("Moon sidereal", m1["moon"], m2["moon"]),
+            ("Sun sidereal", m1["sun"], m2["sun"]),
+            ("Lagna sidereal", m1["lagna"], m2["lagna"])]
+    checks = []
+    for name, a, b in rows:
+        d = angdiff(a, b)
+        print(f"{name:<24} swe {a:11.6f}  method-2 {b:11.6f}  diff {d:+7.1f}\"")
+        checks.append({"item": name, "swisseph": round(a, 6), "method_2": round(b, 6),
+                       "diff_arcsec": round(d, 1)})
+    d3 = angdiff(m1["moon"], m3_moon)
+    print(f"{'Moon (PyEphem, 3rd)':<24} swe {m1['moon']:11.6f}  pyephem  {m3_moon:11.6f}  diff {d3:+7.1f}\"")
+    checks.append({"item": "Moon sidereal (PyEphem)", "swisseph": round(m1["moon"], 6),
+                   "method_3": round(m3_moon, 6), "diff_arcsec": round(d3, 1)})
+    naks = {nakshatra(x)["name"] + f" p{nakshatra(x)['pada']}" for x in (m1["moon"], m2["moon"], m3_moon)}
+    print(f"Moon nakshatra by all methods: {naks}")
+    report["second_method"] = checks
+    report["moon_nakshatra_all_methods"] = sorted(naks)
+
+    print("\n== (b) full moon of January 2004 ==")
+    fm_swe, fm_meeus = full_moon_jan_2004()
+    for name, jd in (("Swiss Ephemeris", fm_swe), ("Meeus ch.49", fm_meeus)):
+        print(f"{name:<16} {jd_to_ist(jd) - timedelta(hours=5.5):%Y-%m-%d %H:%M} UT")
+    hrs = (fm_swe - swe_jd) * 24
+    angle = c["tithi"]["sun_moon_angle"]
+    rate = c["grahas"]["Moon"]["speed_deg_per_day"] - c["grahas"]["Sun"]["speed_deg_per_day"]
+    expect = 180 - rate * hrs / 24
+    print(f"Birth is {hrs:.1f} h before full moon. Sun-Moon angle at birth {angle:.2f}°;"
+          f" at today's relative speed {rate:.2f}°/day the expected angle is {expect:.2f}°.")
+    report["full_moon"] = {
+        "swisseph_ut": f"{jd_to_ist(fm_swe) - timedelta(hours=5.5):%Y-%m-%d %H:%M}",
+        "meeus_ut": f"{jd_to_ist(fm_meeus) - timedelta(hours=5.5):%Y-%m-%d %H:%M}",
+        "hours_birth_to_full_moon": round(hrs, 2), "sun_moon_angle_at_birth": angle,
+        "expected_angle_from_speed": round(expect, 2)}
+
+    print("\n== birth-time test ==")
+    tt = []
+    for t in ("19:15", "19:30", "19:45"):
+        cc = build_chart(f"2004-01-06 {t}")
+        L, M = cc["lagna"], cc["grahas"]["Moon"]
+        row = {"time_ist": t, "lagna": f"{L['sign']} {L['degree']}", "lagna_nakshatra":
+               f"{L['nakshatra']['name']} p{L['nakshatra']['pada']}", "d9_lagna": L["d9_sign"],
+               "d10_lagna": L["d10_sign"], "moon": f"{M['sign']} {M['degree']}",
+               "moon_nakshatra": f"{M['nakshatra']['name']} p{M['nakshatra']['pada']}",
+               "moon_nak_fraction_elapsed": M["nakshatra"]["fraction_elapsed"]}
+        tt.append(row)
+        print(f"{t}  Lagna {row['lagna']:<20} {row['lagna_nakshatra']:<14} D9 {row['d9_lagna']:<12}"
+              f" D10 {row['d10_lagna']:<8} Moon {row['moon']} {row['moon_nakshatra']}")
+    s0, edges = window(lambda x: int(x // 30))
+    wins = {
+        "lagna_sign": (SIGNS[s0], edges),
+        "lagna_nakshatra": (lambda v: (NAKSHATRAS[v[0]][0], v[1]))(window(lambda x: int(x // NAK_SPAN))),
+        "d9_lagna": (lambda v: (SIGNS[v[0]], v[1]))(window(navamsa_sign)),
+        "d10_lagna": (lambda v: (SIGNS[v[0]], v[1]))(window(dasamsa_sign)),
+    }
+    for k, (val, w) in wins.items():
+        print(f"{k:<16} {val:<12} holds {w['from']} to {w['to']} IST")
+    m2_15, m2_45 = second_method("2004-01-06 19:15")["lagna"], second_method("2004-01-06 19:45")["lagna"]
+    print(f"Method-2 Lagna: 19:15 {SIGNS[int(m2_15 // 30)]} {dms(m2_15 % 30)}, "
+          f"19:45 {SIGNS[int(m2_45 // 30)]} {dms(m2_45 % 30)}")
+    stable = len({r["lagna"].split()[0] for r in tt}) == 1
+    d9_stable = len({r["d9_lagna"] for r in tt}) == 1
+    d10_stable = len({r["d10_lagna"] for r in tt}) == 1
+    print(f"Lagna sign stable: {stable}. D9 Lagna stable: {d9_stable}. D10 Lagna stable: {d10_stable}.")
+    # Dasha sensitivity: Moon motion over +-15 min, as days of the running Rahu-nakshatra dasha
+    mo = [build_chart(f"2004-01-06 {t}")["grahas"]["Moon"]["longitude"] for t in ("19:15", "19:45")]
+    shift = (mo[1] - mo[0]) / 2 / NAK_SPAN * 18 * 365.25
+    print(f"Moon moves {(mo[1] - mo[0]) / 2 * 60:.1f}' per 15 min -> all dasha dates shift about"
+          f" {shift:.0f} days per 15 min of birth-time error.")
+    report["birth_time_test"] = {"rows": tt,
+                                 "windows_ist": {k: {"value": v, **w} for k, (v, w) in wins.items()},
+                                 "lagna_sign_stable": stable, "d9_lagna_stable": d9_stable,
+                                 "d10_lagna_stable": d10_stable,
+                                 "dasha_shift_days_per_15_min": round(shift)}
+    return report
+
+
+# ---------------------------------------------------------------- Stage 3: time periods
+
+DASHA_ORDER = [("Ketu", 7), ("Venus", 20), ("Sun", 6), ("Moon", 10), ("Mars", 7),
+               ("Rahu", 18), ("Jupiter", 16), ("Saturn", 19), ("Mercury", 17)]
+YEAR_DAYS = 365.25  # Julian year; the commonest Vimshottari year (see NOTES.md)
+WINDOW = ("2026-10-11", "2027-10-11")
+ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 7: "7th", 8: "8th", 10: "10th", 12: "12th"}
+
+
+def ist(jd, minutes=True):
+    return jd_to_ist(jd).strftime("%Y-%m-%d %H:%M" if minutes else "%Y-%m-%d")
+
+
+def date_jd(s):
+    return local_to_jd(s + " 00:00")
+
+
+def vimshottari(moon_lon, birth_jd, year_days=YEAR_DAYS):
+    """Maha and antar dashas from the Moon's nakshatra; returns (balance, tree)."""
+    nk = nakshatra(moon_lon)
+    start_i = [l for l, _ in DASHA_ORDER].index(nk["lord"])
+    first_years = DASHA_ORDER[start_i][1]
+    t = birth_jd - nk["fraction_elapsed"] * first_years * year_days  # virtual MD start
+    tree = []
+    for k in range(9 + 1):
+        lord, yrs = DASHA_ORDER[(start_i + k) % 9]
+        md = {"lord": lord, "start_jd": t, "end_jd": t + yrs * year_days, "antar": []}
+        a = t
+        for j in range(9):
+            al, ay = DASHA_ORDER[(start_i + k + j) % 9]
+            dur = yrs * ay / 120 * year_days
+            md["antar"].append({"lord": al, "start_jd": a, "end_jd": a + dur})
+            a += dur
+        tree.append(md)
+        t = md["end_jd"]
+    balance_years = (1 - nk["fraction_elapsed"]) * first_years
+    return balance_years, tree
+
+
+def pratyantars(md_lord, ad):
+    start_i = [l for l, _ in DASHA_ORDER].index(ad["lord"])
+    span = ad["end_jd"] - ad["start_jd"]
+    out, p = [], ad["start_jd"]
+    for j in range(9):
+        pl, py = DASHA_ORDER[(start_i + j) % 9]
+        dur = span * py / 120
+        out.append({"lord": pl, "start_jd": p, "end_jd": p + dur})
+        p += dur
+    return out
+
+
+def dasha_rows(tree, lo, hi, with_pd=True):
+    rows = []
+    for md in tree:
+        for ad in md["antar"]:
+            if ad["end_jd"] <= lo or ad["start_jd"] >= hi:
+                continue
+            row = {"maha": md["lord"], "antar": ad["lord"],
+                   "start": ist(ad["start_jd"]), "end": ist(ad["end_jd"])}
+            if with_pd:
+                row["pratyantar"] = [
+                    {"lord": pd["lord"], "start": ist(pd["start_jd"]), "end": ist(pd["end_jd"])}
+                    for pd in pratyantars(md["lord"], ad)
+                    if pd["end_jd"] > lo and pd["start_jd"] < hi]
+            rows.append(row)
+    return rows
+
+
+def body_lon(jd, body, node="mean"):
+    sidereal_setup()
+    if body in SWE_ID:
+        return swe.calc_ut(jd, SWE_ID[body], FLAGS)[0][0] % 360
+    nid = swe.MEAN_NODE if node == "mean" else swe.TRUE_NODE
+    lon = swe.calc_ut(jd, nid, FLAGS)[0][0] % 360
+    return lon if body == "Rahu" else (lon + 180) % 360
+
+
+def ingresses(body, lo, hi, step, node="mean"):
+    """Sidereal sign changes between JDs lo and hi, refined to about a minute."""
+    out = []
+    a, sa = lo, int(body_lon(lo, body, node) // 30)
+    while a < hi:
+        b = min(a + step, hi)
+        sb = int(body_lon(b, body, node) // 30)
+        if sb != sa:
+            x, y = a, b
+            while y - x > 1 / 2880:
+                m = (x + y) / 2
+                if int(body_lon(m, body, node) // 30) == sa:
+                    x = m
+                else:
+                    y = m
+            out.append({"jd": y, "from": SIGNS[sa], "to": SIGNS[sb]})
+        a, sa = b, sb
+    return out
+
+
+def stations(body, lo, hi):
+    out = []
+    a, sa = lo, speed(lo, body)
+    while a < hi:
+        b = a + 0.5
+        sb = speed(b, body)
+        if (sa < 0) != (sb < 0):
+            x, y = a, b
+            while y - x > 1 / 1440:
+                m = (x + y) / 2
+                if (speed(m, body) < 0) == (sa < 0):
+                    x = m
+                else:
+                    y = m
+            sid = body_lon(y, body)
+            out.append({"body": body, "ist": ist(y), "turns": "direct" if sb > 0 else "retrograde",
+                        "at": f"{SIGNS[int(sid // 30)]} {dms(sid % 30)}"})
+        a, sa = b, sb
+    return out
+
+
+def eclipses(lo, hi):
+    out = []
+    t = lo
+    while True:
+        ret, tm = swe.sol_eclipse_when_glob(t, swe.FLG_MOSEPH, 0)
+        if tm[0] > hi:
+            break
+        kind = ("total" if ret & swe.ECL_TOTAL else "annular" if ret & swe.ECL_ANNULAR
+                else "hybrid" if ret & swe.ECL_ANNULAR_TOTAL else "partial")
+        sid = body_lon(tm[0], "Sun")
+        out.append({"type": f"solar ({kind})", "ist": ist(tm[0]),
+                    "at": f"{SIGNS[int(sid // 30)]} {dms(sid % 30)}", "jd": tm[0]})
+        t = tm[0] + 20
+    t = lo
+    while True:
+        ret, tm = swe.lun_eclipse_when(t, swe.FLG_MOSEPH, 0)
+        if tm[0] > hi:
+            break
+        kind = ("total" if ret & swe.ECL_TOTAL else "partial" if ret & swe.ECL_PARTIAL
+                else "penumbral")
+        sid = body_lon(tm[0], "Moon")
+        out.append({"type": f"lunar ({kind})", "ist": ist(tm[0]),
+                    "at": f"{SIGNS[int(sid // 30)]} {dms(sid % 30)}", "jd": tm[0]})
+        t = tm[0] + 20
+    return sorted(out, key=lambda e: e["jd"])
+
+
+def saturn_phases(ing, lo_sign_jd, moon_s, lagna_s, hi):
+    """Saturn periods by sign: Sade Sati, Ashtama, Kantaka (from Moon and Lagna)."""
+    spans, start = [], lo_sign_jd
+    sign = SIGNS.index(ing[0]["from"]) if ing else int(body_lon(lo_sign_jd, "Saturn") // 30)
+    for e in ing:
+        spans.append((start, e["jd"], sign))
+        start, sign = e["jd"], SIGNS.index(e["to"])
+    spans.append((start, hi, sign))
+    out = []
+    for a, b, s in spans:
+        hm, hl = house_from(s, moon_s), house_from(s, lagna_s)
+        tags = []
+        if hm in (12, 1, 2):
+            tags.append({12: "Sade Sati phase 1 (rising)", 1: "Sade Sati phase 2 (peak)",
+                         2: "Sade Sati phase 3 (setting)"}[hm])
+        if hm == 8:
+            tags.append("Ashtama Shani (8th from Moon)")
+        if hm in (4, 7, 10):
+            tags.append(f"Kantaka Shani ({ORD[hm]} from Moon)")
+        if hl == 8:
+            tags.append("Ashtama Shani from Lagna (secondary view)")
+        if hl in (1, 4, 7, 10):
+            tags.append(f"Kantaka Shani from Lagna (secondary view, {ORD[hl]})")
+        out.append({"from": ist(a, False), "to": ist(b, False), "saturn_in": SIGNS[s],
+                    "house_from_moon": hm, "house_from_lagna": hl, "tags": tags or ["none"]})
+    return out
+
+
+def timeline():
+    chart = json.load(open(os.path.join(HERE, "chart.json")))
+    birth_jd = chart["birth"]["jd_ut"]
+    moon = chart["grahas"]["Moon"]["longitude"]
+    moon_s = SIGNS.index(chart["grahas"]["Moon"]["sign"])
+    lagna_s = SIGNS.index(chart["lagna"]["sign"])
+    lo, hi = date_jd(WINDOW[0]), date_jd(WINDOW[1])
+
+    balance, tree = vimshottari(moon, birth_jd)
+    md_list = [{"lord": m["lord"], "start": ist(m["start_jd"], False), "end": ist(m["end_jd"], False)}
+               for m in tree]
+    tl = {
+        "window_ist": WINDOW,
+        "settings": {"dasha": "Vimshottari", "year_days": YEAR_DAYS,
+                     "moon_longitude": moon, "moon_nakshatra": chart["grahas"]["Moon"]["nakshatra"],
+                     "node_for_transits": "mean (true-node dates also given)",
+                     "timezone": "IST (UTC+5:30)"},
+        "dasha_balance_at_birth": {"lord": tree[0]["lord"], "years": round(balance, 4),
+                                   "ends": ist(tree[0]["end_jd"])},
+        "maha_dashas": md_list,
+        "antar_dashas_all": [{"maha": m["lord"], "antar": a["lord"], "start": ist(a["start_jd"], False),
+                              "end": ist(a["end_jd"], False)} for m in tree for a in m["antar"]
+                             if a["end_jd"] > birth_jd and a["start_jd"] < date_jd("2036-01-01")],
+        "window_dashas": dasha_rows(tree, lo, hi),
+        "acting_window_dashas_2027_2029": dasha_rows(tree, hi, date_jd("2030-01-01")),
+    }
+
+    # Sensitivity: the same dates under other conventions / birth times
+    sens = {}
+    for label, yd in (("year 365.2422 (tropical)", 365.2422), ("year 365.2564 (sidereal)", 365.2564),
+                      ("year 360 (savana)", 360.0)):
+        _, tr = vimshottari(moon, birth_jd, yd)
+        r = dasha_rows(tr, lo, lo + 1, with_pd=False)
+        sens[label] = f"{r[0]['maha']}-{r[0]['antar']} {r[0]['start']} to {r[0]['end']}" if r else "-"
+    for t in ("19:15", "19:45"):
+        c2 = build_chart(f"2004-01-06 {t}")
+        _, tr = vimshottari(c2["grahas"]["Moon"]["longitude"], c2["birth"]["jd_ut"])
+        r = dasha_rows(tr, lo, lo + 1, with_pd=False)
+        sens[f"birth {t}"] = f"{r[0]['maha']}-{r[0]['antar']} {r[0]['start']} to {r[0]['end']}"
+    for label, mode in (("Lahiri ICRC", swe.SIDM_LAHIRI_ICRC), ("Lahiri 1940", swe.SIDM_LAHIRI_1940),
+                        ("Lahiri VP285", swe.SIDM_LAHIRI_VP285)):
+        swe.set_sid_mode(mode, 0, 0)
+        mlon = swe.calc_ut(birth_jd, swe.MOON, FLAGS)[0][0] % 360
+        sidereal_setup()
+        _, tr = vimshottari(mlon, birth_jd)
+        r = dasha_rows(tr, lo, lo + 1, with_pd=False)
+        sens[label] = (f"Moon {angdiff(mlon, moon):+.0f}\" vs Lahiri; "
+                       f"{r[0]['maha']}-{r[0]['antar']} {r[0]['start']} to {r[0]['end']}")
+    tl["dasha_sensitivity"] = sens
+
+    # Transits
+    t_lo, t_hi = date_jd("2025-01-01"), date_jd("2031-01-01")
+    slow = {}
+    for body in ("Saturn", "Jupiter", "Rahu", "Ketu"):
+        rows = []
+        for e in ingresses(body, t_lo, t_hi, 1.0):
+            s = SIGNS.index(e["to"])
+            row = {"ist": ist(e["jd"]), "from": e["from"], "enters": e["to"],
+                   "house_from_lagna": house_from(s, lagna_s), "house_from_moon": house_from(s, moon_s),
+                   "in_window": lo <= e["jd"] < hi}
+            if body in ("Rahu", "Ketu"):
+                tn = [x for x in ingresses(body, e["jd"] - 120, e["jd"] + 120, 1.0, node="true")
+                      if x["to"] == e["to"]]
+                row["true_node_ist"] = ", ".join(ist(x["jd"]) for x in tn) or "outside +-120 days"
+            rows.append(row)
+        slow[body] = rows
+    tl["slow_transits"] = slow
+
+    def where(jd):
+        out = {}
+        for b in ("Saturn", "Jupiter", "Rahu", "Ketu"):
+            lon = body_lon(jd, b)
+            s = int(lon // 30)
+            out[b] = {"sign": SIGNS[s], "degree": dms(lon % 30),
+                      "house_from_lagna": house_from(s, lagna_s), "house_from_moon": house_from(s, moon_s),
+                      "retrograde": (speed(jd, b) < 0) if b in SWE_ID else True}
+        return out
+    tl["positions_at_window_start"] = where(lo)
+    tl["positions_at_window_end"] = where(hi)
+
+    sat_ing = [e for e in ingresses("Saturn", t_lo, date_jd("2036-01-01"), 1.0)]
+    tl["saturn_phases"] = saturn_phases(sat_ing, t_lo, moon_s, lagna_s, date_jd("2036-01-01"))
+
+    st = []
+    for b in ("Mercury", "Venus", "Mars", "Jupiter", "Saturn"):
+        st += stations(b, lo, hi)
+    tl["stations_in_window"] = sorted(st, key=lambda r: r["ist"])
+
+    fast = []
+    for b, step in (("Sun", 1.0), ("Mars", 1.0), ("Venus", 0.5), ("Mercury", 0.5)):
+        for e in ingresses(b, lo, hi, step):
+            s = SIGNS.index(e["to"])
+            fast.append({"body": b, "ist": ist(e["jd"]), "from": e["from"], "enters": e["to"],
+                         "retrograde": speed(e["jd"], b) < 0,
+                         "house_from_lagna": house_from(s, lagna_s), "house_from_moon": house_from(s, moon_s)})
+    tl["fast_transits_in_window"] = sorted(fast, key=lambda r: r["ist"])
+    tl["eclipses_in_window"] = [{k: v for k, v in e.items() if k != "jd"} | {
+        "house_from_lagna": house_from(SIGNS.index(e["at"].split()[0]), lagna_s),
+        "house_from_moon": house_from(SIGNS.index(e["at"].split()[0]), moon_s)}
+        for e in eclipses(lo, hi)]
+    return tl
+
+
+def print_timeline(tl):
+    b = tl["dasha_balance_at_birth"]
+    print(f"Dasha balance at birth: {b['lord']} {b['years']} years, ends {b['ends']}")
+    for m in tl["maha_dashas"][:4]:
+        print(f"  MD {m['lord']:<8} {m['start']} -> {m['end']}")
+    print("Window dashas:")
+    for r in tl["window_dashas"]:
+        print(f"  {r['maha']}-{r['antar']}  {r['start']} -> {r['end']}")
+        for p in r["pratyantar"]:
+            print(f"      PD {p['lord']:<8} {p['start']} -> {p['end']}")
+    print("Sensitivity:", json.dumps(tl["dasha_sensitivity"], indent=1))
+    for body, rows in tl["slow_transits"].items():
+        for r in rows:
+            mark = "*" if r["in_window"] else " "
+            print(f" {mark} {body:<8} -> {r['enters']:<12} {r['ist']}  L{r['house_from_lagna']:<2} M{r['house_from_moon']:<2}"
+                  f" {r.get('true_node_ist', '')}")
+    for s in tl["saturn_phases"]:
+        print(f"  Saturn {s['from']} -> {s['to']} {s['saturn_in']:<12} {s['tags']}")
+    for s in tl["stations_in_window"]:
+        print(f"  station {s['body']:<8} {s['turns']:<10} {s['ist']} at {s['at']}")
+    for e in tl["eclipses_in_window"]:
+        print(f"  eclipse {e['type']:<18} {e['ist']} at {e['at']} L{e['house_from_lagna']} M{e['house_from_moon']}")
+
+
 # ---------------------------------------------------------------- main
 
 def write_json(name, data):
@@ -561,7 +1074,7 @@ def print_chart(c):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["chart"])
+    ap.add_argument("cmd", choices=["chart", "verify", "timeline"])
     args = ap.parse_args()
     if args.cmd == "chart":
         c = build_chart()
@@ -571,6 +1084,15 @@ def main():
         }
         print_chart(c)
         write_json("chart.json", c)
+    elif args.cmd == "verify":
+        r = verify()
+        c = json.load(open(os.path.join(HERE, "chart.json")))
+        c["verification"] = r
+        write_json("chart.json", c)
+    elif args.cmd == "timeline":
+        tl = timeline()
+        print_timeline(tl)
+        write_json("timeline.json", tl)
 
 
 if __name__ == "__main__":

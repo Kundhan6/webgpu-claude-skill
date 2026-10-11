@@ -755,5 +755,109 @@
   "node_check": {
     "true_node_rahu": 25.138868,
     "mean_node_rahu": 23.496722
+  },
+  "verification": {
+    "second_method": [
+      {
+        "item": "Lahiri ayanamsa (mean)",
+        "swisseph": 23.913163,
+        "method_2": 23.913127,
+        "diff_arcsec": 0.1
+      },
+      {
+        "item": "Moon sidereal",
+        "swisseph": 69.778425,
+        "method_2": 69.778768,
+        "diff_arcsec": -1.2
+      },
+      {
+        "item": "Sun sidereal",
+        "swisseph": 261.671373,
+        "method_2": 261.671405,
+        "diff_arcsec": -0.1
+      },
+      {
+        "item": "Lagna sidereal",
+        "swisseph": 106.916795,
+        "method_2": 106.91683,
+        "diff_arcsec": -0.1
+      },
+      {
+        "item": "Moon sidereal (PyEphem)",
+        "swisseph": 69.778425,
+        "method_3": 69.778755,
+        "diff_arcsec": -1.2
+      }
+    ],
+    "moon_nakshatra_all_methods": [
+      "Ardra p1"
+    ],
+    "full_moon": {
+      "swisseph_ut": "2004-01-07 15:40",
+      "meeus_ut": "2004-01-07 15:40",
+      "hours_birth_to_full_moon": 25.67,
+      "sun_moon_angle_at_birth": 168.1071,
+      "expected_angle_from_speed": 168.2
+    },
+    "birth_time_test": {
+      "rows": [
+        {
+          "time_ist": "19:15",
+          "lagna": "Cancer 13°30'34\"",
+          "lagna_nakshatra": "Pushya p4",
+          "d9_lagna": "Scorpio",
+          "d10_lagna": "Cancer",
+          "moon": "Gemini 9°39'10\"",
+          "moon_nakshatra": "Ardra p1",
+          "moon_nak_fraction_elapsed": 0.223966
+        },
+        {
+          "time_ist": "19:30",
+          "lagna": "Cancer 16°55'00\"",
+          "lagna_nakshatra": "Ashlesha p1",
+          "d9_lagna": "Sagittarius",
+          "d10_lagna": "Leo",
+          "moon": "Gemini 9°46'42\"",
+          "moon_nakshatra": "Ardra p1",
+          "moon_nak_fraction_elapsed": 0.233382
+        },
+        {
+          "time_ist": "19:45",
+          "lagna": "Cancer 20°20'28\"",
+          "lagna_nakshatra": "Ashlesha p2",
+          "d9_lagna": "Capricorn",
+          "d10_lagna": "Virgo",
+          "moon": "Gemini 9°54'14\"",
+          "moon_nakshatra": "Ardra p1",
+          "moon_nak_fraction_elapsed": 0.242799
+        }
+      ],
+      "windows_ist": {
+        "lagna_sign": {
+          "value": "Cancer",
+          "from": "18:15",
+          "to": "20:26"
+        },
+        "lagna_nakshatra": {
+          "value": "Ashlesha",
+          "from": "19:29",
+          "to": "20:26"
+        },
+        "d9_lagna": {
+          "value": "Sagittarius",
+          "from": "19:29",
+          "to": "19:43"
+        },
+        "d10_lagna": {
+          "value": "Leo",
+          "from": "19:22",
+          "to": "19:34"
+        }
+      },
+      "lagna_sign_stable": true,
+      "d9_lagna_stable": false,
+      "d10_lagna_stable": false,
+      "dasha_shift_days_per_15_min": 62
+    }
   }
 }
