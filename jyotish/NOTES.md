@@ -307,12 +307,12 @@ Format: reading - confidence - why.
 | Area | Leading reading | Conf. | Rival readings |
 |---|---|---|---|
 | Company/money | Build year: effort now, money later | medium | Standing first (medium); gains this year (low) |
-| Acting (this year) | Groundwork year | medium | Opening Jan-May 2027 (low); skill via father/teachers (medium) |
-| Acting 2027-29 | Jupiter-Sun opening, peak 27 Dec 2028 - 30 Mar 2029 | medium | Jupiter-Moon public face (low); later bloom 2031-33 (low) |
+| Acting (this year) | Groundwork year | medium | Opening Jan-May 2027 (low); skill via father/teachers (low) |
+| Acting 2027-29 | Jupiter-Sun opening (low); best transits 26 Dec 2028 - 29 Mar 2029 (medium for transits, low for acting as such) | low | Jupiter-Moon public face (low); later bloom 2031-33 (low) |
 | Father/family | Father a strong, lucky force | medium | Backing distant/demanding (low) |
 | Health/energy | Sleep is your battery | medium | Fighter's engine (medium); inward reset (low) |
 | Love | Tested now, steadier later | medium | Bond may form Jan-Jun 2027 (low) |
-| Learning | A scholar's mind | high | Stop-start, practice-led (medium) |
+| Learning | A scholar's mind (as a lifelong trait) | high | Stop-start, practice-led (low) |
 | Travel | A mover, long stays later | medium | Home base (low) |
 
 ## Done — Stage 5
@@ -321,9 +321,31 @@ Format: reading - confidence - why.
 - Every month and life area carries a confidence (with a one-line why)
   and source codes (S1-S24, listed at the end).
 
+### Final review (3 independent agents) and fixes
+- A facts reviewer checked every date against the json. It found a
+  one-day lag in the double-transit table: daily sampling with no boundary
+  refinement. Fixed in jyotish.py (bisection to the minute; spans already
+  running at the start are flagged). timeline.json regenerated. It also
+  caught that Saturn leaves Pisces on 3 Jun, so the father window says
+  "Saturn there until 3 Jun".
+- A rules reviewer: month fields are now list items, so they don't merge
+  into one paragraph on a phone. Two Work lines max. Year in 5 lines, with
+  confidences. All terms explained at first use. Mantras without diacritics.
+  Every "When" list has sources. Remedy pages carry a note that gems and
+  paid rituals are left out. Instruction-like lines are reworded as themes.
+- A claims reviewer:
+  - "Saturn's gains wait until 2028-29" was a derived rule stated as a text.
+    It now reads as cancelled this year, with a derived lean to late 2028-29.
+  - The Jupiter-Sun acting reading is lowered to LOW (texts split 2-2).
+  - The Uttara Kalamrita Rahu rule is removed from the Jan-May 2027 window.
+  - Learning B and Acting C are lowered to low (single modern source).
+  - Missing counter-views are added: Love (BPHS 18.4 vs Phaladeepika
+    10.4), the Feb eclipse not visible from India, and Brihat Jataka
+    20.7 for Learning A.
+  - Learning A is kept high, explicitly as a lifelong trait.
+
 ## Next
-- Final independent review of LIFE-READING.md (dates vs json, rules,
-  style); fix anything found; commit.
+- Nothing open. All five stages are done.
 
 ## Open questions
 - Lagna sits 15' into Ashlesha (Pushya/Ashlesha cusp). The sign isn't at

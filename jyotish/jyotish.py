@@ -1060,16 +1060,27 @@ def double_transits(lagna_s, moon_s, lo, hi):
     def touches(body, jd, sign):
         s = int(body_lon(jd, body) // 30)
         return s == sign or sign in aspects_cast(body, s)
+    def edge(a, b, sign, was):
+        """Refine the moment the double-transit state flips between a and b."""
+        while b - a > 1 / 1440:
+            m = (a + b) / 2
+            now = touches("Saturn", m, sign) and touches("Jupiter", m, sign)
+            a, b = (m, b) if now == was else (a, m)
+        return b
+
     out = []
     for label, sign in targets.items():
-        on, start, t = False, None, lo
+        on = touches("Saturn", lo, sign) and touches("Jupiter", lo, sign)
+        start, t = lo, lo + 1.0
         while t <= hi:
             both = touches("Saturn", t, sign) and touches("Jupiter", t, sign)
             if both and not on:
-                on, start = True, t
+                on, start = True, edge(t - 1.0, t, sign, False)
             elif not both and on:
                 on = False
-                out.append({"house": label, "sign": SIGNS[sign], "from": ist(start, False), "to": ist(t, False)})
+                out.append({"house": label, "sign": SIGNS[sign],
+                            "from": ist(start, False) + (" (already running)" if start == lo else ""),
+                            "to": ist(edge(t - 1.0, t, sign, True), False)})
             t += 1.0
         if on:
             out.append({"house": label, "sign": SIGNS[sign], "from": ist(start, False), "to": ist(hi, False) + " (open)"})
