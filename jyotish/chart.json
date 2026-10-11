@@ -1,0 +1,759 @@
+{
+  "birth": {
+    "name": "Krish",
+    "sex": "male",
+    "local": "2004-01-06 19:30",
+    "tz_hours": 5.5,
+    "place": "Kakinada, Andhra Pradesh, India",
+    "lat": 16.9891,
+    "lon": 82.2475,
+    "told_nakshatra": "Ardra",
+    "local_used": "2004-01-06 19:30",
+    "jd_ut": 2453011.083333,
+    "utc": "2004-01-06T14:00:00"
+  },
+  "settings": {
+    "zodiac": "sidereal",
+    "ayanamsa": "Lahiri (swe.SIDM_LAHIRI)",
+    "ayanamsa_value": 23.913163,
+    "ayanamsa_dms": "23°54'47\"",
+    "houses": "whole sign",
+    "ephemeris": "Swiss Ephemeris Moshier (built-in)",
+    "swisseph_version": "2.10.03",
+    "node": "mean node",
+    "combust_orbs": {
+      "Moon": 12,
+      "Mars": 17,
+      "Mercury": 14,
+      "Jupiter": 11,
+      "Venus": 10,
+      "Saturn": 15
+    },
+    "combust_orbs_retrograde": {
+      "Mercury": 12,
+      "Venus": 8
+    }
+  },
+  "lagna": {
+    "longitude": 106.916795,
+    "sign": "Cancer",
+    "sign_sanskrit": "Karka",
+    "degree": "16°55'00\"",
+    "nakshatra": {
+      "index": 9,
+      "name": "Ashlesha",
+      "lord": "Mercury",
+      "pada": 1,
+      "fraction_elapsed": 0.01876
+    },
+    "lord": "Moon",
+    "d9_sign": "Sagittarius",
+    "d10_sign": "Leo"
+  },
+  "grahas": {
+    "Sun": {
+      "longitude": 261.671373,
+      "sign": "Sagittarius",
+      "sign_sanskrit": "Dhanu",
+      "degree": "21°40'17\"",
+      "nakshatra": {
+        "index": 20,
+        "name": "Purva Ashadha",
+        "lord": "Venus",
+        "pada": 3,
+        "fraction_elapsed": 0.625353
+      },
+      "house": 6,
+      "retrograde": false,
+      "speed_deg_per_day": 1.0189,
+      "combustion": null,
+      "dignity": "Jupiter's sign: natural friend, compound neutral",
+      "d9_sign": "Libra",
+      "d10_sign": "Cancer",
+      "vargottama": false,
+      "aspects_houses": [
+        12
+      ]
+    },
+    "Moon": {
+      "longitude": 69.778425,
+      "sign": "Gemini",
+      "sign_sanskrit": "Mithuna",
+      "degree": "9°46'42\"",
+      "nakshatra": {
+        "index": 6,
+        "name": "Ardra",
+        "lord": "Rahu",
+        "pada": 1,
+        "fraction_elapsed": 0.233382
+      },
+      "house": 12,
+      "retrograde": false,
+      "speed_deg_per_day": 12.0535,
+      "combustion": {
+        "combust": false,
+        "distance_from_sun": 168.11,
+        "orb_used": 12
+      },
+      "dignity": "Mercury's sign: natural friend, compound neutral",
+      "d9_sign": "Sagittarius",
+      "d10_sign": "Virgo",
+      "vargottama": false,
+      "aspects_houses": [
+        6
+      ]
+    },
+    "Mars": {
+      "longitude": 348.664006,
+      "sign": "Pisces",
+      "sign_sanskrit": "Meena",
+      "degree": "18°39'50\"",
+      "nakshatra": {
+        "index": 27,
+        "name": "Revati",
+        "lord": "Mercury",
+        "pada": 1,
+        "fraction_elapsed": 0.1498
+      },
+      "house": 9,
+      "retrograde": false,
+      "speed_deg_per_day": 0.6136,
+      "combustion": {
+        "combust": false,
+        "distance_from_sun": 86.99,
+        "orb_used": 17
+      },
+      "dignity": "Jupiter's sign: natural friend, compound neutral",
+      "d9_sign": "Sagittarius",
+      "d10_sign": "Taurus",
+      "vargottama": false,
+      "aspects_houses": [
+        12,
+        3,
+        4
+      ],
+      "nearest_station_within_20_days": null
+    },
+    "Mercury": {
+      "longitude": 242.359758,
+      "sign": "Sagittarius",
+      "sign_sanskrit": "Dhanu",
+      "degree": "2°21'35\"",
+      "nakshatra": {
+        "index": 19,
+        "name": "Mula",
+        "lord": "Ketu",
+        "pada": 1,
+        "fraction_elapsed": 0.176982
+      },
+      "house": 6,
+      "retrograde": false,
+      "speed_deg_per_day": 0.0016,
+      "combustion": {
+        "combust": false,
+        "distance_from_sun": 19.31,
+        "orb_used": 14
+      },
+      "dignity": "Jupiter's sign: natural neutral, compound enemy",
+      "d9_sign": "Aries",
+      "d10_sign": "Sagittarius",
+      "vargottama": false,
+      "aspects_houses": [
+        12
+      ],
+      "nearest_station_within_20_days": {
+        "turns": "direct",
+        "ist": "2004-01-06 19:14",
+        "hours_from_birth": -0.3
+      }
+    },
+    "Jupiter": {
+      "longitude": 144.983099,
+      "sign": "Leo",
+      "sign_sanskrit": "Simha",
+      "degree": "24°58'59\"",
+      "nakshatra": {
+        "index": 11,
+        "name": "Purva Phalguni",
+        "lord": "Venus",
+        "pada": 4,
+        "fraction_elapsed": 0.873732
+      },
+      "house": 2,
+      "retrograde": true,
+      "speed_deg_per_day": -0.0084,
+      "combustion": {
+        "combust": false,
+        "distance_from_sun": 116.69,
+        "orb_used": 11
+      },
+      "dignity": "Sun's sign: natural friend, compound neutral",
+      "d9_sign": "Scorpio",
+      "d10_sign": "Aries",
+      "vargottama": false,
+      "aspects_houses": [
+        6,
+        8,
+        10
+      ],
+      "nearest_station_within_20_days": {
+        "turns": "retrograde",
+        "ist": "2004-01-04 04:59",
+        "hours_from_birth": -62.5
+      }
+    },
+    "Venus": {
+      "longitude": 296.155591,
+      "sign": "Capricorn",
+      "sign_sanskrit": "Makara",
+      "degree": "26°09'20\"",
+      "nakshatra": {
+        "index": 23,
+        "name": "Dhanishta",
+        "lord": "Mars",
+        "pada": 1,
+        "fraction_elapsed": 0.211669
+      },
+      "house": 7,
+      "retrograde": false,
+      "speed_deg_per_day": 1.2245,
+      "combustion": {
+        "combust": false,
+        "distance_from_sun": 34.48,
+        "orb_used": 10
+      },
+      "dignity": "Saturn's sign: natural friend, compound neutral",
+      "d9_sign": "Leo",
+      "d10_sign": "Taurus",
+      "vargottama": false,
+      "aspects_houses": [
+        1
+      ],
+      "nearest_station_within_20_days": null
+    },
+    "Saturn": {
+      "longitude": 75.382517,
+      "sign": "Gemini",
+      "sign_sanskrit": "Mithuna",
+      "degree": "15°22'57\"",
+      "nakshatra": {
+        "index": 6,
+        "name": "Ardra",
+        "lord": "Rahu",
+        "pada": 3,
+        "fraction_elapsed": 0.653689
+      },
+      "house": 12,
+      "retrograde": true,
+      "speed_deg_per_day": -0.0818,
+      "combustion": {
+        "combust": false,
+        "distance_from_sun": 173.71,
+        "orb_used": 15
+      },
+      "dignity": "Mercury's sign: natural friend, compound neutral",
+      "d9_sign": "Aquarius",
+      "d10_sign": "Scorpio",
+      "vargottama": false,
+      "aspects_houses": [
+        2,
+        6,
+        9
+      ],
+      "nearest_station_within_20_days": null
+    },
+    "Rahu": {
+      "longitude": 23.496722,
+      "sign": "Aries",
+      "sign_sanskrit": "Mesha",
+      "degree": "23°29'48\"",
+      "nakshatra": {
+        "index": 2,
+        "name": "Bharani",
+        "lord": "Venus",
+        "pada": 4,
+        "fraction_elapsed": 0.762254
+      },
+      "house": 10,
+      "retrograde": true,
+      "speed_deg_per_day": -0.053,
+      "combustion": null,
+      "dignity": "in Mars's sign (nodes have no fixed dignity)",
+      "d9_sign": "Scorpio",
+      "d10_sign": "Scorpio",
+      "vargottama": false,
+      "aspects_houses": [
+        2,
+        4,
+        6
+      ]
+    },
+    "Ketu": {
+      "longitude": 203.496722,
+      "sign": "Libra",
+      "sign_sanskrit": "Tula",
+      "degree": "23°29'48\"",
+      "nakshatra": {
+        "index": 16,
+        "name": "Vishakha",
+        "lord": "Jupiter",
+        "pada": 2,
+        "fraction_elapsed": 0.262254
+      },
+      "house": 4,
+      "retrograde": true,
+      "speed_deg_per_day": -0.053,
+      "combustion": null,
+      "dignity": "in Venus's sign (nodes have no fixed dignity)",
+      "d9_sign": "Taurus",
+      "d10_sign": "Taurus",
+      "vargottama": false,
+      "aspects_houses": [
+        8,
+        10,
+        12
+      ]
+    }
+  },
+  "houses": [
+    {
+      "house": 1,
+      "sign": "Cancer",
+      "lord": "Moon",
+      "lord_in_house": 12,
+      "occupants": [],
+      "aspected_by": [
+        "Venus"
+      ]
+    },
+    {
+      "house": 2,
+      "sign": "Leo",
+      "lord": "Sun",
+      "lord_in_house": 6,
+      "occupants": [
+        "Jupiter"
+      ],
+      "aspected_by": [
+        "Saturn",
+        "Rahu"
+      ]
+    },
+    {
+      "house": 3,
+      "sign": "Virgo",
+      "lord": "Mercury",
+      "lord_in_house": 6,
+      "occupants": [],
+      "aspected_by": [
+        "Mars"
+      ]
+    },
+    {
+      "house": 4,
+      "sign": "Libra",
+      "lord": "Venus",
+      "lord_in_house": 7,
+      "occupants": [
+        "Ketu"
+      ],
+      "aspected_by": [
+        "Mars",
+        "Rahu"
+      ]
+    },
+    {
+      "house": 5,
+      "sign": "Scorpio",
+      "lord": "Mars",
+      "lord_in_house": 9,
+      "occupants": [],
+      "aspected_by": []
+    },
+    {
+      "house": 6,
+      "sign": "Sagittarius",
+      "lord": "Jupiter",
+      "lord_in_house": 2,
+      "occupants": [
+        "Sun",
+        "Mercury"
+      ],
+      "aspected_by": [
+        "Moon",
+        "Jupiter",
+        "Saturn",
+        "Rahu"
+      ]
+    },
+    {
+      "house": 7,
+      "sign": "Capricorn",
+      "lord": "Saturn",
+      "lord_in_house": 12,
+      "occupants": [
+        "Venus"
+      ],
+      "aspected_by": []
+    },
+    {
+      "house": 8,
+      "sign": "Aquarius",
+      "lord": "Saturn",
+      "lord_in_house": 12,
+      "occupants": [],
+      "aspected_by": [
+        "Jupiter",
+        "Ketu"
+      ]
+    },
+    {
+      "house": 9,
+      "sign": "Pisces",
+      "lord": "Jupiter",
+      "lord_in_house": 2,
+      "occupants": [
+        "Mars"
+      ],
+      "aspected_by": [
+        "Saturn"
+      ]
+    },
+    {
+      "house": 10,
+      "sign": "Aries",
+      "lord": "Mars",
+      "lord_in_house": 9,
+      "occupants": [
+        "Rahu"
+      ],
+      "aspected_by": [
+        "Jupiter",
+        "Ketu"
+      ]
+    },
+    {
+      "house": 11,
+      "sign": "Taurus",
+      "lord": "Venus",
+      "lord_in_house": 7,
+      "occupants": [],
+      "aspected_by": []
+    },
+    {
+      "house": 12,
+      "sign": "Gemini",
+      "lord": "Mercury",
+      "lord_in_house": 6,
+      "occupants": [
+        "Moon",
+        "Saturn"
+      ],
+      "aspected_by": [
+        "Sun",
+        "Mars",
+        "Mercury",
+        "Ketu"
+      ]
+    }
+  ],
+  "d9": {
+    "Lagna": {
+      "sign": "Sagittarius",
+      "house": 1
+    },
+    "Sun": {
+      "sign": "Libra",
+      "house": 11
+    },
+    "Moon": {
+      "sign": "Sagittarius",
+      "house": 1
+    },
+    "Mars": {
+      "sign": "Sagittarius",
+      "house": 1
+    },
+    "Mercury": {
+      "sign": "Aries",
+      "house": 5
+    },
+    "Jupiter": {
+      "sign": "Scorpio",
+      "house": 12
+    },
+    "Venus": {
+      "sign": "Leo",
+      "house": 9
+    },
+    "Saturn": {
+      "sign": "Aquarius",
+      "house": 3
+    },
+    "Rahu": {
+      "sign": "Scorpio",
+      "house": 12
+    },
+    "Ketu": {
+      "sign": "Taurus",
+      "house": 6
+    }
+  },
+  "d10": {
+    "Lagna": {
+      "sign": "Leo",
+      "house": 1
+    },
+    "Sun": {
+      "sign": "Cancer",
+      "house": 12
+    },
+    "Moon": {
+      "sign": "Virgo",
+      "house": 2
+    },
+    "Mars": {
+      "sign": "Taurus",
+      "house": 10
+    },
+    "Mercury": {
+      "sign": "Sagittarius",
+      "house": 5
+    },
+    "Jupiter": {
+      "sign": "Aries",
+      "house": 9
+    },
+    "Venus": {
+      "sign": "Taurus",
+      "house": 10
+    },
+    "Saturn": {
+      "sign": "Scorpio",
+      "house": 4
+    },
+    "Rahu": {
+      "sign": "Scorpio",
+      "house": 4
+    },
+    "Ketu": {
+      "sign": "Taurus",
+      "house": 10
+    }
+  },
+  "tithi": {
+    "sun_moon_angle": 168.1071,
+    "number": 15,
+    "paksha": "Shukla (waxing)",
+    "in_paksha": 15
+  },
+  "yogas": [
+    {
+      "name": "Gaja Kesari",
+      "present": false,
+      "rule": "Jupiter in a kendra (1/4/7/10) from the Moon",
+      "detail": "Jupiter is house 3 from the Moon",
+      "note": ""
+    },
+    {
+      "name": "Budha-Aditya",
+      "present": true,
+      "rule": "Sun and Mercury in one sign",
+      "detail": "Sun Sagittarius, Mercury Sagittarius",
+      "note": "Weak if Mercury is combust: False"
+    },
+    {
+      "name": "Chandra-Mangala",
+      "present": false,
+      "rule": "Moon and Mars in one sign",
+      "detail": "Moon Gemini, Mars Pisces",
+      "note": ""
+    },
+    {
+      "name": "Ruchaka (Mahapurusha)",
+      "present": false,
+      "rule": "Mars in own/exaltation sign AND in a kendra from Lagna",
+      "detail": "Mars: house 9, Jupiter's sign: natural friend, compound neutral",
+      "note": ""
+    },
+    {
+      "name": "Bhadra (Mahapurusha)",
+      "present": false,
+      "rule": "Mercury in own/exaltation sign AND in a kendra from Lagna",
+      "detail": "Mercury: house 6, Jupiter's sign: natural neutral, compound enemy",
+      "note": ""
+    },
+    {
+      "name": "Hamsa (Mahapurusha)",
+      "present": false,
+      "rule": "Jupiter in own/exaltation sign AND in a kendra from Lagna",
+      "detail": "Jupiter: house 2, Sun's sign: natural friend, compound neutral",
+      "note": ""
+    },
+    {
+      "name": "Malavya (Mahapurusha)",
+      "present": false,
+      "rule": "Venus in own/exaltation sign AND in a kendra from Lagna",
+      "detail": "Venus: house 7, Saturn's sign: natural friend, compound neutral",
+      "note": ""
+    },
+    {
+      "name": "Sasa (Mahapurusha)",
+      "present": false,
+      "rule": "Saturn in own/exaltation sign AND in a kendra from Lagna",
+      "detail": "Saturn: house 12, Mercury's sign: natural friend, compound neutral",
+      "note": ""
+    },
+    {
+      "name": "Raja yoga (kendra-trikona link)",
+      "present": true,
+      "rule": "Lord of 1/4/7/10 joined to lord of 1/5/9 (4-fold sambandha)",
+      "detail": "Saturn (lord of 7/8, in 12) + Mars (lord of 5/10, in 9): mutual aspect [mixed: Saturn also rules 6/8/12]; Saturn (lord of 7/8, in 12) + Moon (lord of 1, in 12): conjunct [mixed: Saturn also rules 6/8/12]",
+      "note": ""
+    },
+    {
+      "name": "Yogakaraka",
+      "present": true,
+      "rule": "One planet rules both a kendra and a trikona (not the Lagna lord)",
+      "detail": "Mars rules houses 5/10, sits in house 9, Jupiter's sign: natural friend, compound neutral",
+      "note": ""
+    },
+    {
+      "name": "Dhana yoga (wealth-lord link)",
+      "present": true,
+      "rule": "Lords of 1/2/5/9/11 joined (4-fold sambandha)",
+      "detail": "Jupiter (lord of 6/9, in 2) + Sun (lord of 2, in 6): sign exchange [mixed: Jupiter also rules 6/8/12]; Moon (lord of 1, in 12) + Sun (lord of 2, in 6): mutual aspect",
+      "note": ""
+    },
+    {
+      "name": "Harsha (Viparita Raja)",
+      "present": false,
+      "rule": "Lord of house 6 placed in house 6, 8 or 12",
+      "detail": "Jupiter (lord of 6) is in house 2",
+      "note": ""
+    },
+    {
+      "name": "Sarala (Viparita Raja)",
+      "present": true,
+      "rule": "Lord of house 8 placed in house 6, 8 or 12",
+      "detail": "Saturn (lord of 8) is in house 12",
+      "note": ""
+    },
+    {
+      "name": "Vimala (Viparita Raja)",
+      "present": true,
+      "rule": "Lord of house 12 placed in house 6, 8 or 12",
+      "detail": "Mercury (lord of 12) is in house 6",
+      "note": ""
+    },
+    {
+      "name": "Parivartana (sign exchange)",
+      "present": true,
+      "rule": "Two planets in each other's signs; type set by the two HOUSES exchanged (Phaladeepika ch. 6)",
+      "detail": "Sun in Sagittarius (house 6) <-> Jupiter in Leo (house 2): Dainya (a 6/8/12 house is involved)",
+      "note": ""
+    },
+    {
+      "name": "Sunapha",
+      "present": false,
+      "rule": "Planet(s) other than Sun in 2nd from Moon only",
+      "detail": "2nd from Moon: none",
+      "note": ""
+    },
+    {
+      "name": "Anapha",
+      "present": false,
+      "rule": "Planet(s) other than Sun in 12th from Moon only",
+      "detail": "12th from Moon: none",
+      "note": ""
+    },
+    {
+      "name": "Durudhara",
+      "present": false,
+      "rule": "Planets in both 2nd and 12th from Moon",
+      "detail": "2nd: none; 12th: none",
+      "note": ""
+    },
+    {
+      "name": "Kemadruma",
+      "present": true,
+      "rule": "No planet (except Sun/nodes) in 2nd or 12th from Moon",
+      "detail": "2nd: none; 12th: none; with Moon: ['Saturn']",
+      "note": "CANCELLED by the kendra rule. Planets in kendra from Lagna ['Venus']; from Moon ['Sun', 'Mars', 'Mercury', 'Saturn']"
+    },
+    {
+      "name": "Vesi",
+      "present": true,
+      "rule": "Planet (not Moon) in 2nd from Sun only",
+      "detail": "2nd from Sun: ['Venus']",
+      "note": ""
+    },
+    {
+      "name": "Vasi",
+      "present": false,
+      "rule": "Planet (not Moon) in 12th from Sun only",
+      "detail": "12th from Sun: none",
+      "note": ""
+    },
+    {
+      "name": "Ubhayachari",
+      "present": false,
+      "rule": "Planets in both 2nd and 12th from Sun",
+      "detail": "2nd: ['Venus']; 12th: none",
+      "note": ""
+    },
+    {
+      "name": "Adhi",
+      "present": true,
+      "rule": "Natural benefics in 6th/7th/8th from Moon (full yoga: all three)",
+      "detail": "benefics there: ['Mercury', 'Venus']",
+      "note": "partial"
+    },
+    {
+      "name": "Amala",
+      "present": false,
+      "rule": "Natural benefic in 10th from Lagna or Moon",
+      "detail": "10th from Lagna: none; 10th from Moon: none",
+      "note": ""
+    },
+    {
+      "name": "Shakata",
+      "present": false,
+      "rule": "Moon in 6th/8th/12th from Jupiter",
+      "detail": "Moon is house 11 from Jupiter",
+      "note": ""
+    },
+    {
+      "name": "Moon-Saturn conjunction (Punarphoo/Vish, modern)",
+      "present": true,
+      "rule": "Moon and Saturn in one sign",
+      "detail": "Moon Gemini, Saturn Gemini, 5.60° apart",
+      "note": "Modern label; treat as a combination, not a classical yoga."
+    },
+    {
+      "name": "Guru-Chandala",
+      "present": false,
+      "rule": "Jupiter with Rahu (some include Ketu)",
+      "detail": "Jupiter Leo, Rahu Aries, Ketu Libra",
+      "note": ""
+    },
+    {
+      "name": "Kala Sarpa",
+      "present": false,
+      "rule": "All 7 planets on one side of the Rahu-Ketu axis",
+      "detail": "3 of 7 on the Rahu->Ketu side",
+      "note": ""
+    },
+    {
+      "name": "Mangal dosha",
+      "present": false,
+      "rule": "Mars in 1/2/4/7/8/12 from Lagna, Moon or Venus",
+      "detail": "Mars house from Lagna 9, from Moon 10, from Venus 3",
+      "note": "Folk/marriage-matching rule; many exceptions are taught."
+    }
+  ],
+  "node_check": {
+    "true_node_rahu": 25.138868,
+    "mean_node_rahu": 23.496722
+  }
+}
