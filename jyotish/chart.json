@@ -286,7 +286,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "aspects_note": "5/7/9 node aspects: disputed view, not used in yogas"
     },
     "Ketu": {
       "longitude": 203.496722,
@@ -312,7 +313,8 @@
         8,
         10,
         12
-      ]
+      ],
+      "aspects_note": "5/7/9 node aspects: disputed view, not used in yogas"
     }
   },
   "houses": [
@@ -324,7 +326,8 @@
       "occupants": [],
       "aspected_by": [
         "Venus"
-      ]
+      ],
+      "aspected_by_nodes_disputed": []
     },
     {
       "house": 2,
@@ -335,7 +338,9 @@
         "Jupiter"
       ],
       "aspected_by": [
-        "Saturn",
+        "Saturn"
+      ],
+      "aspected_by_nodes_disputed": [
         "Rahu"
       ]
     },
@@ -347,7 +352,8 @@
       "occupants": [],
       "aspected_by": [
         "Mars"
-      ]
+      ],
+      "aspected_by_nodes_disputed": []
     },
     {
       "house": 4,
@@ -358,7 +364,9 @@
         "Ketu"
       ],
       "aspected_by": [
-        "Mars",
+        "Mars"
+      ],
+      "aspected_by_nodes_disputed": [
         "Rahu"
       ]
     },
@@ -368,7 +376,8 @@
       "lord": "Mars",
       "lord_in_house": 9,
       "occupants": [],
-      "aspected_by": []
+      "aspected_by": [],
+      "aspected_by_nodes_disputed": []
     },
     {
       "house": 6,
@@ -382,7 +391,9 @@
       "aspected_by": [
         "Moon",
         "Jupiter",
-        "Saturn",
+        "Saturn"
+      ],
+      "aspected_by_nodes_disputed": [
         "Rahu"
       ]
     },
@@ -394,7 +405,8 @@
       "occupants": [
         "Venus"
       ],
-      "aspected_by": []
+      "aspected_by": [],
+      "aspected_by_nodes_disputed": []
     },
     {
       "house": 8,
@@ -403,7 +415,9 @@
       "lord_in_house": 12,
       "occupants": [],
       "aspected_by": [
-        "Jupiter",
+        "Jupiter"
+      ],
+      "aspected_by_nodes_disputed": [
         "Ketu"
       ]
     },
@@ -417,7 +431,8 @@
       ],
       "aspected_by": [
         "Saturn"
-      ]
+      ],
+      "aspected_by_nodes_disputed": []
     },
     {
       "house": 10,
@@ -428,7 +443,9 @@
         "Rahu"
       ],
       "aspected_by": [
-        "Jupiter",
+        "Jupiter"
+      ],
+      "aspected_by_nodes_disputed": [
         "Ketu"
       ]
     },
@@ -438,7 +455,8 @@
       "lord": "Venus",
       "lord_in_house": 7,
       "occupants": [],
-      "aspected_by": []
+      "aspected_by": [],
+      "aspected_by_nodes_disputed": []
     },
     {
       "house": 12,
@@ -452,7 +470,9 @@
       "aspected_by": [
         "Sun",
         "Mars",
-        "Mercury",
+        "Mercury"
+      ],
+      "aspected_by_nodes_disputed": [
         "Ketu"
       ]
     }
@@ -549,15 +569,25 @@
   },
   "yogas": [
     {
+      "name": "Benefic/malefic status",
+      "present": true,
+      "status": "info",
+      "rule": "BPHS 3.11 (Mercury turns malefic when joined by a malefic)",
+      "detail": "benefics: ['Jupiter', 'Moon', 'Venus']; malefics: ['Ketu', 'Mars', 'Mercury', 'Rahu', 'Saturn', 'Sun']",
+      "note": "Moon bright (benefic), 168° from Sun"
+    },
+    {
       "name": "Gaja Kesari",
       "present": false,
-      "rule": "Jupiter in a kendra (1/4/7/10) from the Moon",
-      "detail": "Jupiter is house 3 from the Moon",
+      "status": "absent",
+      "rule": "Jupiter in a kendra from the Moon or Lagna; BPHS adds: joined/aspected by benefics, not debilitated, combust or in an enemy sign",
+      "detail": "Jupiter is house 3 from the Moon, house 2 from Lagna",
       "note": ""
     },
     {
       "name": "Budha-Aditya",
       "present": true,
+      "status": "present",
       "rule": "Sun and Mercury in one sign",
       "detail": "Sun Sagittarius, Mercury Sagittarius",
       "note": "Weak if Mercury is combust: False"
@@ -565,6 +595,7 @@
     {
       "name": "Chandra-Mangala",
       "present": false,
+      "status": "absent",
       "rule": "Moon and Mars in one sign",
       "detail": "Moon Gemini, Mars Pisces",
       "note": ""
@@ -572,6 +603,7 @@
     {
       "name": "Ruchaka (Mahapurusha)",
       "present": false,
+      "status": "absent",
       "rule": "Mars in own/exaltation sign AND in a kendra from Lagna",
       "detail": "Mars: house 9, Jupiter's sign: natural friend, compound neutral",
       "note": ""
@@ -579,6 +611,7 @@
     {
       "name": "Bhadra (Mahapurusha)",
       "present": false,
+      "status": "absent",
       "rule": "Mercury in own/exaltation sign AND in a kendra from Lagna",
       "detail": "Mercury: house 6, Jupiter's sign: natural neutral, compound enemy",
       "note": ""
@@ -586,6 +619,7 @@
     {
       "name": "Hamsa (Mahapurusha)",
       "present": false,
+      "status": "absent",
       "rule": "Jupiter in own/exaltation sign AND in a kendra from Lagna",
       "detail": "Jupiter: house 2, Sun's sign: natural friend, compound neutral",
       "note": ""
@@ -593,6 +627,7 @@
     {
       "name": "Malavya (Mahapurusha)",
       "present": false,
+      "status": "absent",
       "rule": "Venus in own/exaltation sign AND in a kendra from Lagna",
       "detail": "Venus: house 7, Saturn's sign: natural friend, compound neutral",
       "note": ""
@@ -600,6 +635,7 @@
     {
       "name": "Sasa (Mahapurusha)",
       "present": false,
+      "status": "absent",
       "rule": "Saturn in own/exaltation sign AND in a kendra from Lagna",
       "detail": "Saturn: house 12, Mercury's sign: natural friend, compound neutral",
       "note": ""
@@ -607,13 +643,15 @@
     {
       "name": "Raja yoga (kendra-trikona link)",
       "present": true,
+      "status": "present",
       "rule": "Lord of 1/4/7/10 joined to lord of 1/5/9 (4-fold sambandha)",
       "detail": "Saturn (lord of 7/8, in 12) + Mars (lord of 5/10, in 9): mutual aspect [mixed: Saturn also rules 6/8/12]; Saturn (lord of 7/8, in 12) + Moon (lord of 1, in 12): conjunct [mixed: Saturn also rules 6/8/12]",
-      "note": ""
+      "note": "'mixed' = a partner also rules 6/8/12. Laghu Parashari is stricter about the 8th lord."
     },
     {
       "name": "Yogakaraka",
       "present": true,
+      "status": "present",
       "rule": "One planet rules both a kendra and a trikona (not the Lagna lord)",
       "detail": "Mars rules houses 5/10, sits in house 9, Jupiter's sign: natural friend, compound neutral",
       "note": ""
@@ -621,6 +659,7 @@
     {
       "name": "Dhana yoga (wealth-lord link)",
       "present": true,
+      "status": "present",
       "rule": "Lords of 1/2/5/9/11 joined (4-fold sambandha)",
       "detail": "Jupiter (lord of 6/9, in 2) + Sun (lord of 2, in 6): sign exchange [mixed: Jupiter also rules 6/8/12]; Moon (lord of 1, in 12) + Sun (lord of 2, in 6): mutual aspect",
       "note": ""
@@ -628,27 +667,31 @@
     {
       "name": "Harsha (Viparita Raja)",
       "present": false,
-      "rule": "Lord of house 6 placed in house 6, 8 or 12",
+      "status": "absent",
+      "rule": "Lord of house 6 placed in house 6, 8 or 12 (common modern form)",
       "detail": "Jupiter (lord of 6) is in house 2",
       "note": ""
     },
     {
       "name": "Sarala (Viparita Raja)",
       "present": true,
-      "rule": "Lord of house 8 placed in house 6, 8 or 12",
+      "status": "present",
+      "rule": "Lord of house 8 placed in house 6, 8 or 12 (common modern form)",
       "detail": "Saturn (lord of 8) is in house 12",
-      "note": ""
+      "note": "Strict view (Uttara Kalamrita 4.22: no link with other house lords) FAILS: Saturn is joined or aspected by Sun (2), Moon (1), Mars (5/10), Mercury (3/12)"
     },
     {
       "name": "Vimala (Viparita Raja)",
       "present": true,
-      "rule": "Lord of house 12 placed in house 6, 8 or 12",
+      "status": "present",
+      "rule": "Lord of house 12 placed in house 6, 8 or 12 (common modern form)",
       "detail": "Mercury (lord of 12) is in house 6",
-      "note": ""
+      "note": "Strict view (Uttara Kalamrita 4.22: no link with other house lords) FAILS: Mercury is joined or aspected by Sun (2), Moon (1), Jupiter (6/9), Saturn (7/8)"
     },
     {
       "name": "Parivartana (sign exchange)",
       "present": true,
+      "status": "present",
       "rule": "Two planets in each other's signs; type set by the two HOUSES exchanged (Phaladeepika ch. 6)",
       "detail": "Sun in Sagittarius (house 6) <-> Jupiter in Leo (house 2): Dainya (a 6/8/12 house is involved)",
       "note": ""
@@ -656,6 +699,7 @@
     {
       "name": "Sunapha",
       "present": false,
+      "status": "absent",
       "rule": "Planet(s) other than Sun in 2nd from Moon only",
       "detail": "2nd from Moon: none",
       "note": ""
@@ -663,6 +707,7 @@
     {
       "name": "Anapha",
       "present": false,
+      "status": "absent",
       "rule": "Planet(s) other than Sun in 12th from Moon only",
       "detail": "12th from Moon: none",
       "note": ""
@@ -670,20 +715,23 @@
     {
       "name": "Durudhara",
       "present": false,
+      "status": "absent",
       "rule": "Planets in both 2nd and 12th from Moon",
       "detail": "2nd: none; 12th: none",
       "note": ""
     },
     {
       "name": "Kemadruma",
-      "present": true,
+      "present": false,
+      "status": "formed but cancelled",
       "rule": "No planet (except Sun/nodes) in 2nd or 12th from Moon",
       "detail": "2nd: none; 12th: none; with Moon: ['Saturn']",
-      "note": "CANCELLED by the kendra rule. Planets in kendra from Lagna ['Venus']; from Moon ['Sun', 'Mars', 'Mercury', 'Saturn']"
+      "note": "BPHS 37.11 kendra-from-Lagna clause: ['Venus']; later texts add kendra from Moon: ['Sun', 'Mars', 'Mercury', 'Saturn']"
     },
     {
       "name": "Vesi",
       "present": true,
+      "status": "present",
       "rule": "Planet (not Moon) in 2nd from Sun only",
       "detail": "2nd from Sun: ['Venus']",
       "note": ""
@@ -691,6 +739,7 @@
     {
       "name": "Vasi",
       "present": false,
+      "status": "absent",
       "rule": "Planet (not Moon) in 12th from Sun only",
       "detail": "12th from Sun: none",
       "note": ""
@@ -698,27 +747,31 @@
     {
       "name": "Ubhayachari",
       "present": false,
+      "status": "absent",
       "rule": "Planets in both 2nd and 12th from Sun",
       "detail": "2nd: ['Venus']; 12th: none",
       "note": ""
     },
     {
       "name": "Adhi",
-      "present": true,
-      "rule": "Natural benefics in 6th/7th/8th from Moon (full yoga: all three)",
-      "detail": "benefics there: ['Mercury', 'Venus']",
-      "note": "partial"
+      "present": false,
+      "status": "partial (commentary view only)",
+      "rule": "Benefics occupying the 6th, 7th and 8th from Moon (BPHS 37.5)",
+      "detail": "6th: none; 7th: none; 8th: ['Venus']",
+      "note": "Some commentators grade 1-2 filled houses as a weaker Adhi."
     },
     {
       "name": "Amala",
       "present": false,
-      "rule": "Natural benefic in 10th from Lagna or Moon",
-      "detail": "10th from Lagna: none; 10th from Moon: none",
+      "status": "absent",
+      "rule": "Only benefics in the 10th from Lagna or Moon (BPHS 36.5)",
+      "detail": "10th from Lagna: ['Rahu']; 10th from Moon: ['Mars']",
       "note": ""
     },
     {
       "name": "Shakata",
       "present": false,
+      "status": "absent",
       "rule": "Moon in 6th/8th/12th from Jupiter",
       "detail": "Moon is house 11 from Jupiter",
       "note": ""
@@ -726,6 +779,7 @@
     {
       "name": "Moon-Saturn conjunction (Punarphoo/Vish, modern)",
       "present": true,
+      "status": "present",
       "rule": "Moon and Saturn in one sign",
       "detail": "Moon Gemini, Saturn Gemini, 5.60° apart",
       "note": "Modern label; treat as a combination, not a classical yoga."
@@ -733,20 +787,23 @@
     {
       "name": "Guru-Chandala",
       "present": false,
+      "status": "absent",
       "rule": "Jupiter with Rahu (some include Ketu)",
       "detail": "Jupiter Leo, Rahu Aries, Ketu Libra",
       "note": ""
     },
     {
-      "name": "Kala Sarpa",
+      "name": "Kala Sarpa (modern)",
       "present": false,
-      "rule": "All 7 planets on one side of the Rahu-Ketu axis",
+      "status": "absent",
+      "rule": "All 7 planets on one side of the Rahu-Ketu axis (not in BPHS/Phaladeepika/Saravali)",
       "detail": "3 of 7 on the Rahu->Ketu side",
-      "note": ""
+      "note": "Modern combination; users split Kala Sarpa (Rahu->Ketu) from Kala Amrita (Ketu->Rahu)."
     },
     {
       "name": "Mangal dosha",
       "present": false,
+      "status": "absent",
       "rule": "Mars in 1/2/4/7/8/12 from Lagna, Moon or Venus",
       "detail": "Mars house from Lagna 9, from Moon 10, from Venus 3",
       "note": "Folk/marriage-matching rule; many exceptions are taught."
@@ -797,7 +854,160 @@
       "meeus_ut": "2004-01-07 15:40",
       "hours_birth_to_full_moon": 25.67,
       "sun_moon_angle_at_birth": 168.1071,
-      "expected_angle_from_speed": 168.2
+      "expected_angle_from_speed": 168.2,
+      "web": {
+        "value_ut": "2004-01-07 15:40",
+        "sources": [
+          "https://eclipse.gsfc.nasa.gov/phase/phases2001.html (NASA, F. Espenak: Jan 7 15:40 UT)",
+          "https://aa.usno.navy.mil/api/moon/phases/date?date=2004-01-01&nump=8 (USNO: Full Moon 2004-01-07 15:40)",
+          "https://lunaf.com/lunar-calendar/2004/01/07/ (7 Jan 2004 15:40 UTC)"
+        ]
+      }
+    },
+    "published_ephemeris": {
+      "source": "findyourfate.com 2004 ephemeris (00:00 GMT), signsbystars.com",
+      "rows": [
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Sun",
+          "published": "Capricorn 14°59'",
+          "computed": 284.987,
+          "diff_arcmin": 0.2
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Moon",
+          "published": "Gemini 26°40'",
+          "computed": 86.682,
+          "diff_arcmin": 0.9
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Mercury",
+          "published": "Sagittarius 26°18'",
+          "computed": 266.294,
+          "diff_arcmin": -0.3
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Venus",
+          "published": "Aquarius 19°21'",
+          "computed": 319.351,
+          "diff_arcmin": 0.1
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Mars",
+          "published": "Aries 12°13'",
+          "computed": 12.216,
+          "diff_arcmin": -0.0
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Jupiter",
+          "published": "Virgo 18°54'",
+          "computed": 168.897,
+          "diff_arcmin": -0.2
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Saturn",
+          "published": "Cancer 9°20'",
+          "computed": 99.34,
+          "diff_arcmin": 0.4
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Node (true)",
+          "published": "Taurus 17°26'",
+          "computed": 49.128,
+          "diff_arcmin": 101.7
+        },
+        {
+          "date_0h_ut": "2004-01-06",
+          "body": "Node (mean)",
+          "published": "Taurus 17°26'",
+          "computed": 47.437,
+          "diff_arcmin": 0.2
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Sun",
+          "published": "Capricorn 16°00'",
+          "computed": 286.006,
+          "diff_arcmin": 0.3
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Moon",
+          "published": "Cancer 8°43'",
+          "computed": 98.724,
+          "diff_arcmin": 0.4
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Mercury",
+          "published": "Sagittarius 26°17'",
+          "computed": 266.283,
+          "diff_arcmin": -0.0
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Venus",
+          "published": "Aquarius 20°34'",
+          "computed": 320.576,
+          "diff_arcmin": 0.5
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Mars",
+          "published": "Aries 12°50'",
+          "computed": 12.83,
+          "diff_arcmin": -0.2
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Jupiter",
+          "published": "Virgo 18°53'",
+          "computed": 168.889,
+          "diff_arcmin": 0.4
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Saturn",
+          "published": "Cancer 9°16'",
+          "computed": 99.258,
+          "diff_arcmin": -0.5
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Node (true)",
+          "published": "Taurus 17°23'",
+          "computed": 48.985,
+          "diff_arcmin": 96.1
+        },
+        {
+          "date_0h_ut": "2004-01-07",
+          "body": "Node (mean)",
+          "published": "Taurus 17°23'",
+          "computed": 47.385,
+          "diff_arcmin": 0.1
+        }
+      ],
+      "max_abs_diff_arcmin": 0.91
+    },
+    "lahiri_published": {
+      "ours_mean": "23°54'47\"",
+      "ours_true_method2": "23°54'35\"",
+      "published": [
+        "23°54'34\" true, 2004-01-01 0h UT: https://jagannathhora.com/historical-lahiri-ayanamsa-values-tables/",
+        "23°51'25.53\" mean, J2000 (IAE value quoted in Swiss Ephemeris docs): https://www.astro.com/swisseph/swisseph.htm"
+      ],
+      "note": "Published 23°54'34\" (true) is for 1 Jan 2004; +5 days of precession (~0.7\") gives ~23°54'35\", matching ours."
+    },
+    "stations_web": {
+      "mercury": "turned direct 6 Jan 2004 ~19:14 IST (aaps.space Mercury transits 2004; JPL Horizons min longitude ~13:44 UT)",
+      "jupiter": "turned retrograde ~4 Jan 2004 05:15 IST/NPT (aaps.space; vedicmarga)"
     },
     "birth_time_test": {
       "rows": [

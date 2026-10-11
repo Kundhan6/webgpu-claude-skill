@@ -46,7 +46,7 @@ every planet call and stops if it wasn't used.
   - Vesi (Venus 2nd from Sun). Adhi is partial (Mercury, Venus in 7/8 from Moon).
   - Moon and Saturn are conjunct in the 12th. "Punarphoo" and "Vish" are modern names for this.
 
-### Stage 2 — verify (code part done; web part pending)
+### Stage 2 — verify (DONE: all checks agree)
 `jyotish.py verify` writes `verification` into chart.json.
 - (a) Second method, no Swiss Ephemeris: own Julian Day (Meeus ch.7),
   own Delta-T (Espenak-Meeus), own Lahiri (23°15'00.658" on 1956-03-21
@@ -60,7 +60,42 @@ every planet call and stops if it wasn't used.
 - (b) Full moon, Jan 2004: Swiss Ephemeris and Meeus ch.49 both give
   7 Jan 2004 15:40 UT. Birth is 25.7 h before that. Sun-Moon angle at
   birth is 168.11°, against 168.20° expected from the relative speed
-  (11.03°/day). That fits. Web confirmation is pending (background agent).
+  (11.03°/day). That fits.
+  Web: NASA (Espenak) and USNO, two independent sources, both say 7 Jan
+  2004 15:40 UT. lunaf.com agrees.
+- (c) Published ephemeris (findyourfate.com 0h GMT, matched by signsbystars):
+  every body is within 0.9' on 6 and 7 Jan 2004. Values are rounded to 1'.
+  Its "Node" is the mean node (0.2' off); the true node is 1.7° off.
+- (d) Published Lahiri: 23°54'34" true on 1 Jan 2004 (jagannathhora table).
+  Ours is 23°54'35" true on 6 Jan. The ~1" gap is 5 days of precession.
+  IAE J2000 mean 23°51'25.53" = Swiss Ephemeris.
+- (e) Blind recompute by a separate agent. It never saw our files, used
+  PyEphem plus its own Meeus formulas, and derived Lahiri itself:
+  - Lagna 106.91679 (ours 106.91680). Moon 69.778716 (ours 69.778425, 1.0").
+  - All planets within 1.3". Ardra pada 1. Jupiter and Saturn retrograde.
+  - It found the same Mercury station time (13:44 UT = 19:14 IST).
+  - It found the Moon reaches Ardra pada 2 only at ~19:56 IST.
+- Web station times: Mercury direct 6 Jan 19:14 (aaps.space, JPL
+  Horizons). Jupiter retrograde ~4 Jan 05:15 IST (aaps.space, vedicmarga).
+  Both match chart.json.
+- (f) Rule audit by a separate agent against BPHS/Phaladeepika. It confirmed:
+  nakshatras, dasha order, D9 and D10 rules, exaltation, friendships,
+  combust orbs, sambandha and parivartana typing. Fixes made:
+  - Mercury joined by the Sun counts as a malefic (BPHS 3.11). The bright
+    Moon (168° from Sun) counts as a benefic.
+  - Adhi needs benefics IN the 6th, 7th and 8th from the Moon (BPHS 37.5).
+    Here only Venus (8th) qualifies, so it is partial, a commentary view only.
+  - Amala needs ONLY benefics in the 10th (BPHS 36.5). Absent here anyway.
+  - Gaja Kesari: from the Lagna OR the Moon (BPHS 36.3). Absent either way.
+  - Kemadruma: now reported as "formed but cancelled". The BPHS 37.11
+    kendra-from-Lagna clause is met (Venus). The kendra-from-Moon clause is from later texts.
+  - Viparita (Sarala, Vimala): the modern form holds. The strict Uttara
+    Kalamrita 4.22 form fails: Saturn and Mercury are linked with other lords.
+  - Node aspects are now listed apart, marked disputed.
+  - Kala Sarpa is labelled modern. Moolatrikona is checked before exaltation
+    for the Moon and Mercury. Float-safe boundaries. Neecha Bhanga rules
+    widened (no planet is debilitated here, so no effect).
+  - The timeline was re-run after the fixes: unchanged.
 - Birth-time test:
   - 19:15 Lagna Cancer 13°31'. 19:30 Cancer 16°55'. 19:45 Cancer 20°20'.
   - The Lagna stays Cancer from 18:15 to 20:26 IST. **STABLE.**
@@ -109,8 +144,6 @@ every planet call and stops if it wasn't used.
   antardasha lord) is retrograde in Libra since 3 Oct, direct 14 Nov.
 
 ## Next
-- Stage 2: fold in the web check (full-moon date, published Lahiri value)
-  and the blind recompute + rule audit from the background agents.
 - Stage 4: research + confidence tracker.
 - Stage 5: LIFE-READING.md.
 

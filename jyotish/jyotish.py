@@ -11,6 +11,7 @@ All times printed in IST (UTC+5:30) unless a field says UT.
 """
 import argparse
 import json
+import math
 import os
 from datetime import datetime, timedelta
 
@@ -55,7 +56,7 @@ NAK_SPAN = 360 / 27  # 13deg20'
 GRAHAS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]
 SWE_ID = {"Sun": swe.SUN, "Moon": swe.MOON, "Mars": swe.MARS, "Mercury": swe.MERCURY,
           "Jupiter": swe.JUPITER, "Venus": swe.VENUS, "Saturn": swe.SATURN}
-BENEFICS = {"Mercury", "Jupiter", "Venus"}  # natural benefics (Moon handled separately)
+MALEFICS = {"Sun", "Mars", "Saturn", "Rahu", "Ketu"}  # BPHS 3.11 (plus a waning Moon)
 
 # Exaltation sign index and deep-exaltation degree (BPHS ch. 3).
 EXALT = {"Sun": (0, 10), "Moon": (1, 3), "Mars": (9, 28), "Mercury": (5, 15),
@@ -63,7 +64,7 @@ EXALT = {"Sun": (0, 10), "Moon": (1, 3), "Mars": (9, 28), "Mercury": (5, 15),
 OWN = {"Sun": [4], "Moon": [3], "Mars": [0, 7], "Mercury": [2, 5],
        "Jupiter": [8, 11], "Venus": [1, 6], "Saturn": [9, 10]}
 # Moolatrikona: sign index, from-degree, to-degree (BPHS ch. 3).
-MOOLA = {"Sun": (4, 0, 20), "Moon": (1, 4, 30), "Mars": (0, 0, 12), "Mercury": (5, 16, 20),
+MOOLA = {"Sun": (4, 0, 20), "Moon": (1, 3, 30), "Mars": (0, 0, 12), "Mercury": (5, 15, 20),
          "Jupiter": (8, 0, 10), "Venus": (6, 0, 15), "Saturn": (10, 0, 20)}
 # Nodes: the most common view; the alternative view is recorded in the output.
 NODE_EXALT = {"Rahu": 1, "Ketu": 7}  # Taurus / Scorpio (alt: Gemini / Sagittarius)
@@ -85,6 +86,8 @@ COMBUST_ORB = {"Moon": 12, "Mars": 17, "Mercury": 14, "Jupiter": 11, "Venus": 10
 COMBUST_ORB_RETRO = {"Mercury": 12, "Venus": 8}
 
 # Whole-sign special aspects (counted inclusively: 7 = the 7th sign from).
+# Node aspects have no settled classical rule (none / 7th / 5-7-9 ...); the
+# 5-7-9 view is computed but always reported separately, marked disputed.
 SPECIAL_ASPECTS = {"Mars": [4, 7, 8], "Jupiter": [5, 7, 9], "Saturn": [3, 7, 10],
                    "Rahu": [5, 7, 9], "Ketu": [5, 7, 9]}
 
@@ -135,25 +138,30 @@ def lagna_longitude(jd, lat=BIRTH["lat"], lon=BIRTH["lon"]):
     return ascmc[0] % 360
 
 
+def _part(x, span):
+    """floor(x / span), safe at exact boundaries (30/9 and 360/27 aren't exact in binary)."""
+    return int(math.floor(round(x / span, 9)))
+
+
 def nakshatra(lon):
-    i = int(lon // NAK_SPAN)
+    i = _part(lon, NAK_SPAN) % 27
     within = lon - i * NAK_SPAN
     name, lord = NAKSHATRAS[i]
     return {"index": i + 1, "name": name, "lord": lord,
-            "pada": int(within // (NAK_SPAN / 4)) + 1,
+            "pada": min(_part(within, NAK_SPAN / 4), 3) + 1,
             "fraction_elapsed": round(within / NAK_SPAN, 6)}
 
 
 def navamsa_sign(lon):
     # Movable signs start from themselves, fixed from the 9th, dual from the 5th;
     # that rule collapses to counting 3°20' parts straight from 0° Aries.
-    return int(lon // (30 / 9)) % 12
+    return _part(lon, 30 / 9) % 12
 
 
 def dasamsa_sign(lon):
     # Odd signs start from themselves, even signs from the 9th (BPHS ch. 6).
-    s = int(lon // 30)
-    part = int((lon % 30) // 3)
+    s = _part(lon, 30) % 12
+    part = min(_part(lon - s * 30, 3), 9)
     return (s + part) % 12 if s % 2 == 0 else (s + 8 + part) % 12
 
 
@@ -178,13 +186,14 @@ def dignity(p, lon, signs):
         if s == (NODE_EXALT[p] + 6) % 12:
             return "debilitated (common view)"
         return f"in {SIGN_LORD[s]}'s sign (nodes have no fixed dignity)"
-    if s == EXALT[p][0]:
-        return "exalted"
-    if s == (EXALT[p][0] + 6) % 12:
-        return "debilitated"
     m = MOOLA[p]
     if s == m[0] and m[1] <= deg < m[2]:
         return "moolatrikona"
+    if s == EXALT[p][0]:
+        # BPHS 3.51-53: Mercury in Virgo is exalted to 15°, moolatrikona 15-20°, own after.
+        return "own sign" if (p == "Mercury" and deg >= 20) else "exalted"
+    if s == (EXALT[p][0] + 6) % 12:
+        return "debilitated"
     if s in OWN[p]:
         return "own sign"
     lord = SIGN_LORD[s]
@@ -265,6 +274,8 @@ def build_chart(local=BIRTH["local"], node="mean"):
             "vargottama": navamsa_sign(lon) == s,
             "aspects_houses": [house_from(a, lsign) for a in aspects_cast(p, s)],
         }
+        if p in ("Rahu", "Ketu"):
+            grahas[p]["aspects_note"] = "5/7/9 node aspects: disputed view, not used in yogas"
         if p in ("Mars", "Mercury", "Jupiter", "Venus", "Saturn"):
             grahas[p]["nearest_station_within_20_days"] = nearest_station(jd, p)
 
@@ -276,7 +287,9 @@ def build_chart(local=BIRTH["local"], node="mean"):
             "house": h, "sign": SIGNS[sign], "lord": lord,
             "lord_in_house": grahas[lord]["house"],
             "occupants": [p for p in GRAHAS if signs[p] == sign],
-            "aspected_by": [p for p in GRAHAS if sign in aspects_cast(p, signs[p])],
+            "aspected_by": [p for p in GRAHAS[:7] if sign in aspects_cast(p, signs[p])],
+            "aspected_by_nodes_disputed": [p for p in ("Rahu", "Ketu")
+                                           if sign in aspects_cast(p, signs[p])],
         })
 
     d9_lagna, d10_lagna = navamsa_sign(asc), dasamsa_sign(asc)
@@ -357,16 +370,33 @@ def find_yogas(chart, signs, lsign, pos):
         bad = [p for p in ps if set(owned(p, lord_of).split("/")) & {"6", "8", "12"}]
         return f"mixed: {', '.join(bad)} also rules 6/8/12" if bad else ""
 
+    # Benefics by BPHS 3.11: Jupiter, Venus; Mercury unless joined by a malefic;
+    # the Moon unless waning-dark (taken here as within 72° of the Sun, the
+    # paksha-bala convention).
+    angle = (pos["Moon"][0] - pos["Sun"][0]) % 360
+    moon_benefic = 72 <= angle <= 288
+    mal = set(MALEFICS) | (set() if moon_benefic else {"Moon"})
+    benefic = {"Jupiter", "Venus"} | ({"Moon"} if moon_benefic else set())
+    if not any(signs[q] == signs["Mercury"] for q in mal):
+        benefic.add("Mercury")
     yogas = []
 
-    def add(name, present, rule, detail, note=""):
-        yogas.append({"name": name, "present": present, "rule": rule,
-                      "detail": detail, "note": note})
+    def add(name, present, rule, detail, note="", status=None):
+        yogas.append({"name": name, "present": present,
+                      "status": status or ("present" if present else "absent"),
+                      "rule": rule, "detail": detail, "note": note})
 
-    # Gaja Kesari
-    hj = house_from(signs["Jupiter"], moon_s)
-    add("Gaja Kesari", hj in (1, 4, 7, 10), "Jupiter in a kendra (1/4/7/10) from the Moon",
-        f"Jupiter is house {hj} from the Moon")
+    add("Benefic/malefic status", True, "BPHS 3.11 (Mercury turns malefic when joined by a malefic)",
+        f"benefics: {sorted(benefic)}; malefics: {sorted(mal | (set(GRAHAS[:7]) - benefic - {'Moon'}))}",
+        f"Moon {'bright (benefic)' if moon_benefic else 'dark (malefic)'}, {angle:.0f}° from Sun",
+        status="info")
+
+    # Gaja Kesari (BPHS 36.3: kendra from Lagna OR Moon, plus conditions)
+    hj, hjl = house_from(signs["Jupiter"], moon_s), house["Jupiter"]
+    gk = hj in (1, 4, 7, 10) or hjl in (1, 4, 7, 10)
+    add("Gaja Kesari", gk, "Jupiter in a kendra from the Moon or Lagna; BPHS adds: joined/aspected by "
+        "benefics, not debilitated, combust or in an enemy sign",
+        f"Jupiter is house {hj} from the Moon, house {hjl} from Lagna")
 
     # Budha-Aditya
     add("Budha-Aditya", signs["Sun"] == signs["Mercury"], "Sun and Mercury in one sign",
@@ -388,18 +418,20 @@ def find_yogas(chart, signs, lsign, pos):
     # Raja yogas: kendra lord linked with trikona lord
     kendra_l = {lord_of[h] for h in (1, 4, 7, 10)}
     trikona_l = {lord_of[h] for h in (1, 5, 9)}
-    found = []
+    found, seen = [], set()
     for k in sorted(kendra_l):
         for t in sorted(trikona_l):
             how = linked(k, t)
-            if how:
+            if how and frozenset((k, t)) not in seen:
+                seen.add(frozenset((k, t)))
                 q = taint(k, t)
                 found.append(f"{k} (lord of {owned(k, lord_of)}, in {house[k]}) + {t} (lord of "
                              f"{owned(t, lord_of)}, in {house[t]}): {how}" + (f" [{q}]" if q else ""))
     yk = [p for p in seven if p in kendra_l and p in trikona_l and p != lord_of[1]]
     add("Raja yoga (kendra-trikona link)", bool(found),
         "Lord of 1/4/7/10 joined to lord of 1/5/9 (4-fold sambandha)",
-        "; ".join(found) or "no such link")
+        "; ".join(found) or "no such link",
+        "'mixed' = a partner also rules 6/8/12. Laghu Parashari is stricter about the 8th lord.")
     add("Yogakaraka", bool(yk), "One planet rules both a kendra and a trikona (not the Lagna lord)",
         ", ".join(f"{p} rules houses {owned(p, lord_of)}, sits in house {house[p]}, {G[p]['dignity']}"
                   for p in yk) or "none")
@@ -421,9 +453,16 @@ def find_yogas(chart, signs, lsign, pos):
     # Viparita Raja yogas
     for h, yname in [(6, "Harsha"), (8, "Sarala"), (12, "Vimala")]:
         lord = lord_of[h]
-        add(f"{yname} (Viparita Raja)", house[lord] in (6, 8, 12),
-            f"Lord of house {h} placed in house 6, 8 or 12",
-            f"{lord} (lord of {h}) is in house {house[lord]}")
+        ok = house[lord] in (6, 8, 12)
+        others = [q for q in seven if q != lord
+                  and set(owned(q, lord_of).split("/")) - {"6", "8", "12"}
+                  and (signs[q] == signs[lord] or aspects(q, lord))]
+        add(f"{yname} (Viparita Raja)", ok,
+            f"Lord of house {h} placed in house 6, 8 or 12 (common modern form)",
+            f"{lord} (lord of {h}) is in house {house[lord]}",
+            (f"Strict view (Uttara Kalamrita 4.22: no link with other house lords) FAILS: "
+             f"{lord} is joined or aspected by {', '.join(f'{q} ({owned(q, lord_of)})' for q in others)}"
+             if others else "Strict view (no link with other lords) also holds") if ok else "")
 
     # Parivartana (exchanges)
     ex = []
@@ -452,11 +491,13 @@ def find_yogas(chart, signs, lsign, pos):
     kendra_from_lagna = [p for p in seven if p != "Moon" and house[p] in (1, 4, 7, 10)]
     kendra_from_moon = [p for p in seven if p != "Moon" and house_from(signs[p], moon_s) in (1, 4, 7, 10)]
     kema = not moon_2 and not moon_12
-    add("Kemadruma", kema, "No planet (except Sun/nodes) in 2nd or 12th from Moon",
+    cancelled = kema and bool(kendra_from_lagna or kendra_from_moon)
+    add("Kemadruma", kema and not cancelled, "No planet (except Sun/nodes) in 2nd or 12th from Moon",
         f"2nd: {moon_2 or 'none'}; 12th: {moon_12 or 'none'}; with Moon: {with_moon or 'none'}",
-        (("CANCELLED by the kendra rule. " if (kendra_from_lagna or kendra_from_moon) else "")
-         + "Planets in kendra from Lagna "
-         f"{kendra_from_lagna or 'none'}; from Moon {kendra_from_moon or 'none'}") if kema else "")
+        ("BPHS 37.11 kendra-from-Lagna clause: "
+         f"{kendra_from_lagna or 'none'}; later texts add kendra from Moon: "
+         f"{kendra_from_moon or 'none'}") if kema else "",
+        status="formed but cancelled" if cancelled else None)
 
     # Sun-based yogas (Moon and nodes excluded)
     sun_2 = [p for p in seven if p not in ("Sun", "Moon") and house_from(signs[p], sun_s) == 2]
@@ -469,16 +510,20 @@ def find_yogas(chart, signs, lsign, pos):
         f"2nd: {sun_2 or 'none'}; 12th: {sun_12 or 'none'}")
 
     # Adhi yoga
-    adhi = [p for p in BENEFICS if house_from(signs[p], moon_s) in (6, 7, 8)]
-    add("Adhi", len(adhi) >= 1, "Natural benefics in 6th/7th/8th from Moon (full yoga: all three)",
-        f"benefics there: {sorted(adhi) or 'none'}",
-        "full" if len(adhi) == 3 else ("partial" if adhi else ""))
+    adhi = {hh: [p for p in benefic - {"Moon"} if house_from(signs[p], moon_s) == hh] for hh in (6, 7, 8)}
+    filled = [hh for hh, v in adhi.items() if v]
+    add("Adhi", len(filled) == 3, "Benefics occupying the 6th, 7th and 8th from Moon (BPHS 37.5)",
+        f"6th: {adhi[6] or 'none'}; 7th: {adhi[7] or 'none'}; 8th: {adhi[8] or 'none'}",
+        "Some commentators grade 1-2 filled houses as a weaker Adhi." if 0 < len(filled) < 3 else "",
+        status="partial (commentary view only)" if 0 < len(filled) < 3 else None)
 
     # Amala
-    am_l = [p for p in BENEFICS if house[p] == 10]
-    am_m = [p for p in BENEFICS if house_from(signs[p], moon_s) == 10]
-    add("Amala", bool(am_l or am_m), "Natural benefic in 10th from Lagna or Moon",
-        f"10th from Lagna: {am_l or 'none'}; 10th from Moon: {am_m or 'none'}")
+    def tenth(ref):
+        occ = [p for p in GRAHAS if house_from(signs[p], ref) == 10]
+        return occ, bool(occ) and all(p in benefic for p in occ)
+    (occ_l, am_l), (occ_m, am_m) = tenth(lsign), tenth(moon_s)
+    add("Amala", am_l or am_m, "Only benefics in the 10th from Lagna or Moon (BPHS 36.5)",
+        f"10th from Lagna: {occ_l or 'empty'}; 10th from Moon: {occ_m or 'empty'}")
 
     # Shakata
     hm = house_from(moon_s, signs["Jupiter"])
@@ -499,8 +544,10 @@ def find_yogas(chart, signs, lsign, pos):
     # Kala Sarpa: all seven on one side of the Rahu-Ketu axis
     rahu = pos["Rahu"][0]
     side = [((pos[p][0] - rahu) % 360) < 180 for p in seven]
-    add("Kala Sarpa", all(side) or not any(side), "All 7 planets on one side of the Rahu-Ketu axis",
-        f"{sum(side)} of 7 on the Rahu->Ketu side")
+    add("Kala Sarpa (modern)", all(side) or not any(side),
+        "All 7 planets on one side of the Rahu-Ketu axis (not in BPHS/Phaladeepika/Saravali)",
+        f"{sum(side)} of 7 on the Rahu->Ketu side",
+        "Modern combination; users split Kala Sarpa (Rahu->Ketu) from Kala Amrita (Ketu->Rahu).")
 
     # Neecha Bhanga for each debilitated planet
     for p in seven:
@@ -511,14 +558,25 @@ def find_yogas(chart, signs, lsign, pos):
         ex_in = [q for q in EXALT if EXALT[q][0] == s]
         ex_lord = SIGN_LORD[EXALT[p][0]]
         reasons = []
-        for q, why in [(dl_, "lord of debilitation sign"), (ex_lord, "lord of its exaltation sign")] + \
-                [(q, "planet exalted in that sign") for q in ex_in]:
+        cands = [(dl_, "lord of debilitation sign"), (ex_lord, "lord of its exaltation sign"),
+                 (p, "the debilitated planet itself")] + [(q, "planet exalted in that sign") for q in ex_in]
+        for q, why in cands:
+            if q == p and why != "the debilitated planet itself":
+                continue
             if house[q] in (1, 4, 7, 10):
                 reasons.append(f"{q} ({why}) in kendra from Lagna")
             if house_from(signs[q], moon_s) in (1, 4, 7, 10):
                 reasons.append(f"{q} ({why}) in kendra from Moon")
-        if aspects(dl_, p) or signs[dl_] == s:
+        if dl_ != p and (aspects(dl_, p) or signs[dl_] == s):
             reasons.append(f"{dl_} (lord of debilitation sign) joins or aspects it")
+        if ex_lord != p and aspects(ex_lord, p):
+            reasons.append(f"{ex_lord} (lord of its exaltation sign) aspects it")
+        if dl_ != ex_lord and house_from(signs[ex_lord], signs[dl_]) in (1, 4, 7, 10):
+            reasons.append(f"{dl_} and {ex_lord} are in mutual kendras")
+        if SIGN_LORD[signs[dl_]] == p:
+            reasons.append(f"exchange with {dl_}")
+        if navamsa_sign(pos[p][0]) == EXALT[p][0]:
+            reasons.append("exalted in navamsa")
         add(f"Neecha Bhanga for {p}", bool(reasons), "Cancellation of debilitation (BPHS/Phaladeepika rules)",
             "; ".join(reasons) or "no cancellation rule met")
 
@@ -658,6 +716,56 @@ def window(fn, local=BIRTH["local"]):
     return v0, out
 
 
+# Published values found by web search on 2026-10-11 (copied, with sources).
+WEB_CHECKS = {
+    "full_moon_jan_2004_ut": "2004-01-07 15:40",
+    "full_moon_sources": [
+        "https://eclipse.gsfc.nasa.gov/phase/phases2001.html (NASA, F. Espenak: Jan 7 15:40 UT)",
+        "https://aa.usno.navy.mil/api/moon/phases/date?date=2004-01-01&nump=8 (USNO: Full Moon 2004-01-07 15:40)",
+        "https://lunaf.com/lunar-calendar/2004/01/07/ (7 Jan 2004 15:40 UTC)",
+    ],
+    "lahiri_published": [
+        "23°54'34\" true, 2004-01-01 0h UT: https://jagannathhora.com/historical-lahiri-ayanamsa-values-tables/",
+        "23°51'25.53\" mean, J2000 (IAE value quoted in Swiss Ephemeris docs): https://www.astro.com/swisseph/swisseph.htm",
+    ],
+    "mercury_station": "turned direct 6 Jan 2004 ~19:14 IST (aaps.space Mercury transits 2004; JPL Horizons min longitude ~13:44 UT)",
+    "jupiter_station": "turned retrograde ~4 Jan 2004 05:15 IST/NPT (aaps.space; vedicmarga)",
+}
+
+# Published tropical, apparent, geocentric positions at 00:00 GMT
+# (https://www.findyourfate.com/astrology/ephemeris/2004.html, matched by
+# signsbystars.com to 1'). Values are sign index, degrees, minutes.
+PUBLISHED_EPH = {
+    "2004-01-06": {"Sun": (9, 14, 59), "Moon": (2, 26, 40), "Mercury": (8, 26, 18), "Venus": (10, 19, 21),
+                   "Mars": (0, 12, 13), "Jupiter": (5, 18, 54), "Saturn": (3, 9, 20), "Node": (1, 17, 26)},
+    "2004-01-07": {"Sun": (9, 16, 0), "Moon": (3, 8, 43), "Mercury": (8, 26, 17), "Venus": (10, 20, 34),
+                   "Mars": (0, 12, 50), "Jupiter": (5, 18, 53), "Saturn": (3, 9, 16), "Node": (1, 17, 23)},
+}
+
+
+def published_ephemeris_check():
+    """Swiss Ephemeris tropical apparent positions vs a published 0h ephemeris."""
+    rows, worst = [], 0.0
+    for day, vals in PUBLISHED_EPH.items():
+        y, m, d = map(int, day.split("-"))
+        jd = swe.julday(y, m, d, 0.0)
+        for body, (s, dg, mn) in vals.items():
+            pub = s * 30 + dg + mn / 60
+            if body == "Node":
+                mine = swe.calc_ut(jd, swe.MEAN_NODE, swe.FLG_MOSEPH)[0][0]
+                true = swe.calc_ut(jd, swe.TRUE_NODE, swe.FLG_MOSEPH)[0][0]
+                body = "Node (mean)"
+                rows.append({"date_0h_ut": day, "body": "Node (true)", "published": f"{SIGNS[s]} {dg}°{mn:02d}'",
+                             "computed": round(true, 3), "diff_arcmin": round(angdiff(true, pub) / 60, 1)})
+            else:
+                mine = swe.calc_ut(jd, SWE_ID[body], swe.FLG_MOSEPH)[0][0]
+            diff = angdiff(mine, pub) / 60
+            worst = max(worst, abs(diff))
+            rows.append({"date_0h_ut": day, "body": body, "published": f"{SIGNS[s]} {dg}°{mn:02d}'",
+                         "computed": round(mine, 3), "diff_arcmin": round(diff, 1)})
+    return rows, worst
+
+
 def verify():
     report = {}
     local = BIRTH["local"]
@@ -704,6 +812,25 @@ def verify():
         "meeus_ut": f"{jd_to_ist(fm_meeus) - timedelta(hours=5.5):%Y-%m-%d %H:%M}",
         "hours_birth_to_full_moon": round(hrs, 2), "sun_moon_angle_at_birth": angle,
         "expected_angle_from_speed": round(expect, 2)}
+
+    print("Web:", WEB_CHECKS["full_moon_jan_2004_ut"], "UT per NASA, USNO, lunaf.com")
+    report["full_moon"]["web"] = {"value_ut": WEB_CHECKS["full_moon_jan_2004_ut"],
+                                  "sources": WEB_CHECKS["full_moon_sources"]}
+
+    print("\n== (c) published ephemeris (tropical, 0h UT) ==")
+    rows, worst = published_ephemeris_check()
+    for r in rows:
+        print(f"{r['date_0h_ut']} {r['body']:<12} published {r['published']:<18} diff {r['diff_arcmin']:+5.1f}'")
+    print(f"Largest difference (excluding true node): {worst:.1f}' (published values are rounded to 1')")
+    report["published_ephemeris"] = {"source": "findyourfate.com 2004 ephemeris (00:00 GMT), signsbystars.com",
+                                     "rows": rows, "max_abs_diff_arcmin": round(worst, 2)}
+    report["lahiri_published"] = {"ours_mean": dms(m1["ayanamsa"]),
+                                  "ours_true_method2": dms(m2["ayanamsa_true"]),
+                                  "published": WEB_CHECKS["lahiri_published"],
+                                  "note": "Published 23°54'34\" (true) is for 1 Jan 2004; +5 days of "
+                                          "precession (~0.7\") gives ~23°54'35\", matching ours."}
+    print(f"Lahiri: ours true {dms(m2['ayanamsa_true'])} (6 Jan); published true 23°54'34\" (1 Jan 2004)")
+    report["stations_web"] = {"mercury": WEB_CHECKS["mercury_station"], "jupiter": WEB_CHECKS["jupiter_station"]}
 
     print("\n== birth-time test ==")
     tt = []
@@ -1068,8 +1195,8 @@ def print_chart(c):
               f"  {g['dignity']:<34} D9 {g['d9_sign']:<12} D10 {g['d10_sign']}")
     print("Yogas present:")
     for y in c["yogas"]:
-        if y["present"]:
-            print(f"  - {y['name']}: {y['detail']}")
+        if y["status"] not in ("absent", "info"):
+            print(f"  - [{y['status']}] {y['name']}: {y['detail']}")
 
 
 def main():
