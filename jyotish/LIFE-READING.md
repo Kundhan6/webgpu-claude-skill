@@ -8,7 +8,8 @@ It matches what you were told. Three separate methods agree.
 ## How to read this
 
 - **Math** = computed with code and checked three ways.
-  Dasha and Transit lines, all dates, and every "Math" box are math.
+  Dasha (planet period) and Transit (sky position now) lines, all dates,
+  and every "Math" box are math.
 - **Meaning** = what old texts and good modern writers say.
   It is traditional meaning, not proven fact.
 - Every reading has a confidence (high, medium or low) and a one-line reason.
@@ -29,8 +30,8 @@ Terms, explained once:
 - Exalted = in its best sign. Debilitated = in its weakest sign.
 - Yogakaraka = the single best planet for your rising sign.
 - Yoga = a planet combination.
-- BPHS, Phaladeepika, Saravali, Brihat Jataka and the rest are old astrology books.
-  Full names are in Sources.
+- BPHS, Phaladeepika, Saravali, Brihat Jataka (BJ), Jataka Parijata (JP),
+  Uttara Kalamrita (UK) and the rest are old astrology books. Full names are in Sources.
 
 Birth time and dates:
 - Your Lagna is safe. It stays Cancer for any birth time from 6:15 to 8:26 PM.
@@ -54,10 +55,11 @@ Birth time and dates:
 | Rahu | Aries 23°30' | Bharani 4 | 10 | North node (average position) |
 | Ketu | Libra 23°30' | Vishakha 2 | 4 | South node |
 | Periods now | | | | Jupiter main 2017–2033. Venus sub 6 Sep 2025 – 7 May 2028 |
-| Main yogas | | | | Budha-Aditya (Sun with Mercury). Mars yogakaraka in 9th. Sun–Jupiter sign swap. Sarala, Vimala ("reversal" yogas) |
+| Main yogas | | | | Budha-Aditya; Mars yogakaraka; Sun–Jupiter swap; Sarala, Vimala |
 | D9 / D10 Lagna | | | | Sagittarius / Leo. Both change within minutes, so low weight |
 
 Notes on the table:
+- Budha-Aditya = Sun with Mercury. Sarala and Vimala = two "reversal" yogas.
 - Retrograde = appears to move backward.
 - Stationary = Mercury turned direct 16 minutes before birth.
 - Full-Moon day = Purnima tithi. The exact full Moon came about 26 hours later.
@@ -75,7 +77,7 @@ Notes on the table:
 1. All year: Jupiter–Venus. Growth, with friction with partners and kin (BPHS); Phaladeepika calls it good. Medium.
 2. Jupiter helps until 31 Oct; then Nov 2026 to mid-Jan 2027 is a slow, touchy start. Medium.
 3. 25 Jan – 24 May 2027 is the best run, clearest 26 Apr – 5 May. Medium.
-4. Jun – Oct 2027 is a build phase; Saturn's "gains" are cancelled this year by its weak sign. Medium.
+4. Jun – Oct 2027: a build phase (low); Saturn's "gains" are cancelled by its weak sign (medium).
 5. The 2 Aug 2027 eclipse in your Lagna sign is the pause point; acting windows sit in 2028–29. Low.
 
 ---
@@ -90,7 +92,7 @@ Modern writers also count from your Lagna (Cancer). Each house below says which.
 - Transit: Jupiter enters Leo on 31 Oct (until then, exalted on your Lagna).
 - Work: Classically, Jupiter 2nd from your Moon gives money from more than one source.
   One modern author adds help from senior people. It closes on 31 Oct.
-- Watch: Short temper (weak Mars on your Lagna until 12 Nov), and friction with officials or a partner (Rahu sub-sub-period).
+- Watch: Short temper (weak Mars on your Lagna to 12 Nov); friction with officials or a partner (Rahu).
 - Confidence: medium. Jupiter's support has 2+ sources; the Rahu warning is one text.
 - Sources: S4 (ch. 26), S18, S1 (BPHS 61.78)
 
@@ -107,8 +109,8 @@ Modern writers also count from your Lagna (Cancer). Each house below says which.
 - Dasha: Jupiter–Venus–Rahu
 - Transit: Rahu enters Capricorn and Ketu enters Cancer on 5 Dec.
   By the exact-node method, 25 Nov.
-- Work: Partners, contracts and clients move to centre stage (Rahu in your 7th from Lagna).
-  From your Moon this is a hard Rahu spot, so hidden terms are the theme.
+- Work: Modern writers put partners, contracts and clients at centre stage (Rahu in your 7th from Lagna).
+  From your Moon this is a hard Rahu spot (classical), so hidden terms are the theme.
 - Watch: Fine print in deals, and tighter cash (Ketu 2nd from your Moon).
 - Confidence: medium. The node shift has 2+ sources and fixed dates.
 - Sources: S4 (v. 24), S18, S20
@@ -126,7 +128,7 @@ Modern writers also count from your Lagna (Cancer). Each house below says which.
 - Dasha: Jupiter–Venus–Jupiter
 - Transit: Solar eclipse on 6 Feb near your Venus. Rahu crosses your Venus on 16 Feb.
   Saturn crosses your Mars on 27 Feb.
-- Work: Backing holds. Partner links heat up near the eclipse: new, or not what they seem.
+- Work: Texts read backing as holding. Partner links heat up near the eclipse: new, or not what they seem.
   One modern author reads Saturn on your Mars as a sharper edge over rivals.
 - Watch: Guarantees and partner terms are the sensitive theme.
 - Confidence: medium. Jupiter's support is well sourced; the eclipse reading is one author, and it isn't visible from India.
@@ -200,9 +202,9 @@ Modern writers also count from your Lagna (Cancer). Each house below says which.
 ### October 2027 (to 11 Oct)
 - Dasha: Jupiter–Venus–Saturn (Mercury sub-sub-period from about 25 Oct)
 - Transit: Venus enters Libra on 3 Oct. Mars enters Scorpio, its own sign, on 8 Oct.
-- Work: The build phase closes. Mars, your best planet, is strong again.
-  Just after: Saturn back to Pisces (20 Oct); Jupiter returns to its birth degree (26 Oct), a fresh-start point to one modern author.
-- Watch: From 20 Oct the hard Saturn transit (10th from your Moon) returns, until 23 Feb 2028.
+- Work: The build phase closes, and Mars, your best planet, is strong again.
+  Just after: Jupiter returns to its birth degree (26 Oct), a fresh start to one modern author.
+- Watch: Just after this window, the hard Saturn transit (10th from your Moon) returns, 20 Oct to 23 Feb 2028.
 - Confidence: low. Only 11 days, and the key turns fall just outside.
 - Sources: S18, S4
 
@@ -223,11 +225,12 @@ The first reading is the one I rate most likely.
 - Venus (sub-period lord) is 6th from Jupiter (main-period lord).
 - D10: Venus is in its own sign, with Mars. The D10 house depends on the birth minute.
 
-**A. Build year: effort now, money later.** — Confidence: medium
+**A. Build year: effort now, money slow.** — Confidence: medium
 - Texts give more work and responsibility, and slow, uneven cash.
 - Friction over terms with a partner or co-founder is the classic theme.
 - Money comes through competition, service and pitching, and can leak fast.
-- Saturn's gains transit is cancelled this year by its weak sign. A derived timing rule leans any gain to late 2028–29.
+- Saturn's gains transit is cancelled by its weak sign, now and in its 2028–29 stay too.
+  A derived timing rule leans any gain to late 2028–29, when Saturn is still weak.
 - Why: Several classical texts agree, but Jan–May 2027 pulls the other way.
 - Sources: S1 (BPHS 56.43, 61.78), S2 (BPHS 13.1-2), S4 (v. 23, 25, 32), S7 (6.32-33)
 
@@ -242,7 +245,8 @@ The first reading is the one I rate most likely.
 **C. Money comes this year, from several channels.** — Confidence: low
 - Phaladeepika calls a Venus sub-period inside a 9th-lord main period good.
 - It also says the gains lord's period brings a steady flow.
-- Jupiter 2nd from your Moon (25 Jan – 26 Jun 2027) is the textbook "money from several sources" transit.
+- Jupiter 2nd from your Moon (25 Jan – 26 Jun 2027, blocked from 6 May) is the textbook
+  "money from several sources" transit.
 - Why: Real support, but BPHS reads this pair as friction, and says the gains lord's period blocks gains.
 - Sources: S5 (20.12, 20.49), S6 (21.43), S4 (v. 18, 31), S1 (BPHS 56.43, 48.7)
 
@@ -254,24 +258,27 @@ The first reading is the one I rate most likely.
 - Sources: S1 (BPHS 24.127, 34.27), S18
 
 **When**
-- 11 Oct 2026 – 14 Jan 2027: terms and friction; slow money (Rahu sub-sub-period). Medium.
+- 11 Oct 2026 – 14 Jan 2027: terms and friction (Rahu sub-sub-period, one text); money slows after 31 Oct. Low.
 - 25 Jan – 24 May 2027: best stretch for backing and credibility (Jupiter on your Lagna). Medium.
 - 6 – 27 Feb 2027: partner and client door (eclipse near Venus). Low.
 - 10 Mar – 26 Apr 2027: weak Mars; texts warn of harsh words and spending. Medium.
-- 3 Jun – 11 Oct 2027: more responsibility, cash later (one modern author; gains cancelled by Saturn's weak sign). Low.
+- 3 Jun – 11 Oct 2027: more responsibility, slow cash (one modern author; gains cancelled by Saturn's weak sign). Low.
 - Sources: S1 (BPHS 61.78, 61.79), S4, S15, S18
 
 **Texts disagree**
 - Venus sub-period: BPHS says friction (S1). Phaladeepika says good (S5, S6).
 - Sun–Jupiter swap: Phaladeepika calls it Dainya, a "hardship" swap (S7).
-  Modern lists and Uttara Kalamrita call it a wealth link, but Uttara Kalamrita adds that a 6th-lord link spoils it, and Jupiter rules your 6th (S14).
+  Modern lists and Uttara Kalamrita call it a wealth link (S14).
+  But Uttara Kalamrita adds that a 6th-lord link spoils it, and Jupiter rules your 6th.
 - Gains lord's period: BPHS says gains get blocked (S1). Phaladeepika says steady money (S5).
 - One correction: S1's English misreads BPHS 41.16. Santhanam (S2) has it name the 9th and 5th lords as wealth-givers.
   So the classical money windows are Jupiter and Mars periods.
 
 **Optional, free**
-- Thursdays: Jupiter's mantra "Om graam greem graum sah gurave namah", 108 times (S23; Vedic form in S3).
-- Phaladeepika says planets favour one who earns by right means. For a founder, the classic theme is clean books and fair terms (S4).
+- Thursdays: Jupiter's mantra "Om graam greem graum sah gurave namah", 108 times.
+  (S23; Vedic form in S3.)
+- Phaladeepika says planets favour one who earns by right means.
+  For a founder, the classic theme is clean books and fair terms (S4).
 
 ### Acting and fame (this year)
 
@@ -283,7 +290,7 @@ The first reading is the one I rate most likely.
 **A. A groundwork year: training, skills, people.** — Confidence: medium
 - Your chart does carry fame signs. Phaladeepika calls Rahu in the 10th "famous and fearless".
 - But this year's sub-period strains, and Saturn sits 10th from your Moon until June: hard work, little credit.
-  Jupiter's aspect softens that from 25 Jan to 3 Jun (our extension of a Phaladeepika rule).
+  Jupiter's aspect softens that 11–31 Oct 2026 and 25 Jan – 3 Jun 2027 (our extension of a Phaladeepika rule).
 - One verse says the 4th lord in the 7th can make one quiet in gatherings. Read it as stage confidence still to build.
 - So texts favour building voice, body, camera skills and contacts now, with public results later.
 - Why: The sub-period and Saturn points each have 2+ texts and don't depend on birth time.
@@ -295,23 +302,26 @@ The first reading is the one I rate most likely.
 - Why: Real support for standing, but no text ties it to acting, and the period edges move.
 - Sources: S1 (BPHS 61.79), S5 (20.34)
 
-**C. Art as a skill; the path runs through father and teachers.** — Confidence: low
+**C. The path runs through your father (one modern author).** — Confidence: low
 - B.V. Raman: a 10th lord in the 9th often means a family line of work, and a father with great influence.
-- Two classical rules point away from Venus as your career planet: Phaladeepika's livelihood rule picks Jupiter or Mars.
+- BPHS makes Venus work against a Cancer rising sign, and Phaladeepika's livelihood rule picks Jupiter or Mars.
+  So the texts don't make Venus (arts) your career planet.
 - Why: The father link rests on one modern author and is a reading, not a forecast.
 - Sources: S17, S8 (5.1), S1 (BPHS 34.27)
 
 **When**
-- 25 Jan – 24 May 2027: best window for backing and standing (medium). An acting opening specifically: low.
+- 25 Jan – 24 May 2027: best window for backing and standing (Jupiter on your Lagna, its own sub-sub-period). Medium.
+  An acting opening specifically: low.
 - 10 Mar – 26 Apr 2027: weak Mars on your Lagna; texts warn of quarrels and harsh words.
   Linking it to creative and career pushes is a modern step. Medium.
 - 3 Jun – 20 Oct 2027: Saturn in your 10th from Lagna: more workload, fixed duties. Low.
 - Sources: S1 (BPHS 61.79), S4 (v. 13), S15 (v. 11), S18
 
 **Texts disagree**
-- Rahu in the 10th: Phaladeepika 8.27 says famous. Phaladeepika 16.28 warns of wrong acts (S8, S10).
+- Rahu in the 10th: Phaladeepika says famous in one verse, and warns of wrong acts in another (S8, S10).
 - Venus as your arts planet: Uttara Kalamrita lists dance, music and fine arts under Venus (S14).
-  But BPHS makes Venus work against a Cancer rising sign, and Phaladeepika's livelihood rule picks Jupiter or Mars (S1, S8).
+  But BPHS makes Venus work against a Cancer rising sign (S1).
+  And Phaladeepika's livelihood rule picks Jupiter or Mars (S8).
 
 The Oct 2027 – 2029 acting window has its own section (5).
 
@@ -322,7 +332,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - 9th lord Jupiter is in your 2nd house (family, speech).
 - The 9th from your Sun is Leo, which holds your 9th lord.
 - Sun (father's planet) is in the 6th. It is in its own sign in D12, the parents' chart.
-- You were born at night; one old rule then makes Saturn a second father planet.
+- Born at night (after sunset).
 - Saturn aspects your 9th house, your 9th lord and your Sun.
 
 **A. Your father is a strong, lucky force in your chart.** — Confidence: medium
@@ -335,7 +345,9 @@ The Oct 2027 – 2029 acting window has its own section (5).
 
 **B. Backing is real, but distant or demanding.** — Confidence: low
 - Your Sun sits in a hard house, and Saturn aspects your 9th house, 9th lord and Sun.
-- Old verses on Mars in the 9th are harsh, though two keep royal favour ("a friend of the sovereign"; "honoured by the king").
+- For a night birth, one old rule makes Saturn a second father planet. Yours is in the 12th.
+- Old verses on Mars in the 9th are harsh.
+  Two still keep royal favour: "a friend of the sovereign", "honoured by the king".
 - Texts suggest a driven, exacting father, often busy. Respect may come more easily than closeness.
 - Why: Several hard factors, but the father wording is modern and yogakaraka Mars softens it.
 - Sources: S8 (8.10), S11 (30.34), S12 (BJ 4.5, 20.6), S10 (16.23)
@@ -351,7 +363,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - 25 Jan – 26 Jun 2027: strongest father window this year. Medium.
   Jupiter on your Lagna looks at your 9th; Saturn is also there until 3 Jun.
   A good stretch for his guidance, or one weighty talk.
-- From 5 Dec 2026: Ketu 2nd from your Moon; family talks need gentleness. Medium.
+- From 5 Dec 2026: Ketu 2nd from your Moon; texts read family talks as touchy. Medium.
 - 7 May 2028 – 23 Feb 2029 (Jupiter–Sun): a father- and family-focused period, since the Sun is your father planet.
   Texts split on smooth versus opposed. Edges approximate. Low.
 - Sources: S1 (BPHS 61.79, 56.52), S2 (BPHS 56.54-55), S4, S6 (21.44)
@@ -364,7 +376,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - Lagna lord Moon sits in the 12th (sleep, rest) with Saturn.
 - Sun in the 6th (daily effort).
 - Ketu in your Lagna sign from 5 Dec 2026 to 24 Jun 2028.
-- Mars weak in your Lagna sign from 10 Mar to 26 Apr 2027.
+- Mars weak in your Lagna sign 11 Oct – 12 Nov 2026 and 10 Mar – 26 Apr 2027.
 - Eclipse in your Lagna sign on 2 Aug 2027.
 
 **A. Sleep is your battery.** — Confidence: medium
@@ -379,7 +391,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - Saravali gives a 6th-house Sun strong vigour and drive.
 - An old rule says harsh planets do well in houses 6, 8 and 12: your Sun, Mercury and Saturn.
 - Texts suggest you do best under deadlines and a tight routine. The risk is overdrive, not weakness.
-- Why: 2+ texts back the strong 6th-house Sun; one translation reads it as "defeated by an enemy".
+- Why: 2+ texts back the strong 6th-house Sun; one translation reads it as weaker against rivals.
 - Sources: S11 (30.7, 30.86-87), S12 (BJ 20.2, 20.10)
 
 **C. 2027 as an inward reset.** — Confidence: low
@@ -394,7 +406,8 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - 10 Mar – 26 Apr 2027: impatience and a pull to rush (weak Mars). Medium.
 - About 24 May – 25 Oct 2027: a slower, heavier pace (Saturn sub-sub-period). Low.
 - 2 – 9 Aug 2027: lowest-energy week (eclipse in your Lagna sign). Low.
-  Ketu crosses your exact rising degree near 9 Aug. With up to 15 minutes of birth-time doubt, that could be June to October.
+  Ketu crosses your exact rising degree near 9 Aug.
+  With up to 15 minutes of birth-time doubt, that could be June to October.
 - Sources: S5 (20.34), S4 (v. 13), S1 (BPHS 61.80), S16, S18
 
 **Optional, free**
@@ -411,7 +424,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - Rahu enters your 7th from Lagna on 5 Dec 2026, and crosses your Venus around 16 Feb 2027.
 
 **A. Tested now, steadier later.** — Confidence: medium
-- Venus in your 7th gives real warmth and strong attraction.
+- Texts give Venus in your 7th real warmth and strong attraction.
 - But BPHS reads this sub-period as quarrels and strain in close ties.
 - Moon with Saturn is a slow, serious style in love. Modern writers call this "Punarphoo" and link it to delays.
 - Texts suggest a settled bond fits better later. Some say it often steadies after about age 30.
@@ -428,7 +441,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 
 **When**
 - Until about 14 Jan 2027: a touchy phase in close ties (Rahu sub-sub-period). Low.
-- 25 Jan – 26 Jun 2027: the warmest stretch (Jupiter looks at your 7th). Medium.
+- 25 Jan – 26 Jun 2027: the warmest stretch (Jupiter looks at your 7th from Lagna). Low.
 - 6 – 16 Feb 2027: a charged ten days (eclipse near Venus, Rahu over Venus). Low.
 - About 24 May – 25 Oct 2027: commitment questions (Saturn rules your 7th). Low.
 - Sources: S1 (BPHS 61.78, 61.79, 61.80), S4 (v. 30), S18
@@ -439,7 +452,9 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - BPHS says your 7th lord joined by the full Moon brings comfort (S1).
   Phaladeepika counts the Sun's and Mars's aspects on it as strain (S8).
 
-**Optional, free:** Friday mornings, Venus's mantra "Om draam dreem draum sah shukraaya namah", 108 times, and steady respect toward women (S23; Vedic form in S3).
+**Optional, free**
+- Friday mornings: Venus's mantra "Om draam dreem draum sah shukraaya namah", 108 times.
+- Steady respect toward women. (S23; Vedic form in S3.)
 
 ### Learning
 
@@ -453,7 +468,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - Phaladeepika and Saravali add eloquence and learning (Jupiter in the 2nd).
 - Texts suggest you learn best through teachers, books, and explaining ideas out loud.
 - Why: Three classical texts agree and it doesn't depend on birth time.
-  (Brihat Jataka gives only "good speech". This year Jupiter's transit is weak for about 7 months.)
+  (Brihat Jataka gives only "good speech". This year Jupiter's transit is weak for about 6 months.)
 - Sources: S1 (BPHS 24.98), S8 (8.14), S11 (30.51), S12
 
 **B. Study goes stop-start; skill grows from practice and contest.** — Confidence: low
@@ -501,7 +516,7 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - Saturn enters Taurus on 8 Aug 2029; that starts Sade Sati (Saturn's 7.5-year pass over your Moon).
   It is back in Aries 5 Oct 2029 – 17 Apr 2030.
 - Jupiter returns to its birth degree on 26 Oct 2027, 10 Apr 2028 and 17 Jun 2028.
-- Jupiter is in Libra (5th from your Moon) 26 Dec 2028 – 29 Mar 2029.
+- Jupiter is in Libra (5th from your Moon) 26 Dec 2028 – 29 Mar 2029, and again 25 Aug 2029 – 25 Jan 2030.
 - Saturn and Jupiter both touch your 10th from Lagna (double transit):
   - 28 Feb – 24 Jul 2028
   - 26 Dec 2028 – 29 Mar 2029
@@ -531,20 +546,26 @@ The Oct 2027 – 2029 acting window has its own section (5).
 - Sources: S2 (BPHS 56.72-75), S14 (UK II.82)
 
 **Windows, best first**
-1. 26 Dec 2028 – 29 Mar 2029: the best transits. Jupiter is good from your Moon and looks at your 10th while Saturn sits there.
-   It spans the Sun-to-Moon handover around 23 Feb 2029. Medium for the transits; low for acting specifically.
+1. 26 Dec 2028 – 29 Mar 2029: Jupiter good from your Moon, looking at your 10th while Saturn sits there.
+   It comes before Sade Sati and spans the Sun-to-Moon handover (about 23 Feb 2029).
+   Medium for the transits; low for acting specifically.
 2. 7 May 2028 – 23 Feb 2029: Jupiter–Sun. Recognition through contest, but texts also warn of opposition. Low.
 3. 28 Feb – 24 Jul 2028: career houses stirred, plus the Jupiter return (Apr and Jun 2028). Low.
 4. 26 Oct 2027 – 23 Feb 2028: a fresh-start point (Jupiter return), but credit comes slowly. Low.
-5. From 8 Aug 2029: Sade Sati begins. Texts favour steady work over big launches.
-   A Tamil tradition calls a second round "Pongu" (fruitful). You were born inside one, so this may be your second.
+5. 5 Oct 2029 – 25 Jan 2030: the same transits as window 1 return.
+   But they fall inside the Jupiter–Moon sub-period, just after Sade Sati's first touch. Low.
+6. From 8 Aug 2029: Sade Sati begins. Texts favour steady work over big launches.
+   A Tamil tradition calls a second Sade Sati round "Pongu" (fruitful).
+   You were born during a Sade Sati, so this may count as your second.
    No source rules on whether a round running at birth counts. Low.
 - Sources: S4 (v. 2, 23), S19, S17, S18
 
 **Bottom line:** if acting opens in this span, a classical Jupiter transit (5th from your Moon)
 and the modern double transit point most to **26 Dec 2028 – 29 Mar 2029**.
+It ranks above the late-2029 repeat because it comes before Sade Sati.
 - Confidence: medium for the transit window; low for acting as such.
 - Why: The transit rule is classical with fixed dates, but the running period is contested and Saturn is weak in Aries.
+- Sources: S4 (v. 2, 23), S19
 
 ---
 
@@ -606,7 +627,8 @@ Modern authors and sites:
 - S21. Kerykeion, eclipse on the Ascendant (Western view). https://kerykeion.net/content/learn-astrology/eclipse-conjunct-natal-ascendant
 - S22. AstroMedha, Moon–Saturn remedies (free habits only). https://astromedha.in/insights/vedic/vish-dosha-remedies
 - S23. HinduPad remedy pages (modern practice): https://hindupad.com/jupiter-remedies/ , https://hindupad.com/venus-remedies/ , https://hindupad.com/moon-remedies/
-  Only their free practices are used here. These pages may also list gems and paid rituals, which this reading leaves out.
+  Only their free practices are used here.
+  These pages may also list gems and paid rituals; this reading leaves those out.
 - S24. Shanaishchara Stotram (Dasharatha's hymn to Saturn). https://sanskritdocuments.org/doc_z_misc_navagraha/shani.html
 
 Checks on the math:
