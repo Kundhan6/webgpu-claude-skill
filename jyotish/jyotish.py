@@ -1019,6 +1019,36 @@ def eclipses(lo, hi):
     return sorted(out, key=lambda e: e["jd"])
 
 
+def natal_contacts(chart, lo, hi):
+    """Exact passes of Saturn, Jupiter, Rahu, Ketu over natal Lagna and planets."""
+    points = {"Lagna": chart["lagna"]["longitude"]} | {
+        p: g["longitude"] for p, g in chart["grahas"].items()}
+    out = []
+    for body in ("Saturn", "Jupiter", "Rahu", "Ketu"):
+        for name, nat in points.items():
+            if name == body:
+                name = f"natal {name} (return)"
+            a, da = lo, angdiff(body_lon(lo, body), nat)
+            while a < hi:
+                b = a + 1.0
+                db = angdiff(body_lon(b, body), nat)
+                if (da < 0) != (db < 0) and abs(da - db) < 90 * 3600:
+                    x, y = a, b
+                    while y - x > 1 / 1440:
+                        m = (x + y) / 2
+                        if (angdiff(body_lon(m, body), nat) < 0) == (da < 0):
+                            x = m
+                        else:
+                            y = m
+                    sp = speed(y, body) if body in SWE_ID else -1
+                    out.append({"ist": ist(y, False), "body": body, "over": name,
+                                "at": f"{SIGNS[int(nat // 30)]} {dms(nat % 30)}",
+                                "motion": "retrograde" if sp < 0 else "direct",
+                                "in_window": date_jd(WINDOW[0]) <= y < date_jd(WINDOW[1])})
+                a, da = b, db
+    return sorted(out, key=lambda r: r["ist"])
+
+
 def saturn_phases(ing, lo_sign_jd, moon_s, lagna_s, hi):
     """Saturn periods by sign: Sade Sati, Ashtama, Kantaka (from Moon and Lagna)."""
     spans, start = [], lo_sign_jd
@@ -1143,10 +1173,18 @@ def timeline():
                          "retrograde": speed(e["jd"], b) < 0,
                          "house_from_lagna": house_from(s, lagna_s), "house_from_moon": house_from(s, moon_s)})
     tl["fast_transits_in_window"] = sorted(fast, key=lambda r: r["ist"])
-    tl["eclipses_in_window"] = [{k: v for k, v in e.items() if k != "jd"} | {
-        "house_from_lagna": house_from(SIGNS.index(e["at"].split()[0]), lagna_s),
-        "house_from_moon": house_from(SIGNS.index(e["at"].split()[0]), moon_s)}
-        for e in eclipses(lo, hi)]
+    natal = {"Lagna": chart["lagna"]["longitude"]} | {p: g["longitude"] for p, g in chart["grahas"].items()}
+    ecl = []
+    for e in eclipses(lo, hi):
+        lon = body_lon(e["jd"], "Sun") if e["type"].startswith("solar") else body_lon(e["jd"], "Moon")
+        near = [f"{p} ({abs(angdiff(lon, v)) / 3600:.1f}°)" for p, v in natal.items()
+                if abs(angdiff(lon, v)) <= 5 * 3600]
+        ecl.append({k: v for k, v in e.items() if k != "jd"} | {
+            "house_from_lagna": house_from(SIGNS.index(e["at"].split()[0]), lagna_s),
+            "house_from_moon": house_from(SIGNS.index(e["at"].split()[0]), moon_s),
+            "natal_points_within_5deg": near})
+    tl["eclipses_in_window"] = ecl
+    tl["natal_contacts_2026_2029"] = natal_contacts(chart, date_jd("2026-10-01"), date_jd("2030-01-01"))
     return tl
 
 
@@ -1171,7 +1209,10 @@ def print_timeline(tl):
     for s in tl["stations_in_window"]:
         print(f"  station {s['body']:<8} {s['turns']:<10} {s['ist']} at {s['at']}")
     for e in tl["eclipses_in_window"]:
-        print(f"  eclipse {e['type']:<18} {e['ist']} at {e['at']} L{e['house_from_lagna']} M{e['house_from_moon']}")
+        print(f"  eclipse {e['type']:<18} {e['ist']} at {e['at']} L{e['house_from_lagna']} M{e['house_from_moon']}"
+              f" near {e['natal_points_within_5deg']}")
+    for c in tl["natal_contacts_2026_2029"]:
+        print(f"  {'*' if c['in_window'] else ' '} {c['ist']} {c['body']:<8} over {c['over']:<24} {c['at']} ({c['motion']})")
 
 
 # ---------------------------------------------------------------- main

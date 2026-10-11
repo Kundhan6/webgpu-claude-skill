@@ -1272,35 +1272,144 @@
       "ist": "2027-02-06 21:29",
       "at": "Capricorn 23°23'26\"",
       "house_from_lagna": 7,
-      "house_from_moon": 8
+      "house_from_moon": 8,
+      "natal_points_within_5deg": [
+        "Venus (2.8°)"
+      ]
     },
     {
       "type": "lunar (penumbral)",
       "ist": "2027-02-21 04:42",
       "at": "Leo 7°44'36\"",
       "house_from_lagna": 2,
-      "house_from_moon": 3
+      "house_from_moon": 3,
+      "natal_points_within_5deg": []
     },
     {
       "type": "lunar (penumbral)",
       "ist": "2027-07-18 21:33",
       "at": "Capricorn 1°42'55\"",
       "house_from_lagna": 7,
-      "house_from_moon": 8
+      "house_from_moon": 8,
+      "natal_points_within_5deg": []
     },
     {
       "type": "solar (total)",
       "ist": "2027-08-02 15:36",
       "at": "Cancer 15°40'19\"",
       "house_from_lagna": 1,
-      "house_from_moon": 2
+      "house_from_moon": 2,
+      "natal_points_within_5deg": [
+        "Lagna (1.2°)"
+      ]
     },
     {
       "type": "lunar (penumbral)",
       "ist": "2027-08-17 12:43",
       "at": "Capricorn 29°49'39\"",
       "house_from_lagna": 7,
-      "house_from_moon": 8
+      "house_from_moon": 8,
+      "natal_points_within_5deg": [
+        "Venus (3.7°)"
+      ]
+    }
+  ],
+  "natal_contacts_2026_2029": [
+    {
+      "ist": "2027-02-16",
+      "body": "Rahu",
+      "over": "Venus",
+      "at": "Capricorn 26°09'20\"",
+      "motion": "retrograde",
+      "in_window": true
+    },
+    {
+      "ist": "2027-02-27",
+      "body": "Saturn",
+      "over": "Mars",
+      "at": "Pisces 18°39'50\"",
+      "motion": "direct",
+      "in_window": true
+    },
+    {
+      "ist": "2027-08-09",
+      "body": "Ketu",
+      "over": "Lagna",
+      "at": "Cancer 16°55'00\"",
+      "motion": "retrograde",
+      "in_window": true
+    },
+    {
+      "ist": "2027-10-26",
+      "body": "Jupiter",
+      "over": "natal Jupiter (return)",
+      "at": "Leo 24°58'59\"",
+      "motion": "direct",
+      "in_window": false
+    },
+    {
+      "ist": "2028-04-10",
+      "body": "Jupiter",
+      "over": "natal Jupiter (return)",
+      "at": "Leo 24°58'59\"",
+      "motion": "retrograde",
+      "in_window": false
+    },
+    {
+      "ist": "2028-06-17",
+      "body": "Jupiter",
+      "over": "natal Jupiter (return)",
+      "at": "Leo 24°58'59\"",
+      "motion": "direct",
+      "in_window": false
+    },
+    {
+      "ist": "2028-11-28",
+      "body": "Rahu",
+      "over": "Sun",
+      "at": "Sagittarius 21°40'17\"",
+      "motion": "retrograde",
+      "in_window": false
+    },
+    {
+      "ist": "2029-03-26",
+      "body": "Ketu",
+      "over": "Saturn",
+      "at": "Gemini 15°22'57\"",
+      "motion": "retrograde",
+      "in_window": false
+    },
+    {
+      "ist": "2029-05-30",
+      "body": "Saturn",
+      "over": "Rahu",
+      "at": "Aries 23°29'48\"",
+      "motion": "direct",
+      "in_window": false
+    },
+    {
+      "ist": "2029-07-10",
+      "body": "Ketu",
+      "over": "Moon",
+      "at": "Gemini 9°46'42\"",
+      "motion": "retrograde",
+      "in_window": false
+    },
+    {
+      "ist": "2029-11-27",
+      "body": "Rahu",
+      "over": "Mercury",
+      "at": "Sagittarius 2°21'35\"",
+      "motion": "retrograde",
+      "in_window": false
+    },
+    {
+      "ist": "2029-12-17",
+      "body": "Jupiter",
+      "over": "Ketu",
+      "at": "Libra 23°29'48\"",
+      "motion": "direct",
+      "in_window": false
     }
   ]
 }
