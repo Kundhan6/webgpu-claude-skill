@@ -224,8 +224,8 @@ Format: reading - confidence - why.
 - C. Timing: 2026-27 is preparation. The best windows are 2028-29:
   Jupiter-Sun antardasha (May 2028 - Feb 2029; Raman: Sun aspected by
   Jupiter gives success in the Sun's sub-period; BPHS 56.52), and the
-  double transit on the 10th from the Lagna (29 Feb - 25 Jul 2028;
-  27 Dec 2028 - 30 Mar 2029).
+  double transit on the 10th from the Lagna (28 Feb - 24 Jul 2028;
+  26 Dec 2028 - 29 Mar 2029; exact edges after the review fix).
   - LOW-MEDIUM. Timing rests on modern techniques.
 
 **Father and family**
