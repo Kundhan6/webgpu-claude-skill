@@ -1049,6 +1049,33 @@ def natal_contacts(chart, lo, hi):
     return sorted(out, key=lambda r: r["ist"])
 
 
+def double_transits(lagna_s, moon_s, lo, hi):
+    """Spans when transiting Saturn AND Jupiter both occupy or aspect (whole-sign
+    graha drishti) a sign: the modern 'double transit' timing technique."""
+    targets = {f"{h}th from Lagna" if h != 1 else "1st from Lagna": (lagna_s + h - 1) % 12
+               for h in (1, 5, 7, 10, 11)}
+    targets["10th from Moon"] = (moon_s + 9) % 12
+    targets["11th from Moon"] = (moon_s + 10) % 12
+
+    def touches(body, jd, sign):
+        s = int(body_lon(jd, body) // 30)
+        return s == sign or sign in aspects_cast(body, s)
+    out = []
+    for label, sign in targets.items():
+        on, start, t = False, None, lo
+        while t <= hi:
+            both = touches("Saturn", t, sign) and touches("Jupiter", t, sign)
+            if both and not on:
+                on, start = True, t
+            elif not both and on:
+                on = False
+                out.append({"house": label, "sign": SIGNS[sign], "from": ist(start, False), "to": ist(t, False)})
+            t += 1.0
+        if on:
+            out.append({"house": label, "sign": SIGNS[sign], "from": ist(start, False), "to": ist(hi, False) + " (open)"})
+    return sorted(out, key=lambda r: (r["from"], r["house"]))
+
+
 def saturn_phases(ing, lo_sign_jd, moon_s, lagna_s, hi):
     """Saturn periods by sign: Sade Sati, Ashtama, Kantaka (from Moon and Lagna)."""
     spans, start = [], lo_sign_jd
@@ -1185,6 +1212,7 @@ def timeline():
             "natal_points_within_5deg": near})
     tl["eclipses_in_window"] = ecl
     tl["natal_contacts_2026_2029"] = natal_contacts(chart, date_jd("2026-10-01"), date_jd("2030-01-01"))
+    tl["double_transits_2026_2030"] = double_transits(lagna_s, moon_s, date_jd("2026-10-01"), date_jd("2030-07-01"))
     return tl
 
 
@@ -1211,6 +1239,8 @@ def print_timeline(tl):
     for e in tl["eclipses_in_window"]:
         print(f"  eclipse {e['type']:<18} {e['ist']} at {e['at']} L{e['house_from_lagna']} M{e['house_from_moon']}"
               f" near {e['natal_points_within_5deg']}")
+    for d in tl["double_transits_2026_2030"]:
+        print(f"  double transit {d['house']:<15} ({d['sign']:<11}) {d['from']} -> {d['to']}")
     for c in tl["natal_contacts_2026_2029"]:
         print(f"  {'*' if c['in_window'] else ' '} {c['ist']} {c['body']:<8} over {c['over']:<24} {c['at']} ({c['motion']})")
 

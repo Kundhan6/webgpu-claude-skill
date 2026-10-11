@@ -1411,5 +1411,127 @@
       "motion": "direct",
       "in_window": false
     }
+  ],
+  "double_transits_2026_2030": [
+    {
+      "house": "10th from Moon",
+      "sign": "Pisces",
+      "from": "2026-10-01",
+      "to": "2026-11-01"
+    },
+    {
+      "house": "10th from Moon",
+      "sign": "Pisces",
+      "from": "2027-01-26",
+      "to": "2027-06-04"
+    },
+    {
+      "house": "7th from Lagna",
+      "sign": "Capricorn",
+      "from": "2027-06-04",
+      "to": "2027-06-27"
+    },
+    {
+      "house": "10th from Lagna",
+      "sign": "Aries",
+      "from": "2027-06-27",
+      "to": "2027-10-21"
+    },
+    {
+      "house": "11th from Moon",
+      "sign": "Aries",
+      "from": "2027-06-27",
+      "to": "2027-10-21"
+    },
+    {
+      "house": "10th from Moon",
+      "sign": "Pisces",
+      "from": "2027-11-27",
+      "to": "2028-02-24"
+    },
+    {
+      "house": "11th from Lagna",
+      "sign": "Taurus",
+      "from": "2027-11-27",
+      "to": "2028-02-24"
+    },
+    {
+      "house": "7th from Lagna",
+      "sign": "Capricorn",
+      "from": "2028-02-24",
+      "to": "2028-02-29"
+    },
+    {
+      "house": "10th from Lagna",
+      "sign": "Aries",
+      "from": "2028-02-29",
+      "to": "2028-07-25"
+    },
+    {
+      "house": "11th from Moon",
+      "sign": "Aries",
+      "from": "2028-02-29",
+      "to": "2028-07-25"
+    },
+    {
+      "house": "7th from Lagna",
+      "sign": "Capricorn",
+      "from": "2028-07-25",
+      "to": "2028-12-27"
+    },
+    {
+      "house": "10th from Lagna",
+      "sign": "Aries",
+      "from": "2028-12-27",
+      "to": "2029-03-30"
+    },
+    {
+      "house": "11th from Moon",
+      "sign": "Aries",
+      "from": "2028-12-27",
+      "to": "2029-03-30"
+    },
+    {
+      "house": "7th from Lagna",
+      "sign": "Capricorn",
+      "from": "2029-03-30",
+      "to": "2029-08-09"
+    },
+    {
+      "house": "11th from Lagna",
+      "sign": "Taurus",
+      "from": "2029-08-09",
+      "to": "2029-08-26"
+    },
+    {
+      "house": "10th from Lagna",
+      "sign": "Aries",
+      "from": "2029-10-06",
+      "to": "2030-01-26"
+    },
+    {
+      "house": "11th from Moon",
+      "sign": "Aries",
+      "from": "2029-10-06",
+      "to": "2030-01-26"
+    },
+    {
+      "house": "11th from Lagna",
+      "sign": "Taurus",
+      "from": "2030-04-18",
+      "to": "2030-05-02"
+    },
+    {
+      "house": "1st from Lagna",
+      "sign": "Cancer",
+      "from": "2030-04-18",
+      "to": "2030-05-02"
+    },
+    {
+      "house": "5th from Lagna",
+      "sign": "Scorpio",
+      "from": "2030-04-18",
+      "to": "2030-05-02"
+    }
   ]
 }

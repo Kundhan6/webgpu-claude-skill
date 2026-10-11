@@ -143,56 +143,143 @@ every planet call and stops if it wasn't used.
   and Jupiter (exalted) are together in Cancer on the Lagna. Venus (the
   antardasha lord) is retrograde in Libra since 3 Oct, direct 14 Nov.
 
-## Stage 4 — confidence tracker (competing readings per life area)
+## Stage 4 — research and confidence tracker
 
-Status: PRIOR (before research). These will be updated as verified
-sources come in. Format: reading — confidence — basis.
+### How the research was done
+- Nine topic groups (self/mind, career, money, 6-8-12 and learning, love,
+  father and acting, dashas, transits, remedies). One agent researched each
+  topic, then a second agent tried to refute every claim and re-checked every
+  source. 105 findings in all: 93 confirmed by 2+ sources, 12 single-source.
+- Main texts reached: BPHS (Santhanam tr. and enjoylearningsanskrit
+  Sanskrit), Phaladeepika (Sastri tr., wisdomlib), Saravali (Santhanam tr.),
+  Brihat Jataka (Sastri and Neely), Jataka Parijata (Sastri), Uttara
+  Kalamrita, Hora Sara, Brihat Samhita. Modern: B.V. Raman, P.V.R.
+  Narasimha Rao, Sanjay Rath, Pulippani (Gochar Phaladeepika).
+- Limits: some fact-checkers ran out of web searches and had to verify by
+  fetching the cited pages directly. Pages that returned HTTP 429 were
+  dropped. Health wording that went beyond energy and routine was left out
+  on purpose.
 
-### Company and money
-- A. Steady builder year. Gains come through clients and partners: Venus
-  (11th lord) sits in the 7th and is the antardasha lord. Saturn moves to
-  the 11th from the Moon on 3 Jun 2027. — prior: medium
-- B. Partner and deal friction. Venus is 6th from Jupiter (a 6/8 dasha
-  pair). Rahu enters the 7th on 5 Dec 2026, so partners may be unusual or
-  foreign, with some fog. — prior: medium
-- C. Effort-heavy: money comes through service, competition and debt
-  (the 2-6 Dainya exchange). Saturn 10th from the Moon brings work
-  pressure until Jun 2027. — prior: medium
+### Corrections the fact-checkers caught (they change the reading)
+- BPHS 41.16 names the 9th and 5th lords as wealth-givers, NOT the 2nd and
+  9th (a popular site mistranslates it). So the Jupiter (9L) and Mars (5L)
+  periods are the classical money windows; the Sun period is not.
+- Jupiter-Venus antardasha: BPHS's favourable Venus verses are NOT met.
+  The verse that IS met is 56.43, Venus 6th from Jupiter: friction with kin
+  and partners. The favourable case rests on Phaladeepika 21.43 and 20.49.
+- Mercury with the Sun counts as malefic (BPHS 3.11). That weakens Adhi
+  and the "gain through enemies" reading of the 2nd lord in the 6th.
+- Sarala and Vimala promises come from Phaladeepika alone. Parashara
+  (BPHS 23.5-6, 24.96, 24.138) and Raman's practice point the other way.
+- The full 9th-10th lord Raja yoga is NOT formed (no Jupiter-Mars link).
+  What IS met: Uttara Kalamrita II.82 (Rahu in the 10th, trikona lord
+  Mars in the 9th) and Jataka Parijata XV.60/63 (10th lord in a benefic
+  navamsa: authority, fame).
+- Venus is not the livelihood planet by Phaladeepika 5.1. That makes it
+  Jupiter (from the Lagna) or Mars (from the Moon and the Sun).
+- Saturn in Aries (11th from the Moon) is classically good, but it is
+  debilitated there (Phaladeepika 26.32: good results void). Mars in Libra
+  (24 Aug - 8 Oct 2027) blocks it by vedha (obstruction). So the 2027
+  "gains" are weak; they point to 2028-29.
+- The Rahu pratyantar (to 14 Jan 2027) is adverse in BPHS 61.78. The
+  Jupiter pratyantar (to 24 May 2027) is the best stretch (BPHS 61.79,
+  plus Phaladeepika 20.34/20.59: dasha lord transiting the Lagna).
+- Kemadruma: on BPHS's own wording (Santhanam) it does not even form here.
+- The father: BPHS 7.3 reads parents from D12, where the Sun is in its own
+  sign Leo. The D9 debility is a modern overlay. Night birth: Brihat
+  Jataka 4.5 makes Saturn the co-significator of the father.
 
-### Acting and fame
-- A. The public and arts side is strong (Rahu in the 10th, Venus antardasha),
-  but this year prepares rather than launches. — prior: medium
-- B. The way in is through father and teachers: 5th lord Mars sits in the
-  9th. Timing ties to Mars and Sun periods (Jupiter-Sun 2028, Jupiter-Mars
-  2030). — prior: low-medium
-- C. Real recognition comes later, in the Saturn mahadasha (2033+). — prior: low
+### Confidence by life area (updated after research)
+Format: reading - confidence - why.
 
-### Father and family
-- A. The father is a strong, active support and a source of luck (yogakaraka
-  Mars in the 9th). — prior: medium
-- B. Some friction with father or ego clashes: Sun in the 6th, debilitated
-  in D9. — prior: low-medium
+**Company and money**
+- A. Effort-led rise with backing. Mars (yogakaraka) is the 10th lord in
+  the 9th (BPHS 24.117; JP XV.60/63). The Jupiter mahadasha is a 9th-lord
+  period (BPHS 48.6, 41.16). UK II.82 is met. Peak 14 Jan - 24 May 2027.
+  - MEDIUM. Many classical supports, but the antardasha is 6/8.
+- B. A friction-heavy year with partners and rivals; money leaks.
+  BPHS 56.43, PD 20.28-29, BPHS 61.78 (Rahu pratyantar), Saturn 10th from
+  the Moon (PD 26.23, Brihat Samhita 104.45), Dainya exchange (PD 6.32-33),
+  2nd lord in the 6th (BPHS 13.1-2).
+  - MEDIUM. Equally well sourced. Strongest Oct 2026 - Jan 2027, Mar-Apr 2027.
+- C. The year builds the structure; the real money window is later
+  (Saturn's 11th-from-Moon gains are void in 2027; Jupiter return 26 Oct
+  2027; Jupiter-Mars 2030-31 per BPHS 41.16).
+  - MEDIUM-LOW. Rests on derived timing rules.
+- Leading: A and B together. Mixed, and best from mid-Jan to May 2027.
 
-### Health and energy (routine only)
-- A. Energy follows sleep and mind: Lagna lord Moon in the 12th with Saturn.
-  Routine is the lever. — prior: medium
-- B. Restless or low-energy patches while Ketu is on the Lagna (Dec 2026 on)
-  and Mars is retrograde in Cancer (Mar-Apr 2027). — prior: medium
+**Acting and fame**
+- A. Fame indicators exist but are contested. Rahu in the 10th (PD 8.27
+  famous vs PD 16.28). Mars links the 5th and 10th and aspects the 3rd
+  (modern actor rule). The Moon in the 12th ("film", one modern source).
+  - LOW-MEDIUM.
+- B. The arts come in as a skill, and the path runs through father and
+  teachers. The 10th lord in the 9th (Raman: father's great influence,
+  hereditary line). Venus is not the livelihood planet (PD 5.1) and is a
+  functional malefic (BPHS 34.27).
+  - MEDIUM.
+- C. Timing: 2026-27 is preparation. The best windows are 2028-29:
+  Jupiter-Sun antardasha (May 2028 - Feb 2029; Raman: Sun aspected by
+  Jupiter gives success in the Sun's sub-period; BPHS 56.52), and the
+  double transit on the 10th from the Lagna (29 Feb - 25 Jul 2028;
+  27 Dec 2028 - 30 Mar 2029).
+  - LOW-MEDIUM. Timing rests on modern techniques.
 
-### Love
-- A. Romance is active: Venus antardasha, Venus in the 7th. — prior: medium
-- B. Unusual attractions or confusion: Rahu transits the 7th from Dec 2026. — prior: medium
+**Father and family**
+- A. A strong, influential father who is a source of fortune. The 9th from
+  the Sun holds the 9th lord (PD 15.21-22). The Sun is own-sign in D12.
+  Yogakaraka Mars is in the 9th. Raman: father's great influence.
+  - MEDIUM.
+- B. An intense or demanding bond, with a father who is often busy.
+  The Mars-in-9th verses are harsh (PD 8.10, BJ 20.6). Saturn aspects the
+  9th and its lord. PD 16.25 (Sun in a dusthana) gets low weight.
+  - LOW-MEDIUM.
 
-### Learning
-- A. Sharp, analytic, competitive mind: Budha-Aditya in the 6th, stationary
-  Mercury. Good for self-study and technical depth. — prior: medium
+**Health and energy (routine only)**
+- A. Energy follows mind and sleep: Lagna lord Moon in the 12th with Saturn
+  (BPHS 24.12; PD 8.7 "indolent"; Uttara Kalamrita on the 12th and sleep).
+  - MEDIUM.
+- B. Strong fighting energy: Sun in the 6th (Saravali 30.7: vigour,
+  digestive fire; Satyacharya: malefics good in 6/8/12).
+  - MEDIUM.
+- Watch windows: Ketu on the Lagna from 5 Dec 2026; Mars debilitated on
+  the Lagna 10 Mar - 26 Apr 2027; the Saturn pratyantar ("slight trouble",
+  BPHS 61.80); 2-9 Aug 2027 (eclipse, then Ketu on the Lagna degree).
+  - MEDIUM-LOW.
 
-### Travel
-- A. Travel and foreign links are favoured: Lagna lord in the 12th,
-  Saturn in the 12th, Rahu entering the 7th. — prior: medium
+**Love**
+- A. Warm, romantic, practical partner energy: Venus in the 7th (BPHS 18.3,
+  BJ 20.8 "lovers' tiffs", PD 8.18; JagannathHora: practical, ambitious
+  partner).
+  - MEDIUM.
+- B. Friction and confusion this year: BPHS 56.43, BPHS 61.78 (to 14 Jan
+  2027), Rahu in the 7th from the Lagna from 5 Dec 2026, eclipse near
+  Venus 6 Feb 2027.
+  - MEDIUM. Counter: Pulippani reads Rahu over Venus (16 Feb 2027) as good.
+
+**Learning**
+- A. A sharp, competitive, analytic mind: Budha-Aditya (Saravali 15.4,
+  PD 18.1), Mercury in the 6th (PD 8.12), 5th lord in the 9th (BPHS 24.57:
+  author), 9th lord in the 2nd (BPHS 24.98: scholar), 4th lord in the 7th
+  (BPHS 24.43: learned).
+  - HIGH. Many texts agree and it is time-safe.
+- B. Study comes in bursts, with breaks; self-study suits him better
+  (Raman: "interrupted education"; Mercury's avasthas; PD 8.12 idleness).
+  - MEDIUM.
+
+**Travel**
+- A. Much movement and foreign links: BPHS 23.11 (12th lord with malefics,
+  12th aspected by malefics), Saravali 23.23 via BJ 18.20.
+  - MEDIUM.
+- B. Travel for purpose, roots at home (BPHS 23.12 benefic side: full Moon
+  in the 12th, Jupiter's aspect on Mercury).
+  - LOW-MEDIUM.
+- This year: business travel themes while Jupiter is on the Lagna
+  (Jan-Jun 2027, Pulippani ch. 28) and in the Saturn pratyantar.
 
 ## Next
-- Stage 4: research + confidence tracker.
+- Stage 4: synthesis workflow (competing readings per area, month by
+  month, critic) is running; fold its output into this tracker.
 - Stage 5: LIFE-READING.md.
 
 ## Open questions
