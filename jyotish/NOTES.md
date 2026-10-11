@@ -306,7 +306,7 @@ Format: reading - confidence - why.
 ### Final confidence (as written in LIFE-READING.md)
 | Area | Leading reading | Conf. | Rival readings |
 |---|---|---|---|
-| Company/money | Build year: effort now, money later | medium | Standing first (medium); gains this year (low) |
+| Company/money | Build year: effort now, money slow | medium | Standing first (medium); gains this year (low) |
 | Acting (this year) | Groundwork year | medium | Opening Jan-May 2027 (low); skill via father/teachers (low) |
 | Acting 2027-29 | Jupiter-Sun opening (low); best transits 26 Dec 2028 - 29 Mar 2029 (medium for transits, low for acting as such) | low | Jupiter-Moon public face (low); later bloom 2031-33 (low) |
 | Father/family | Father a strong, lucky force | medium | Backing distant/demanding (low) |
