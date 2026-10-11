@@ -143,6 +143,54 @@ every planet call and stops if it wasn't used.
   and Jupiter (exalted) are together in Cancer on the Lagna. Venus (the
   antardasha lord) is retrograde in Libra since 3 Oct, direct 14 Nov.
 
+## Stage 4 — confidence tracker (competing readings per life area)
+
+Status: PRIOR (before research). These will be updated as verified
+sources come in. Format: reading — confidence — basis.
+
+### Company and money
+- A. Steady builder year. Gains come through clients and partners: Venus
+  (11th lord) sits in the 7th and is the antardasha lord. Saturn moves to
+  the 11th from the Moon on 3 Jun 2027. — prior: medium
+- B. Partner and deal friction. Venus is 6th from Jupiter (a 6/8 dasha
+  pair). Rahu enters the 7th on 5 Dec 2026, so partners may be unusual or
+  foreign, with some fog. — prior: medium
+- C. Effort-heavy: money comes through service, competition and debt
+  (the 2-6 Dainya exchange). Saturn 10th from the Moon brings work
+  pressure until Jun 2027. — prior: medium
+
+### Acting and fame
+- A. The public and arts side is strong (Rahu in the 10th, Venus antardasha),
+  but this year prepares rather than launches. — prior: medium
+- B. The way in is through father and teachers: 5th lord Mars sits in the
+  9th. Timing ties to Mars and Sun periods (Jupiter-Sun 2028, Jupiter-Mars
+  2030). — prior: low-medium
+- C. Real recognition comes later, in the Saturn mahadasha (2033+). — prior: low
+
+### Father and family
+- A. The father is a strong, active support and a source of luck (yogakaraka
+  Mars in the 9th). — prior: medium
+- B. Some friction with father or ego clashes: Sun in the 6th, debilitated
+  in D9. — prior: low-medium
+
+### Health and energy (routine only)
+- A. Energy follows sleep and mind: Lagna lord Moon in the 12th with Saturn.
+  Routine is the lever. — prior: medium
+- B. Restless or low-energy patches while Ketu is on the Lagna (Dec 2026 on)
+  and Mars is retrograde in Cancer (Mar-Apr 2027). — prior: medium
+
+### Love
+- A. Romance is active: Venus antardasha, Venus in the 7th. — prior: medium
+- B. Unusual attractions or confusion: Rahu transits the 7th from Dec 2026. — prior: medium
+
+### Learning
+- A. Sharp, analytic, competitive mind: Budha-Aditya in the 6th, stationary
+  Mercury. Good for self-study and technical depth. — prior: medium
+
+### Travel
+- A. Travel and foreign links are favoured: Lagna lord in the 12th,
+  Saturn in the 12th, Rahu entering the 7th. — prior: medium
+
 ## Next
 - Stage 4: research + confidence tracker.
 - Stage 5: LIFE-READING.md.
