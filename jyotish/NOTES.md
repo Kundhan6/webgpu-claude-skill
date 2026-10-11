@@ -123,8 +123,11 @@ every planet call and stops if it wasn't used.
   - Lahiri ICRC: same day. Lahiri 1940: 8 days earlier. VP285: 3 days later.
   - 360-day year: 15 May 2025 (minority convention, not used).
   - Birth at 19:15: 7 Nov 2025. Birth at 19:45: 6 Jul 2025.
-  - So the antardasha is safe. Pratyantar edges carry about ±2 months
-    if the birth time is off by 15 min.
+  - So the whole reading year stays inside Jupiter-Venus whatever the
+    birth time. But EVERY dasha edge (antardasha and pratyantar alike)
+    moves about ±2 months per 15 min of birth-time error. That includes
+    the Jupiter-Sun start (7 May 2028) and the Sun-to-Moon handover
+    (23 Feb 2029).
 - Transits (mean node; true-node dates in the json):
   - Saturn: Pisces (L9, M10) until 3 Jun 2027; Aries (L10, M11) until
     20 Oct 2027; Pisces again to 23 Feb 2028; Aries to 8 Aug 2029.
@@ -277,10 +280,50 @@ Format: reading - confidence - why.
 - This year: business travel themes while Jupiter is on the Lagna
   (Jan-Jun 2027, Pulippani ch. 28) and in the Saturn pratyantar.
 
+### Synthesis and critic (Stage 4, last step)
+- Six synthesis agents read all the verified research plus the computed
+  data. They produced competing readings per area, month notes, a Top 5
+  and the year in 5 lines. A critic agent then checked every date against
+  timeline.json and every URL against the verified source list. Fixes
+  applied in LIFE-READING.md:
+  - Dasha edges are not "safe": they move ±2 months (see above).
+  - Top 5 #1: the clearest stretch is 26 Apr - 5 May 2027, not from 13 Apr
+    (debilitated Mars is in Cancer until 26 Apr).
+  - Vedha on Jupiter starts 6 May 2027 (Mercury into Taurus), not 15 May.
+  - The eclipse cluster gets low confidence everywhere: translator's note
+    plus one modern author, and only a small partial at Kakinada.
+  - Real rival readings were added where the drafts only offered
+    same-verdict "alternatives": money ("gains this year"), acting ("a first
+    opening Jan-May 2027"), father ("backing distant or demanding"),
+    learning ("stop-start, practice-led").
+  - Lines that read like financial instructions were reworded as themes.
+  - One cited URL (Tantrokta japa manual) was not in the verified list,
+    so it was dropped.
+  - The Father A and Learning A "high" ratings were reviewed: Father A
+    lowered to medium (the sub-period reads as discord with kin), and
+    Learning A kept high on its classical core only.
+
+### Final confidence (as written in LIFE-READING.md)
+| Area | Leading reading | Conf. | Rival readings |
+|---|---|---|---|
+| Company/money | Build year: effort now, money later | medium | Standing first (medium); gains this year (low) |
+| Acting (this year) | Groundwork year | medium | Opening Jan-May 2027 (low); skill via father/teachers (medium) |
+| Acting 2027-29 | Jupiter-Sun opening, peak 27 Dec 2028 - 30 Mar 2029 | medium | Jupiter-Moon public face (low); later bloom 2031-33 (low) |
+| Father/family | Father a strong, lucky force | medium | Backing distant/demanding (low) |
+| Health/energy | Sleep is your battery | medium | Fighter's engine (medium); inward reset (low) |
+| Love | Tested now, steadier later | medium | Bond may form Jan-Jun 2027 (low) |
+| Learning | A scholar's mind | high | Stop-start, practice-led (medium) |
+| Travel | A mover, long stays later | medium | Home base (low) |
+
+## Done — Stage 5
+- LIFE-READING.md written in the required order: chart table, year in 5
+  lines, 13 months, life areas, acting window 2027-29, Top 5, sources.
+- Every month and life area carries a confidence (with a one-line why)
+  and source codes (S1-S24, listed at the end).
+
 ## Next
-- Stage 4: synthesis workflow (competing readings per area, month by
-  month, critic) is running; fold its output into this tracker.
-- Stage 5: LIFE-READING.md.
+- Final independent review of LIFE-READING.md (dates vs json, rules,
+  style); fix anything found; commit.
 
 ## Open questions
 - Lagna sits 15' into Ashlesha (Pushya/Ashlesha cusp). The sign isn't at
@@ -289,5 +332,10 @@ Format: reading - confidence - why.
 - The birth tithi is 15 (Purnima) by only 0.1°. Chaturdashi ends minutes
   before birth, so the tithi is time-sensitive. It's minor for the reading.
 - Dasha dates depend on the Moon's exact degree: 1' of Moon is about 8
-  days of dasha. Done in Stage 3: the antardasha is safe, the pratyantar
-  edges are ±2 months.
+  days of dasha. All dasha edges move ±2 months per 15 min of birth-time
+  error. The year itself stays in Jupiter-Venus.
+- Exact-degree contacts with the Lagna are birth-time sensitive too.
+  The Lagna moves about 3°25' per 15 min. Ketu-over-Lagna-degree (9 Aug
+  2027 at 19:30) could fall anywhere from June to October 2027. The
+  eclipse is 1.2° from the Lagna at 19:30, 2.2° at 19:15 and 4.7° at
+  19:45. The sign-level facts are safe.
