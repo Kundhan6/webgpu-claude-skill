@@ -1,0 +1,1306 @@
+{
+  "window_ist": [
+    "2026-10-11",
+    "2027-10-11"
+  ],
+  "settings": {
+    "dasha": "Vimshottari",
+    "year_days": 365.25,
+    "moon_longitude": 69.778425,
+    "moon_nakshatra": {
+      "index": 6,
+      "name": "Ardra",
+      "lord": "Rahu",
+      "pada": 1,
+      "fraction_elapsed": 0.233382
+    },
+    "node_for_transits": "mean (true-node dates also given)",
+    "timezone": "IST (UTC+5:30)"
+  },
+  "dasha_balance_at_birth": {
+    "lord": "Rahu",
+    "years": 13.7991,
+    "ends": "2017-10-24 22:37"
+  },
+  "maha_dashas": [
+    {
+      "lord": "Rahu",
+      "start": "1999-10-25",
+      "end": "2017-10-24"
+    },
+    {
+      "lord": "Jupiter",
+      "start": "2017-10-24",
+      "end": "2033-10-24"
+    },
+    {
+      "lord": "Saturn",
+      "start": "2033-10-24",
+      "end": "2052-10-24"
+    },
+    {
+      "lord": "Mercury",
+      "start": "2052-10-24",
+      "end": "2069-10-24"
+    },
+    {
+      "lord": "Ketu",
+      "start": "2069-10-24",
+      "end": "2076-10-24"
+    },
+    {
+      "lord": "Venus",
+      "start": "2076-10-24",
+      "end": "2096-10-24"
+    },
+    {
+      "lord": "Sun",
+      "start": "2096-10-24",
+      "end": "2102-10-26"
+    },
+    {
+      "lord": "Moon",
+      "start": "2102-10-26",
+      "end": "2112-10-25"
+    },
+    {
+      "lord": "Mars",
+      "start": "2112-10-25",
+      "end": "2119-10-26"
+    },
+    {
+      "lord": "Rahu",
+      "start": "2119-10-26",
+      "end": "2137-10-25"
+    }
+  ],
+  "antar_dashas_all": [
+    {
+      "maha": "Rahu",
+      "antar": "Jupiter",
+      "start": "2002-07-07",
+      "end": "2004-11-30"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Saturn",
+      "start": "2004-11-30",
+      "end": "2007-10-07"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Mercury",
+      "start": "2007-10-07",
+      "end": "2010-04-25"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Ketu",
+      "start": "2010-04-25",
+      "end": "2011-05-14"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Venus",
+      "start": "2011-05-14",
+      "end": "2014-05-13"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Sun",
+      "start": "2014-05-13",
+      "end": "2015-04-07"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Moon",
+      "start": "2015-04-07",
+      "end": "2016-10-06"
+    },
+    {
+      "maha": "Rahu",
+      "antar": "Mars",
+      "start": "2016-10-06",
+      "end": "2017-10-24"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Jupiter",
+      "start": "2017-10-24",
+      "end": "2019-12-13"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Saturn",
+      "start": "2019-12-13",
+      "end": "2022-06-25"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Mercury",
+      "start": "2022-06-25",
+      "end": "2024-09-30"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Ketu",
+      "start": "2024-09-30",
+      "end": "2025-09-06"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Venus",
+      "start": "2025-09-06",
+      "end": "2028-05-07"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Sun",
+      "start": "2028-05-07",
+      "end": "2029-02-23"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Moon",
+      "start": "2029-02-23",
+      "end": "2030-06-25"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Mars",
+      "start": "2030-06-25",
+      "end": "2031-06-01"
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Rahu",
+      "start": "2031-06-01",
+      "end": "2033-10-24"
+    },
+    {
+      "maha": "Saturn",
+      "antar": "Saturn",
+      "start": "2033-10-24",
+      "end": "2036-10-27"
+    }
+  ],
+  "window_dashas": [
+    {
+      "maha": "Jupiter",
+      "antar": "Venus",
+      "start": "2025-09-06 05:49",
+      "end": "2028-05-07 05:49",
+      "pratyantar": [
+        {
+          "lord": "Rahu",
+          "start": "2026-08-21 06:13",
+          "end": "2027-01-14 08:37"
+        },
+        {
+          "lord": "Jupiter",
+          "start": "2027-01-14 08:37",
+          "end": "2027-05-24 05:25"
+        },
+        {
+          "lord": "Saturn",
+          "start": "2027-05-24 05:25",
+          "end": "2027-10-25 10:37"
+        }
+      ]
+    }
+  ],
+  "acting_window_dashas_2027_2029": [
+    {
+      "maha": "Jupiter",
+      "antar": "Venus",
+      "start": "2025-09-06 05:49",
+      "end": "2028-05-07 05:49",
+      "pratyantar": [
+        {
+          "lord": "Saturn",
+          "start": "2027-05-24 05:25",
+          "end": "2027-10-25 10:37"
+        },
+        {
+          "lord": "Mercury",
+          "start": "2027-10-25 10:37",
+          "end": "2028-03-11 10:13"
+        },
+        {
+          "lord": "Ketu",
+          "start": "2028-03-11 10:13",
+          "end": "2028-05-07 05:49"
+        }
+      ]
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Sun",
+      "start": "2028-05-07 05:49",
+      "end": "2029-02-23 10:37",
+      "pratyantar": [
+        {
+          "lord": "Sun",
+          "start": "2028-05-07 05:49",
+          "end": "2028-05-21 20:27"
+        },
+        {
+          "lord": "Moon",
+          "start": "2028-05-21 20:27",
+          "end": "2028-06-15 04:51"
+        },
+        {
+          "lord": "Mars",
+          "start": "2028-06-15 04:51",
+          "end": "2028-07-02 05:56"
+        },
+        {
+          "lord": "Rahu",
+          "start": "2028-07-02 05:56",
+          "end": "2028-08-15 01:51"
+        },
+        {
+          "lord": "Jupiter",
+          "start": "2028-08-15 01:51",
+          "end": "2028-09-23 00:54"
+        },
+        {
+          "lord": "Saturn",
+          "start": "2028-09-23 00:54",
+          "end": "2028-11-08 07:15"
+        },
+        {
+          "lord": "Mercury",
+          "start": "2028-11-08 07:15",
+          "end": "2028-12-19 16:44"
+        },
+        {
+          "lord": "Ketu",
+          "start": "2028-12-19 16:44",
+          "end": "2029-01-05 17:49"
+        },
+        {
+          "lord": "Venus",
+          "start": "2029-01-05 17:49",
+          "end": "2029-02-23 10:37"
+        }
+      ]
+    },
+    {
+      "maha": "Jupiter",
+      "antar": "Moon",
+      "start": "2029-02-23 10:37",
+      "end": "2030-06-25 10:37",
+      "pratyantar": [
+        {
+          "lord": "Moon",
+          "start": "2029-02-23 10:37",
+          "end": "2029-04-05 00:37"
+        },
+        {
+          "lord": "Mars",
+          "start": "2029-04-05 00:37",
+          "end": "2029-05-03 10:25"
+        },
+        {
+          "lord": "Rahu",
+          "start": "2029-05-03 10:25",
+          "end": "2029-07-15 11:37"
+        },
+        {
+          "lord": "Jupiter",
+          "start": "2029-07-15 11:37",
+          "end": "2029-09-18 10:01"
+        },
+        {
+          "lord": "Saturn",
+          "start": "2029-09-18 10:01",
+          "end": "2029-12-04 12:37"
+        },
+        {
+          "lord": "Mercury",
+          "start": "2029-12-04 12:37",
+          "end": "2030-02-11 12:25"
+        }
+      ]
+    }
+  ],
+  "dasha_sensitivity": {
+    "year 365.2422 (tropical)": "Jupiter-Venus 2025-09-06 01:45 to 2028-05-07 01:15",
+    "year 365.2564 (sidereal)": "Jupiter-Venus 2025-09-06 09:08 to 2028-05-07 09:33",
+    "year 360 (savana)": "Jupiter-Venus 2025-05-15 11:55 to 2027-12-31 11:55",
+    "birth 19:15": "Jupiter-Venus 2025-11-07 03:18 to 2028-07-08 03:18",
+    "birth 19:45": "Jupiter-Venus 2025-07-06 08:10 to 2028-03-06 08:10",
+    "Lahiri ICRC": "Moon +1\" vs Lahiri; Jupiter-Venus 2025-09-06 02:20 to 2028-05-07 02:20",
+    "Lahiri 1940": "Moon +53\" vs Lahiri; Jupiter-Venus 2025-08-29 23:08 to 2028-04-29 23:08",
+    "Lahiri VP285": "Moon -23\" vs Lahiri; Jupiter-Venus 2025-09-09 09:33 to 2028-05-10 09:33"
+  },
+  "slow_transits": {
+    "Saturn": [
+      {
+        "ist": "2025-03-29 21:45",
+        "from": "Aquarius",
+        "enters": "Pisces",
+        "house_from_lagna": 9,
+        "house_from_moon": 10,
+        "in_window": false
+      },
+      {
+        "ist": "2027-06-03 05:28",
+        "from": "Pisces",
+        "enters": "Aries",
+        "house_from_lagna": 10,
+        "house_from_moon": 11,
+        "in_window": true
+      },
+      {
+        "ist": "2027-10-20 07:12",
+        "from": "Aries",
+        "enters": "Pisces",
+        "house_from_lagna": 9,
+        "house_from_moon": 10,
+        "in_window": false
+      },
+      {
+        "ist": "2028-02-23 19:24",
+        "from": "Pisces",
+        "enters": "Aries",
+        "house_from_lagna": 10,
+        "house_from_moon": 11,
+        "in_window": false
+      },
+      {
+        "ist": "2029-08-08 12:34",
+        "from": "Aries",
+        "enters": "Taurus",
+        "house_from_lagna": 11,
+        "house_from_moon": 12,
+        "in_window": false
+      },
+      {
+        "ist": "2029-10-05 16:50",
+        "from": "Taurus",
+        "enters": "Aries",
+        "house_from_lagna": 10,
+        "house_from_moon": 11,
+        "in_window": false
+      },
+      {
+        "ist": "2030-04-17 09:08",
+        "from": "Aries",
+        "enters": "Taurus",
+        "house_from_lagna": 11,
+        "house_from_moon": 12,
+        "in_window": false
+      }
+    ],
+    "Jupiter": [
+      {
+        "ist": "2025-05-14 22:36",
+        "from": "Taurus",
+        "enters": "Gemini",
+        "house_from_lagna": 12,
+        "house_from_moon": 1,
+        "in_window": false
+      },
+      {
+        "ist": "2025-10-18 19:47",
+        "from": "Gemini",
+        "enters": "Cancer",
+        "house_from_lagna": 1,
+        "house_from_moon": 2,
+        "in_window": false
+      },
+      {
+        "ist": "2025-12-05 17:25",
+        "from": "Cancer",
+        "enters": "Gemini",
+        "house_from_lagna": 12,
+        "house_from_moon": 1,
+        "in_window": false
+      },
+      {
+        "ist": "2026-06-02 01:50",
+        "from": "Gemini",
+        "enters": "Cancer",
+        "house_from_lagna": 1,
+        "house_from_moon": 2,
+        "in_window": false
+      },
+      {
+        "ist": "2026-10-31 12:02",
+        "from": "Cancer",
+        "enters": "Leo",
+        "house_from_lagna": 2,
+        "house_from_moon": 3,
+        "in_window": true
+      },
+      {
+        "ist": "2027-01-25 01:31",
+        "from": "Leo",
+        "enters": "Cancer",
+        "house_from_lagna": 1,
+        "house_from_moon": 2,
+        "in_window": true
+      },
+      {
+        "ist": "2027-06-26 05:19",
+        "from": "Cancer",
+        "enters": "Leo",
+        "house_from_lagna": 2,
+        "house_from_moon": 3,
+        "in_window": true
+      },
+      {
+        "ist": "2027-11-26 18:45",
+        "from": "Leo",
+        "enters": "Virgo",
+        "house_from_lagna": 3,
+        "house_from_moon": 4,
+        "in_window": false
+      },
+      {
+        "ist": "2028-02-28 19:17",
+        "from": "Virgo",
+        "enters": "Leo",
+        "house_from_lagna": 2,
+        "house_from_moon": 3,
+        "in_window": false
+      },
+      {
+        "ist": "2028-07-24 15:36",
+        "from": "Leo",
+        "enters": "Virgo",
+        "house_from_lagna": 3,
+        "house_from_moon": 4,
+        "in_window": false
+      },
+      {
+        "ist": "2028-12-26 13:39",
+        "from": "Virgo",
+        "enters": "Libra",
+        "house_from_lagna": 4,
+        "house_from_moon": 5,
+        "in_window": false
+      },
+      {
+        "ist": "2029-03-29 14:32",
+        "from": "Libra",
+        "enters": "Virgo",
+        "house_from_lagna": 3,
+        "house_from_moon": 4,
+        "in_window": false
+      },
+      {
+        "ist": "2029-08-25 01:01",
+        "from": "Virgo",
+        "enters": "Libra",
+        "house_from_lagna": 4,
+        "house_from_moon": 5,
+        "in_window": false
+      },
+      {
+        "ist": "2030-01-25 01:54",
+        "from": "Libra",
+        "enters": "Scorpio",
+        "house_from_lagna": 5,
+        "house_from_moon": 6,
+        "in_window": false
+      },
+      {
+        "ist": "2030-05-01 14:17",
+        "from": "Scorpio",
+        "enters": "Libra",
+        "house_from_lagna": 4,
+        "house_from_moon": 5,
+        "in_window": false
+      },
+      {
+        "ist": "2030-09-23 02:25",
+        "from": "Libra",
+        "enters": "Scorpio",
+        "house_from_lagna": 5,
+        "house_from_moon": 6,
+        "in_window": false
+      }
+    ],
+    "Rahu": [
+      {
+        "ist": "2025-05-18 19:34",
+        "from": "Pisces",
+        "enters": "Aquarius",
+        "house_from_lagna": 8,
+        "house_from_moon": 9,
+        "in_window": false,
+        "true_node_ist": "2025-05-30 00:56"
+      },
+      {
+        "ist": "2026-12-05 22:32",
+        "from": "Aquarius",
+        "enters": "Capricorn",
+        "house_from_lagna": 7,
+        "house_from_moon": 8,
+        "in_window": true,
+        "true_node_ist": "2026-11-25 19:15"
+      },
+      {
+        "ist": "2028-06-24 01:30",
+        "from": "Capricorn",
+        "enters": "Sagittarius",
+        "house_from_lagna": 6,
+        "house_from_moon": 7,
+        "in_window": false,
+        "true_node_ist": "2028-05-24 15:11"
+      },
+      {
+        "ist": "2030-01-11 04:27",
+        "from": "Sagittarius",
+        "enters": "Scorpio",
+        "house_from_lagna": 5,
+        "house_from_moon": 6,
+        "in_window": false,
+        "true_node_ist": "2030-02-04 13:20"
+      }
+    ],
+    "Ketu": [
+      {
+        "ist": "2025-05-18 19:34",
+        "from": "Virgo",
+        "enters": "Leo",
+        "house_from_lagna": 2,
+        "house_from_moon": 3,
+        "in_window": false,
+        "true_node_ist": "2025-05-30 00:56"
+      },
+      {
+        "ist": "2026-12-05 22:32",
+        "from": "Leo",
+        "enters": "Cancer",
+        "house_from_lagna": 1,
+        "house_from_moon": 2,
+        "in_window": true,
+        "true_node_ist": "2026-11-25 19:15"
+      },
+      {
+        "ist": "2028-06-24 01:30",
+        "from": "Cancer",
+        "enters": "Gemini",
+        "house_from_lagna": 12,
+        "house_from_moon": 1,
+        "in_window": false,
+        "true_node_ist": "2028-05-24 15:11"
+      },
+      {
+        "ist": "2030-01-11 04:27",
+        "from": "Gemini",
+        "enters": "Taurus",
+        "house_from_lagna": 11,
+        "house_from_moon": 12,
+        "in_window": false,
+        "true_node_ist": "2030-02-04 13:20"
+      }
+    ]
+  },
+  "positions_at_window_start": {
+    "Saturn": {
+      "sign": "Pisces",
+      "degree": "16°34'42\"",
+      "house_from_lagna": 9,
+      "house_from_moon": 10,
+      "retrograde": true
+    },
+    "Jupiter": {
+      "sign": "Cancer",
+      "degree": "27°02'11\"",
+      "house_from_lagna": 1,
+      "house_from_moon": 2,
+      "retrograde": false
+    },
+    "Rahu": {
+      "sign": "Aquarius",
+      "degree": "2°57'52\"",
+      "house_from_lagna": 8,
+      "house_from_moon": 9,
+      "retrograde": true
+    },
+    "Ketu": {
+      "sign": "Leo",
+      "degree": "2°57'52\"",
+      "house_from_lagna": 2,
+      "house_from_moon": 3,
+      "retrograde": true
+    }
+  },
+  "positions_at_window_end": {
+    "Saturn": {
+      "sign": "Aries",
+      "degree": "0°44'17\"",
+      "house_from_lagna": 10,
+      "house_from_moon": 11,
+      "retrograde": true
+    },
+    "Jupiter": {
+      "sign": "Leo",
+      "degree": "22°00'50\"",
+      "house_from_lagna": 2,
+      "house_from_moon": 3,
+      "retrograde": false
+    },
+    "Rahu": {
+      "sign": "Capricorn",
+      "degree": "13°37'20\"",
+      "house_from_lagna": 7,
+      "house_from_moon": 8,
+      "retrograde": true
+    },
+    "Ketu": {
+      "sign": "Cancer",
+      "degree": "13°37'20\"",
+      "house_from_lagna": 1,
+      "house_from_moon": 2,
+      "retrograde": true
+    }
+  },
+  "saturn_phases": [
+    {
+      "from": "2025-01-01",
+      "to": "2025-03-29",
+      "saturn_in": "Aquarius",
+      "house_from_moon": 9,
+      "house_from_lagna": 8,
+      "tags": [
+        "Ashtama Shani from Lagna (secondary view)"
+      ]
+    },
+    {
+      "from": "2025-03-29",
+      "to": "2027-06-03",
+      "saturn_in": "Pisces",
+      "house_from_moon": 10,
+      "house_from_lagna": 9,
+      "tags": [
+        "Kantaka Shani (10th from Moon)"
+      ]
+    },
+    {
+      "from": "2027-06-03",
+      "to": "2027-10-20",
+      "saturn_in": "Aries",
+      "house_from_moon": 11,
+      "house_from_lagna": 10,
+      "tags": [
+        "Kantaka Shani from Lagna (secondary view, 10th)"
+      ]
+    },
+    {
+      "from": "2027-10-20",
+      "to": "2028-02-23",
+      "saturn_in": "Pisces",
+      "house_from_moon": 10,
+      "house_from_lagna": 9,
+      "tags": [
+        "Kantaka Shani (10th from Moon)"
+      ]
+    },
+    {
+      "from": "2028-02-23",
+      "to": "2029-08-08",
+      "saturn_in": "Aries",
+      "house_from_moon": 11,
+      "house_from_lagna": 10,
+      "tags": [
+        "Kantaka Shani from Lagna (secondary view, 10th)"
+      ]
+    },
+    {
+      "from": "2029-08-08",
+      "to": "2029-10-05",
+      "saturn_in": "Taurus",
+      "house_from_moon": 12,
+      "house_from_lagna": 11,
+      "tags": [
+        "Sade Sati phase 1 (rising)"
+      ]
+    },
+    {
+      "from": "2029-10-05",
+      "to": "2030-04-17",
+      "saturn_in": "Aries",
+      "house_from_moon": 11,
+      "house_from_lagna": 10,
+      "tags": [
+        "Kantaka Shani from Lagna (secondary view, 10th)"
+      ]
+    },
+    {
+      "from": "2030-04-17",
+      "to": "2032-05-31",
+      "saturn_in": "Taurus",
+      "house_from_moon": 12,
+      "house_from_lagna": 11,
+      "tags": [
+        "Sade Sati phase 1 (rising)"
+      ]
+    },
+    {
+      "from": "2032-05-31",
+      "to": "2034-07-13",
+      "saturn_in": "Gemini",
+      "house_from_moon": 1,
+      "house_from_lagna": 12,
+      "tags": [
+        "Sade Sati phase 2 (peak)"
+      ]
+    },
+    {
+      "from": "2034-07-13",
+      "to": "2036-01-01",
+      "saturn_in": "Cancer",
+      "house_from_moon": 2,
+      "house_from_lagna": 1,
+      "tags": [
+        "Sade Sati phase 3 (setting)",
+        "Kantaka Shani from Lagna (secondary view, 1st)"
+      ]
+    }
+  ],
+  "stations_in_window": [
+    {
+      "body": "Mercury",
+      "ist": "2026-10-24 12:42",
+      "turns": "retrograde",
+      "at": "Libra 26°44'43\""
+    },
+    {
+      "body": "Mercury",
+      "ist": "2026-11-13 21:24",
+      "turns": "direct",
+      "at": "Libra 10°47'56\""
+    },
+    {
+      "body": "Venus",
+      "ist": "2026-11-14 06:00",
+      "turns": "direct",
+      "at": "Virgo 28°37'44\""
+    },
+    {
+      "body": "Saturn",
+      "ist": "2026-12-11 06:00",
+      "turns": "direct",
+      "at": "Pisces 13°41'42\""
+    },
+    {
+      "body": "Jupiter",
+      "ist": "2026-12-13 06:01",
+      "turns": "retrograde",
+      "at": "Leo 2°47'18\""
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-01-10 18:25",
+      "turns": "retrograde",
+      "at": "Leo 16°11'28\""
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-02-09 23:06",
+      "turns": "retrograde",
+      "at": "Aquarius 11°44'32\""
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-03-03 18:02",
+      "turns": "direct",
+      "at": "Capricorn 26°41'00\""
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-04-01 19:41",
+      "turns": "direct",
+      "at": "Cancer 26°41'09\""
+    },
+    {
+      "body": "Jupiter",
+      "ist": "2027-04-13 08:12",
+      "turns": "direct",
+      "at": "Cancer 22°45'16\""
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-06-10 23:45",
+      "turns": "retrograde",
+      "at": "Gemini 12°07'03\""
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-07-05 01:11",
+      "turns": "direct",
+      "at": "Gemini 3°13'27\""
+    },
+    {
+      "body": "Saturn",
+      "ist": "2027-08-09 22:54",
+      "turns": "retrograde",
+      "at": "Aries 3°38'02\""
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-10-07 20:06",
+      "turns": "retrograde",
+      "at": "Libra 10°40'46\""
+    }
+  ],
+  "fast_transits_in_window": [
+    {
+      "body": "Sun",
+      "ist": "2026-10-17 19:51",
+      "from": "Virgo",
+      "enters": "Libra",
+      "retrograde": false,
+      "house_from_lagna": 4,
+      "house_from_moon": 5
+    },
+    {
+      "body": "Venus",
+      "ist": "2026-11-06 01:04",
+      "from": "Libra",
+      "enters": "Virgo",
+      "retrograde": true,
+      "house_from_lagna": 3,
+      "house_from_moon": 4
+    },
+    {
+      "body": "Mars",
+      "ist": "2026-11-12 20:18",
+      "from": "Cancer",
+      "enters": "Leo",
+      "retrograde": false,
+      "house_from_lagna": 2,
+      "house_from_moon": 3
+    },
+    {
+      "body": "Sun",
+      "ist": "2026-11-16 19:43",
+      "from": "Libra",
+      "enters": "Scorpio",
+      "retrograde": false,
+      "house_from_lagna": 5,
+      "house_from_moon": 6
+    },
+    {
+      "body": "Venus",
+      "ist": "2026-11-22 17:21",
+      "from": "Virgo",
+      "enters": "Libra",
+      "retrograde": false,
+      "house_from_lagna": 4,
+      "house_from_moon": 5
+    },
+    {
+      "body": "Mercury",
+      "ist": "2026-12-02 17:27",
+      "from": "Libra",
+      "enters": "Scorpio",
+      "retrograde": false,
+      "house_from_lagna": 5,
+      "house_from_moon": 6
+    },
+    {
+      "body": "Sun",
+      "ist": "2026-12-16 10:25",
+      "from": "Scorpio",
+      "enters": "Sagittarius",
+      "retrograde": false,
+      "house_from_lagna": 6,
+      "house_from_moon": 7
+    },
+    {
+      "body": "Mercury",
+      "ist": "2026-12-22 07:39",
+      "from": "Scorpio",
+      "enters": "Sagittarius",
+      "retrograde": false,
+      "house_from_lagna": 6,
+      "house_from_moon": 7
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-01-01 23:23",
+      "from": "Libra",
+      "enters": "Scorpio",
+      "retrograde": false,
+      "house_from_lagna": 5,
+      "house_from_moon": 6
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-01-10 00:37",
+      "from": "Sagittarius",
+      "enters": "Capricorn",
+      "retrograde": false,
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-01-14 21:10",
+      "from": "Sagittarius",
+      "enters": "Capricorn",
+      "retrograde": false,
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-01-28 03:34",
+      "from": "Capricorn",
+      "enters": "Aquarius",
+      "retrograde": false,
+      "house_from_lagna": 8,
+      "house_from_moon": 9
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-01-29 18:42",
+      "from": "Scorpio",
+      "enters": "Sagittarius",
+      "retrograde": false,
+      "house_from_lagna": 6,
+      "house_from_moon": 7
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-02-13 10:09",
+      "from": "Capricorn",
+      "enters": "Aquarius",
+      "retrograde": false,
+      "house_from_lagna": 8,
+      "house_from_moon": 9
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-02-24 04:40",
+      "from": "Aquarius",
+      "enters": "Capricorn",
+      "retrograde": true,
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-02-24 15:16",
+      "from": "Sagittarius",
+      "enters": "Capricorn",
+      "retrograde": false,
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-03-10 00:13",
+      "from": "Leo",
+      "enters": "Cancer",
+      "retrograde": true,
+      "house_from_lagna": 1,
+      "house_from_moon": 2
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-03-12 05:07",
+      "from": "Capricorn",
+      "enters": "Aquarius",
+      "retrograde": false,
+      "house_from_lagna": 8,
+      "house_from_moon": 9
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-03-15 07:00",
+      "from": "Aquarius",
+      "enters": "Pisces",
+      "retrograde": false,
+      "house_from_lagna": 9,
+      "house_from_moon": 10
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-03-21 18:52",
+      "from": "Capricorn",
+      "enters": "Aquarius",
+      "retrograde": false,
+      "house_from_lagna": 8,
+      "house_from_moon": 9
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-04-05 16:16",
+      "from": "Aquarius",
+      "enters": "Pisces",
+      "retrograde": false,
+      "house_from_lagna": 9,
+      "house_from_moon": 10
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-04-14 15:28",
+      "from": "Pisces",
+      "enters": "Aries",
+      "retrograde": false,
+      "house_from_lagna": 10,
+      "house_from_moon": 11
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-04-15 15:20",
+      "from": "Aquarius",
+      "enters": "Pisces",
+      "retrograde": false,
+      "house_from_lagna": 9,
+      "house_from_moon": 10
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-04-22 08:12",
+      "from": "Pisces",
+      "enters": "Aries",
+      "retrograde": false,
+      "house_from_lagna": 10,
+      "house_from_moon": 11
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-04-26 11:47",
+      "from": "Cancer",
+      "enters": "Leo",
+      "retrograde": false,
+      "house_from_lagna": 2,
+      "house_from_moon": 3
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-05-06 12:36",
+      "from": "Aries",
+      "enters": "Taurus",
+      "retrograde": false,
+      "house_from_lagna": 11,
+      "house_from_moon": 12
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-05-10 08:49",
+      "from": "Pisces",
+      "enters": "Aries",
+      "retrograde": false,
+      "house_from_lagna": 10,
+      "house_from_moon": 11
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-05-15 12:20",
+      "from": "Aries",
+      "enters": "Taurus",
+      "retrograde": false,
+      "house_from_lagna": 11,
+      "house_from_moon": 12
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-05-23 18:32",
+      "from": "Taurus",
+      "enters": "Gemini",
+      "retrograde": false,
+      "house_from_lagna": 12,
+      "house_from_moon": 1
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-06-04 00:41",
+      "from": "Aries",
+      "enters": "Taurus",
+      "retrograde": false,
+      "house_from_lagna": 11,
+      "house_from_moon": 12
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-06-15 18:56",
+      "from": "Taurus",
+      "enters": "Gemini",
+      "retrograde": false,
+      "house_from_lagna": 12,
+      "house_from_moon": 1
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-06-28 14:39",
+      "from": "Taurus",
+      "enters": "Gemini",
+      "retrograde": false,
+      "house_from_lagna": 12,
+      "house_from_moon": 1
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-07-05 04:34",
+      "from": "Leo",
+      "enters": "Virgo",
+      "retrograde": false,
+      "house_from_lagna": 3,
+      "house_from_moon": 4
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-07-17 05:49",
+      "from": "Gemini",
+      "enters": "Cancer",
+      "retrograde": false,
+      "house_from_lagna": 1,
+      "house_from_moon": 2
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-07-23 01:47",
+      "from": "Gemini",
+      "enters": "Cancer",
+      "retrograde": false,
+      "house_from_lagna": 1,
+      "house_from_moon": 2
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-07-30 18:31",
+      "from": "Gemini",
+      "enters": "Cancer",
+      "retrograde": false,
+      "house_from_lagna": 1,
+      "house_from_moon": 2
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-08-14 11:53",
+      "from": "Cancer",
+      "enters": "Leo",
+      "retrograde": false,
+      "house_from_lagna": 2,
+      "house_from_moon": 3
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-08-16 09:35",
+      "from": "Cancer",
+      "enters": "Leo",
+      "retrograde": false,
+      "house_from_lagna": 2,
+      "house_from_moon": 3
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-08-17 14:13",
+      "from": "Cancer",
+      "enters": "Leo",
+      "retrograde": false,
+      "house_from_lagna": 2,
+      "house_from_moon": 3
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-08-24 09:52",
+      "from": "Virgo",
+      "enters": "Libra",
+      "retrograde": false,
+      "house_from_lagna": 4,
+      "house_from_moon": 5
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-08-31 02:01",
+      "from": "Leo",
+      "enters": "Virgo",
+      "retrograde": false,
+      "house_from_lagna": 3,
+      "house_from_moon": 4
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-09-09 14:41",
+      "from": "Leo",
+      "enters": "Virgo",
+      "retrograde": false,
+      "house_from_lagna": 3,
+      "house_from_moon": 4
+    },
+    {
+      "body": "Sun",
+      "ist": "2027-09-17 14:10",
+      "from": "Leo",
+      "enters": "Virgo",
+      "retrograde": false,
+      "house_from_lagna": 3,
+      "house_from_moon": 4
+    },
+    {
+      "body": "Mercury",
+      "ist": "2027-09-21 18:21",
+      "from": "Virgo",
+      "enters": "Libra",
+      "retrograde": false,
+      "house_from_lagna": 4,
+      "house_from_moon": 5
+    },
+    {
+      "body": "Venus",
+      "ist": "2027-10-03 18:24",
+      "from": "Virgo",
+      "enters": "Libra",
+      "retrograde": false,
+      "house_from_lagna": 4,
+      "house_from_moon": 5
+    },
+    {
+      "body": "Mars",
+      "ist": "2027-10-08 01:28",
+      "from": "Libra",
+      "enters": "Scorpio",
+      "retrograde": false,
+      "house_from_lagna": 5,
+      "house_from_moon": 6
+    }
+  ],
+  "eclipses_in_window": [
+    {
+      "type": "solar (annular)",
+      "ist": "2027-02-06 21:29",
+      "at": "Capricorn 23°23'26\"",
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    },
+    {
+      "type": "lunar (penumbral)",
+      "ist": "2027-02-21 04:42",
+      "at": "Leo 7°44'36\"",
+      "house_from_lagna": 2,
+      "house_from_moon": 3
+    },
+    {
+      "type": "lunar (penumbral)",
+      "ist": "2027-07-18 21:33",
+      "at": "Capricorn 1°42'55\"",
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    },
+    {
+      "type": "solar (total)",
+      "ist": "2027-08-02 15:36",
+      "at": "Cancer 15°40'19\"",
+      "house_from_lagna": 1,
+      "house_from_moon": 2
+    },
+    {
+      "type": "lunar (penumbral)",
+      "ist": "2027-08-17 12:43",
+      "at": "Capricorn 29°49'39\"",
+      "house_from_lagna": 7,
+      "house_from_moon": 8
+    }
+  ]
+}
